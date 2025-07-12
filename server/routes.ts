@@ -12,7 +12,7 @@ const pusher = new Pusher({
   appId: "1879330",
   key: "d4b6f6b7c6b0e4e8c7a2",
   secret: "5e8c7a2d4b6f6b7c6b0e4e8c7a2d4b6f",
-  cluster: "eu",
+  cluster: "us2",
   useTLS: true,
 });
 

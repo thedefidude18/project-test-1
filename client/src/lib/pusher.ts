@@ -2,7 +2,7 @@ import Pusher from 'pusher-js';
 
 // Initialize Pusher client
 export const pusher = new Pusher('d4b6f6b7c6b0e4e8c7a2', {
-  cluster: 'eu',
+  cluster: 'us2',
   forceTLS: true,
 });
 

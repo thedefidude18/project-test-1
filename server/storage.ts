@@ -17,6 +17,9 @@ import {
   userInteractions,
   eventJoinRequests,
   eventPools,
+  messageReactions,
+  eventTyping,
+  eventActivity,
   type User,
   type UpsertUser,
   type Event,
@@ -34,9 +37,11 @@ import {
   type ChallengeMessage,
   type EventJoinRequest,
   type InsertEventJoinRequest,
+  type MessageReaction,
+  type InsertMessageReaction,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, sql, count, sum } from "drizzle-orm";
+import { eq, desc, and, or, sql, count, sum, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations - Required for Replit Auth
@@ -263,7 +268,7 @@ export class DatabaseStorage implements IStorage {
 
     // Get reactions for each message
     const messageIds = messages.map(m => m.id);
-    const reactions = await db
+    const reactions = messageIds.length > 0 ? await db
       .select({
         messageId: messageReactions.messageId,
         emoji: messageReactions.emoji,
@@ -276,7 +281,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(messageReactions)
       .innerJoin(users, eq(messageReactions.userId, users.id))
-      .where(sql`${messageReactions.messageId} IN (${messageIds.join(',')})`);
+      .where(inArray(messageReactions.messageId, messageIds)) : [];
 
     // Get reply-to messages
     const replyToIds = messages.filter(m => m.replyToId).map(m => m.replyToId);
@@ -292,12 +297,12 @@ export class DatabaseStorage implements IStorage {
       })
       .from(eventMessages)
       .innerJoin(users, eq(eventMessages.userId, users.id))
-      .where(sql`${eventMessages.id} IN (${replyToIds.join(',')})`) : [];
+      .where(inArray(eventMessages.id, replyToIds)) : [];
 
     // Combine data
     return messages.map(message => {
-      const messageReactions = reactions.filter(r => r.messageId === message.id);
-      const reactionSummary = messageReactions.reduce((acc: any[], reaction) => {
+      const msgReactions = reactions.filter(r => r.messageId === message.id);
+      const reactionSummary = msgReactions.reduce((acc: any[], reaction) => {
         const existing = acc.find(r => r.emoji === reaction.emoji);
         if (existing) {
           existing.count++;
