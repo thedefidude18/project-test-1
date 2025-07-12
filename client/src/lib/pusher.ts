@@ -1,8 +1,8 @@
 import Pusher from 'pusher-js';
 
 // Initialize Pusher client
-export const pusher = new Pusher('d4b6f6b7c6b0e4e8c7a2', {
-  cluster: 'us2',
+export const pusher = new Pusher('decd2cca5e39cf0cbcd4', {
+  cluster: 'mt1',
   forceTLS: true,
 });
 
