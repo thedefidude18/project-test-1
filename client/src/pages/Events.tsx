@@ -143,12 +143,15 @@ export default function Events() {
                 Create Event
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Event</DialogTitle>
+                <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+                  🎁 Earn 1000 Points for creating an event!
+                </p>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                   <FormField
                     control={form.control}
                     name="title"
@@ -170,7 +173,11 @@ export default function Events() {
                       <FormItem>
                         <FormLabel>Description (Optional)</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="Describe your event..." {...field} />
+                          <Textarea 
+                            placeholder="Describe your event..." 
+                            className="min-h-[60px]"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -205,19 +212,35 @@ export default function Events() {
                     )}
                   />
                   
-                  <FormField
-                    control={form.control}
-                    name="entryFee"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Entry Fee (₦)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="100" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="entryFee"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Entry Fee (₦)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="100" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="maxParticipants"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Max Participants</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="100" min="2" max="1000" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   
                   <FormField
                     control={form.control}
@@ -239,23 +262,9 @@ export default function Events() {
                   
                   <FormField
                     control={form.control}
-                    name="maxParticipants"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Maximum Participants</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="100" min="2" max="1000" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
                     name="isPrivate"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
                         <FormControl>
                           <Checkbox
                             checked={field.value}
@@ -264,15 +273,15 @@ export default function Events() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>Private Event</FormLabel>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Require approval to join this event
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Require approval to join
                           </p>
                         </div>
                       </FormItem>
                     )}
                   />
                   
-                  <div className="flex space-x-2 pt-4">
+                  <div className="flex space-x-2 pt-4 sticky bottom-0 bg-white dark:bg-slate-800 pb-2 border-t border-slate-200 dark:border-slate-700 mt-4">
                     <Button
                       type="button"
                       variant="outline"
@@ -286,7 +295,7 @@ export default function Events() {
                       disabled={createEventMutation.isPending}
                       className="flex-1 bg-primary text-white hover:bg-primary/90"
                     >
-                      {createEventMutation.isPending ? "Creating..." : "Create Event"}
+                      {createEventMutation.isPending ? "Creating..." : "Create Event (+1000 Points)"}
                     </Button>
                   </div>
                 </form>
