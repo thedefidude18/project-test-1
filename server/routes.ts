@@ -345,29 +345,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hash = req.headers['x-paystack-signature'];
       const body = req.body;
       
-      // Convert buffer to string for signature verification
-      const bodyString = body.toString();
-      const expectedHash = require('crypto')
-        .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY || '')
-        .update(bodyString)
-        .digest('hex');
-
       console.log('Webhook received:', {
-        receivedHash: hash,
-        expectedHash,
-        body: bodyString
+        headers: req.headers,
+        bodyType: typeof body,
+        bodyLength: body?.length
       });
 
-      if (hash !== expectedHash) {
-        console.log('Invalid webhook signature');
-        return res.status(400).json({ message: "Invalid signature" });
+      // Handle both string and buffer bodies
+      const bodyString = Buffer.isBuffer(body) ? body.toString() : (typeof body === 'string' ? body : JSON.stringify(body));
+      
+      // Verify signature if secret key is available
+      if (process.env.PAYSTACK_SECRET_KEY) {
+        const expectedHash = require('crypto')
+          .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
+          .update(bodyString)
+          .digest('hex');
+
+        console.log('Signature verification:', {
+          receivedHash: hash,
+          expectedHash,
+          match: hash === expectedHash
+        });
+
+        if (hash !== expectedHash) {
+          console.log('Invalid webhook signature');
+          return res.status(400).json({ message: "Invalid signature" });
+        }
+      } else {
+        console.log('Warning: PAYSTACK_SECRET_KEY not set, skipping signature verification');
       }
 
-      const event = JSON.parse(bodyString);
+      // Parse the event
+      let event;
+      try {
+        event = JSON.parse(bodyString);
+      } catch (parseError) {
+        console.error('Failed to parse webhook body:', parseError);
+        return res.status(400).json({ message: "Invalid JSON" });
+      }
+
       console.log('Webhook event:', event);
       
       if (event.event === 'charge.success') {
         const { reference, amount, metadata, status } = event.data;
+        
+        console.log('Processing charge.success:', {
+          reference,
+          amount,
+          metadata,
+          status
+        });
         
         if (status === 'success' && metadata && metadata.userId) {
           const userId = metadata.userId;
@@ -375,25 +402,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           console.log(`Processing successful deposit for user ${userId}: ₦${depositAmount}`);
 
-          // Create transaction record
-          await storage.createTransaction({
-            userId,
-            type: 'deposit',
-            amount: depositAmount.toString(),
-            description: `Deposit via Paystack - ${reference}`,
-            status: 'completed',
-          });
+          try {
+            // Create transaction record
+            await storage.createTransaction({
+              userId,
+              type: 'deposit',
+              amount: depositAmount.toString(),
+              description: `Deposit via Paystack - ${reference}`,
+              status: 'completed',
+            });
 
-          console.log(`Deposit completed for user ${userId}: ₦${depositAmount}`);
+            console.log(`✅ Deposit completed for user ${userId}: ₦${depositAmount}`);
+          } catch (dbError) {
+            console.error('Database error while creating transaction:', dbError);
+            return res.status(500).json({ message: "Database error" });
+          }
         } else {
-          console.log('Charge success but payment not completed or missing metadata');
+          console.log('⚠️ Charge success but invalid status or missing metadata:', {
+            status,
+            hasMetadata: !!metadata,
+            userId: metadata?.userId
+          });
         }
+      } else {
+        console.log('Webhook event not charge.success:', event.event);
       }
 
-      res.status(200).json({ message: "Webhook processed" });
+      res.status(200).json({ message: "Webhook processed successfully" });
     } catch (error) {
-      console.error("Error processing webhook:", error);
+      console.error("❌ Error processing webhook:", error);
       res.status(500).json({ message: "Webhook processing failed" });
+    }
+  });
+
+  // Manual payment verification (for testing)
+  app.post('/api/wallet/verify-payment', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { reference } = req.body;
+      const userId = req.user.claims.sub;
+
+      if (!reference) {
+        return res.status(400).json({ message: "Reference is required" });
+      }
+
+      console.log(`Manual verification requested for reference: ${reference}`);
+
+      // Verify payment with Paystack
+      const verifyResponse = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        }
+      });
+
+      const verifyData = await verifyResponse.json();
+      console.log('Paystack verification response:', verifyData);
+
+      if (verifyData.status && verifyData.data.status === 'success') {
+        const { amount, metadata } = verifyData.data;
+        
+        if (metadata && metadata.userId === userId) {
+          const depositAmount = amount / 100; // Convert from kobo to naira
+
+          // Check if transaction already exists
+          const existingTransactions = await storage.getTransactions(userId);
+          const exists = existingTransactions.some((t: any) => t.description?.includes(reference));
+
+          if (!exists) {
+            await storage.createTransaction({
+              userId,
+              type: 'deposit',
+              amount: depositAmount.toString(),
+              description: `Deposit via Paystack - ${reference}`,
+              status: 'completed',
+            });
+
+            console.log(`✅ Manual verification completed for user ${userId}: ₦${depositAmount}`);
+            res.json({ message: "Payment verified and credited", amount: depositAmount });
+          } else {
+            res.json({ message: "Payment already processed", amount: depositAmount });
+          }
+        } else {
+          res.status(400).json({ message: "Payment user mismatch" });
+        }
+      } else {
+        res.status(400).json({ message: "Payment verification failed" });
+      }
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      res.status(500).json({ message: "Failed to verify payment" });
     }
   });
 

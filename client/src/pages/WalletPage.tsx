@@ -81,14 +81,42 @@ export default function WalletPage() {
             if (response.status === 'success') {
               toast({
                 title: "Payment Successful",
-                description: "Your deposit is being processed! Balance will update shortly.",
+                description: "Verifying payment... Please wait.",
               });
               
-              // Refresh balance and transactions after a short delay to allow webhook processing
-              setTimeout(() => {
+              // Manually verify payment with backend
+              setTimeout(async () => {
+                try {
+                  const verifyResponse = await apiRequest("POST", "/api/wallet/verify-payment", { 
+                    reference: response.reference 
+                  });
+                  
+                  if (verifyResponse.ok) {
+                    toast({
+                      title: "Payment Verified",
+                      description: "Your deposit has been credited to your account!",
+                    });
+                  } else {
+                    console.error('Verification failed:', await verifyResponse.text());
+                    toast({
+                      title: "Verification Failed",
+                      description: "Payment successful but verification failed. Contact support.",
+                      variant: "destructive",
+                    });
+                  }
+                } catch (error) {
+                  console.error('Verification error:', error);
+                  toast({
+                    title: "Verification Error",
+                    description: "Payment successful but verification failed. Contact support.",
+                    variant: "destructive",
+                  });
+                }
+                
+                // Refresh balance and transactions
                 queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
                 queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-              }, 2000);
+              }, 1000);
               
               setIsDepositDialogOpen(false);
               setDepositAmount("");
