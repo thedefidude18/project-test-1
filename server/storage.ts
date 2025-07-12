@@ -370,8 +370,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserBalance(userId: string): Promise<number> {
-    const user = await this.getUser(userId);
-    return user ? parseFloat(user.balance || "0") : 0;
+    // Calculate balance from all transactions
+    const [result] = await db
+      .select({
+        totalBalance: sql<number>`COALESCE(SUM(CAST(${transactions.amount} AS DECIMAL)), 0)`
+      })
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.status, 'completed')
+        )
+      );
+
+    return result?.totalBalance || 0;
   }
 
   async updateUserBalance(userId: string, amount: number): Promise<User> {
@@ -391,6 +403,21 @@ export class DatabaseStorage implements IStorage {
       .insert(transactions)
       .values(transaction)
       .returning();
+
+    // Update user balance for deposit/withdrawal transactions
+    if (transaction.type === 'deposit' || transaction.type === 'withdrawal' || transaction.type === 'win') {
+      const amount = parseFloat(transaction.amount);
+      if (!isNaN(amount)) {
+        await db
+          .update(users)
+          .set({
+            balance: sql`COALESCE(${users.balance}, 0) + ${amount}`,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, transaction.userId));
+      }
+    }
+
     return newTransaction;
   }
 

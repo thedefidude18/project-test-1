@@ -271,7 +271,7 @@ export default function WalletPage() {
 
   if (!user) return null;
 
-  const currentBalance = typeof balance === 'object' ? balance.balance : balance;
+  const currentBalance = typeof balance === 'object' ? (balance.balance || 0) : (balance || 0);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
