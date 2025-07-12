@@ -761,7 +761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/wallet/withdraw', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { amount } } = req.body;
+      const { amount } = req.body;
 
       if (!amount || amount <= 0) {
         return res.status(400).json({ message: "Invalid amount" });
