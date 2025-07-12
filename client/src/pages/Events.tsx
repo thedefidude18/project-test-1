@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import { EventCard } from "@/components/EventCard";
+import { OnboardingTooltip } from "@/components/OnboardingTooltip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,25 @@ export default function Events() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Check if user should see onboarding
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem('hasSeenEventsOnboarding');
+    if (!hasSeenOnboarding && user) {
+      setShowOnboarding(true);
+    }
+  }, [user]);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('hasSeenEventsOnboarding', 'true');
+    setShowOnboarding(false);
+  };
+
+  const handleOnboardingClose = () => {
+    localStorage.setItem('hasSeenEventsOnboarding', 'true');
+    setShowOnboarding(false);
+  };
 
   const form = useForm<z.infer<typeof createEventSchema>>({
     resolver: zodResolver(createEventSchema),
@@ -126,7 +146,7 @@ export default function Events() {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+        <div id="events-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
               Events 🎯
@@ -134,11 +154,19 @@ export default function Events() {
             <p className="text-slate-600 dark:text-slate-400">
               Predict outcomes and join betting pools on various topics
             </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowOnboarding(true)}
+              className="mt-2 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              ℹ️ Show rewards guide
+            </Button>
           </div>
           
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-primary text-white hover:bg-primary/90 mt-4 sm:mt-0">
+              <Button id="create-event-btn" className="bg-primary text-white hover:bg-primary/90 mt-4 sm:mt-0">
                 <i className="fas fa-plus mr-2"></i>
                 Create Event
               </Button>
@@ -367,7 +395,7 @@ export default function Events() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div id="events-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event: any, index: number) => (
               <EventCard 
                 key={event.id} 
@@ -380,6 +408,13 @@ export default function Events() {
       </div>
 
       <MobileNavigation />
+      
+      {/* Onboarding Tooltip */}
+      <OnboardingTooltip
+        isOpen={showOnboarding}
+        onClose={handleOnboardingClose}
+        onComplete={handleOnboardingComplete}
+      />
     </div>
   );
 }
