@@ -75,17 +75,30 @@ export default function WalletPage() {
           currency: 'NGN',
           ref: data.reference,
           callback: function(response: any) {
-            console.log('Payment successful:', response);
-            toast({
-              title: "Payment Successful",
-              description: "Your deposit is being processed!",
-            });
+            console.log('Payment response:', response);
             
-            // Refresh balance and transactions
-            queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-            setIsDepositDialogOpen(false);
-            setDepositAmount("");
+            // Only show success if payment was actually successful
+            if (response.status === 'success') {
+              toast({
+                title: "Payment Successful",
+                description: "Your deposit is being processed! Balance will update shortly.",
+              });
+              
+              // Refresh balance and transactions after a short delay to allow webhook processing
+              setTimeout(() => {
+                queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+              }, 2000);
+              
+              setIsDepositDialogOpen(false);
+              setDepositAmount("");
+            } else {
+              toast({
+                title: "Payment Failed",
+                description: response.message || "Payment was not successful. Please try again.",
+                variant: "destructive",
+              });
+            }
           },
           onClose: function() {
             console.log('Payment popup closed');

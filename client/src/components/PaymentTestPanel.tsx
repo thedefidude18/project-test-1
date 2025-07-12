@@ -58,11 +58,20 @@ export function PaymentTestPanel() {
           currency: 'NGN',
           ref: data.reference,
           callback: function(response: any) {
-            addTestResult('Deposit Test', 'success', `Payment completed: ${response.reference}`);
-            toast({
-              title: "Test Payment Successful",
-              description: "Test payment completed successfully!",
-            });
+            if (response.status === 'success') {
+              addTestResult('Deposit Test', 'success', `Payment completed: ${response.reference}`);
+              toast({
+                title: "Test Payment Successful",
+                description: "Test payment completed successfully!",
+              });
+            } else {
+              addTestResult('Deposit Test', 'error', `Payment failed: ${response.message || 'Unknown error'}`);
+              toast({
+                title: "Test Payment Failed",
+                description: response.message || "Payment was not successful.",
+                variant: "destructive",
+              });
+            }
           },
           onClose: function() {
             addTestResult('Deposit Test', 'error', 'Payment popup was closed');

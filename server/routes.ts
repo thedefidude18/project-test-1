@@ -340,36 +340,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Paystack webhook for payment verification
-  app.post('/api/webhook/paystack', async (req, res) => {
+  app.post('/api/webhook/paystack', express.raw({ type: 'application/json' }), async (req, res) => {
     try {
       const hash = req.headers['x-paystack-signature'];
-      const body = JSON.stringify(req.body);
+      const body = req.body;
+      
+      // Convert buffer to string for signature verification
+      const bodyString = body.toString();
       const expectedHash = require('crypto')
-        .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
-        .update(body)
+        .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY || '')
+        .update(bodyString)
         .digest('hex');
 
+      console.log('Webhook received:', {
+        receivedHash: hash,
+        expectedHash,
+        body: bodyString
+      });
+
       if (hash !== expectedHash) {
+        console.log('Invalid webhook signature');
         return res.status(400).json({ message: "Invalid signature" });
       }
 
-      const event = req.body;
+      const event = JSON.parse(bodyString);
+      console.log('Webhook event:', event);
       
       if (event.event === 'charge.success') {
-        const { reference, amount, metadata } = event.data;
-        const userId = metadata.userId;
-        const depositAmount = amount / 100; // Convert from kobo to naira
+        const { reference, amount, metadata, status } = event.data;
+        
+        if (status === 'success' && metadata && metadata.userId) {
+          const userId = metadata.userId;
+          const depositAmount = amount / 100; // Convert from kobo to naira
 
-        // Create transaction record
-        await storage.createTransaction({
-          userId,
-          type: 'deposit',
-          amount: depositAmount.toString(),
-          description: `Deposit via Paystack - ${reference}`,
-          status: 'completed',
-        });
+          console.log(`Processing successful deposit for user ${userId}: ₦${depositAmount}`);
 
-        console.log(`Deposit completed for user ${userId}: ₦${depositAmount}`);
+          // Create transaction record
+          await storage.createTransaction({
+            userId,
+            type: 'deposit',
+            amount: depositAmount.toString(),
+            description: `Deposit via Paystack - ${reference}`,
+            status: 'completed',
+          });
+
+          console.log(`Deposit completed for user ${userId}: ₦${depositAmount}`);
+        } else {
+          console.log('Charge success but payment not completed or missing metadata');
+        }
       }
 
       res.status(200).json({ message: "Webhook processed" });
