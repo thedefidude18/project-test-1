@@ -1,0 +1,521 @@
+import {
+  users,
+  events,
+  challenges,
+  notifications,
+  transactions,
+  friends,
+  achievements,
+  userAchievements,
+  eventParticipants,
+  eventMessages,
+  challengeMessages,
+  dailyLogins,
+  referrals,
+  referralRewards,
+  userPreferences,
+  userInteractions,
+  type User,
+  type UpsertUser,
+  type Event,
+  type InsertEvent,
+  type Challenge,
+  type InsertChallenge,
+  type Notification,
+  type InsertNotification,
+  type Transaction,
+  type InsertTransaction,
+  type Achievement,
+  type Friend,
+  type EventParticipant,
+  type EventMessage,
+  type ChallengeMessage,
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, and, or, sql, count, sum } from "drizzle-orm";
+
+export interface IStorage {
+  // User operations - Required for Replit Auth
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
+
+  // Event operations
+  getEvents(limit?: number): Promise<Event[]>;
+  getEventById(id: number): Promise<Event | undefined>;
+  createEvent(event: InsertEvent): Promise<Event>;
+  updateEvent(id: number, updates: Partial<Event>): Promise<Event>;
+  joinEvent(eventId: number, userId: string, prediction: boolean, amount: number): Promise<EventParticipant>;
+  getEventParticipants(eventId: number): Promise<EventParticipant[]>;
+  getEventMessages(eventId: number, limit?: number): Promise<(EventMessage & { user: User })[]>;
+  createEventMessage(eventId: number, userId: string, message: string): Promise<EventMessage>;
+
+  // Challenge operations
+  getChallenges(userId: string, limit?: number): Promise<(Challenge & { challengerUser: User, challengedUser: User })[]>;
+  getChallengeById(id: number): Promise<Challenge | undefined>;
+  createChallenge(challenge: InsertChallenge): Promise<Challenge>;
+  updateChallenge(id: number, updates: Partial<Challenge>): Promise<Challenge>;
+  getChallengeMessages(challengeId: number): Promise<(ChallengeMessage & { user: User })[]>;
+  createChallengeMessage(challengeId: number, userId: string, message: string): Promise<ChallengeMessage>;
+
+  // Friend operations
+  getFriends(userId: string): Promise<(Friend & { requester: User, addressee: User })[]>;
+  sendFriendRequest(requesterId: string, addresseeId: string): Promise<Friend>;
+  acceptFriendRequest(id: number): Promise<Friend>;
+
+  // Notification operations
+  getNotifications(userId: string, limit?: number): Promise<Notification[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationRead(id: number): Promise<Notification>;
+
+  // Transaction operations
+  getTransactions(userId: string, limit?: number): Promise<Transaction[]>;
+  createTransaction(transaction: InsertTransaction): Promise<Transaction>;
+  getUserBalance(userId: string): Promise<number>;
+  updateUserBalance(userId: string, amount: number): Promise<User>;
+
+  // Achievement operations
+  getAchievements(): Promise<Achievement[]>;
+  getUserAchievements(userId: string): Promise<(Achievement & { unlockedAt: Date })[]>;
+  unlockAchievement(userId: string, achievementId: number): Promise<void>;
+
+  // Leaderboard operations
+  getLeaderboard(limit?: number): Promise<(User & { rank: number })[]>;
+
+  // Referral operations
+  createReferral(referrerId: string, referredId: string, code: string): Promise<void>;
+  getReferrals(userId: string): Promise<any[]>;
+
+  // User stats
+  getUserStats(userId: string): Promise<{
+    wins: number;
+    activeChallenges: number;
+    friendsOnline: number;
+  }>;
+}
+
+export class DatabaseStorage implements IStorage {
+  // User operations - Required for Replit Auth
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...userData,
+        referralCode: userData.referralCode || this.generateReferralCode(),
+      })
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
+  }
+
+  // Event operations
+  async getEvents(limit = 10): Promise<Event[]> {
+    return await db
+      .select()
+      .from(events)
+      .orderBy(desc(events.createdAt))
+      .limit(limit);
+  }
+
+  async getEventById(id: number): Promise<Event | undefined> {
+    const [event] = await db.select().from(events).where(eq(events.id, id));
+    return event;
+  }
+
+  async createEvent(event: InsertEvent): Promise<Event> {
+    const [newEvent] = await db.insert(events).values(event).returning();
+    return newEvent;
+  }
+
+  async updateEvent(id: number, updates: Partial<Event>): Promise<Event> {
+    const [event] = await db
+      .update(events)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(events.id, id))
+      .returning();
+    return event;
+  }
+
+  async joinEvent(eventId: number, userId: string, prediction: boolean, amount: number): Promise<EventParticipant> {
+    const [participant] = await db
+      .insert(eventParticipants)
+      .values({
+        eventId,
+        userId,
+        prediction,
+        amount: amount.toString(),
+      })
+      .returning();
+    
+    // Update event pools
+    if (prediction) {
+      await db
+        .update(events)
+        .set({
+          yesPool: sql`${events.yesPool} + ${amount}`,
+        })
+        .where(eq(events.id, eventId));
+    } else {
+      await db
+        .update(events)
+        .set({
+          noPool: sql`${events.noPool} + ${amount}`,
+        })
+        .where(eq(events.id, eventId));
+    }
+
+    return participant;
+  }
+
+  async getEventParticipants(eventId: number): Promise<EventParticipant[]> {
+    return await db
+      .select()
+      .from(eventParticipants)
+      .where(eq(eventParticipants.eventId, eventId));
+  }
+
+  async getEventMessages(eventId: number, limit = 50): Promise<(EventMessage & { user: User })[]> {
+    return await db
+      .select({
+        id: eventMessages.id,
+        eventId: eventMessages.eventId,
+        userId: eventMessages.userId,
+        message: eventMessages.message,
+        createdAt: eventMessages.createdAt,
+        user: users,
+      })
+      .from(eventMessages)
+      .innerJoin(users, eq(eventMessages.userId, users.id))
+      .where(eq(eventMessages.eventId, eventId))
+      .orderBy(desc(eventMessages.createdAt))
+      .limit(limit);
+  }
+
+  async createEventMessage(eventId: number, userId: string, message: string): Promise<EventMessage> {
+    const [newMessage] = await db
+      .insert(eventMessages)
+      .values({ eventId, userId, message })
+      .returning();
+    return newMessage;
+  }
+
+  // Challenge operations
+  async getChallenges(userId: string, limit = 10): Promise<(Challenge & { challengerUser: User, challengedUser: User })[]> {
+    return await db
+      .select({
+        id: challenges.id,
+        challenger: challenges.challenger,
+        challenged: challenges.challenged,
+        title: challenges.title,
+        description: challenges.description,
+        category: challenges.category,
+        amount: challenges.amount,
+        status: challenges.status,
+        evidence: challenges.evidence,
+        result: challenges.result,
+        dueDate: challenges.dueDate,
+        createdAt: challenges.createdAt,
+        completedAt: challenges.completedAt,
+        challengerUser: {
+          id: sql`challenger_user.id`,
+          username: sql`challenger_user.username`,
+          firstName: sql`challenger_user.first_name`,
+          lastName: sql`challenger_user.last_name`,
+          profileImageUrl: sql`challenger_user.profile_image_url`,
+        },
+        challengedUser: {
+          id: sql`challenged_user.id`,
+          username: sql`challenged_user.username`,
+          firstName: sql`challenged_user.first_name`,
+          lastName: sql`challenged_user.last_name`,
+          profileImageUrl: sql`challenged_user.profile_image_url`,
+        },
+      })
+      .from(challenges)
+      .innerJoin(sql`users challenger_user`, eq(challenges.challenger, sql`challenger_user.id`))
+      .innerJoin(sql`users challenged_user`, eq(challenges.challenged, sql`challenged_user.id`))
+      .where(or(eq(challenges.challenger, userId), eq(challenges.challenged, userId)))
+      .orderBy(desc(challenges.createdAt))
+      .limit(limit) as any;
+  }
+
+  async getChallengeById(id: number): Promise<Challenge | undefined> {
+    const [challenge] = await db.select().from(challenges).where(eq(challenges.id, id));
+    return challenge;
+  }
+
+  async createChallenge(challenge: InsertChallenge): Promise<Challenge> {
+    const [newChallenge] = await db.insert(challenges).values(challenge).returning();
+    return newChallenge;
+  }
+
+  async updateChallenge(id: number, updates: Partial<Challenge>): Promise<Challenge> {
+    const [challenge] = await db
+      .update(challenges)
+      .set(updates)
+      .where(eq(challenges.id, id))
+      .returning();
+    return challenge;
+  }
+
+  async getChallengeMessages(challengeId: number): Promise<(ChallengeMessage & { user: User })[]> {
+    return await db
+      .select({
+        id: challengeMessages.id,
+        challengeId: challengeMessages.challengeId,
+        userId: challengeMessages.userId,
+        message: challengeMessages.message,
+        createdAt: challengeMessages.createdAt,
+        user: users,
+      })
+      .from(challengeMessages)
+      .innerJoin(users, eq(challengeMessages.userId, users.id))
+      .where(eq(challengeMessages.challengeId, challengeId))
+      .orderBy(desc(challengeMessages.createdAt));
+  }
+
+  async createChallengeMessage(challengeId: number, userId: string, message: string): Promise<ChallengeMessage> {
+    const [newMessage] = await db
+      .insert(challengeMessages)
+      .values({ challengeId, userId, message })
+      .returning();
+    return newMessage;
+  }
+
+  // Friend operations
+  async getFriends(userId: string): Promise<(Friend & { requester: User, addressee: User })[]> {
+    return await db
+      .select({
+        id: friends.id,
+        requesterId: friends.requesterId,
+        addresseeId: friends.addresseeId,
+        status: friends.status,
+        createdAt: friends.createdAt,
+        acceptedAt: friends.acceptedAt,
+        requester: sql`requester`,
+        addressee: sql`addressee`,
+      })
+      .from(friends)
+      .innerJoin(sql`users requester`, eq(friends.requesterId, sql`requester.id`))
+      .innerJoin(sql`users addressee`, eq(friends.addresseeId, sql`addressee.id`))
+      .where(
+        and(
+          or(eq(friends.requesterId, userId), eq(friends.addresseeId, userId)),
+          eq(friends.status, "accepted")
+        )
+      ) as any;
+  }
+
+  async sendFriendRequest(requesterId: string, addresseeId: string): Promise<Friend> {
+    const [friendRequest] = await db
+      .insert(friends)
+      .values({ requesterId, addresseeId, status: "pending" })
+      .returning();
+    return friendRequest;
+  }
+
+  async acceptFriendRequest(id: number): Promise<Friend> {
+    const [friend] = await db
+      .update(friends)
+      .set({ status: "accepted", acceptedAt: new Date() })
+      .where(eq(friends.id, id))
+      .returning();
+    return friend;
+  }
+
+  // Notification operations
+  async getNotifications(userId: string, limit = 20): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit);
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [newNotification] = await db
+      .insert(notifications)
+      .values(notification)
+      .returning();
+    return newNotification;
+  }
+
+  async markNotificationRead(id: number): Promise<Notification> {
+    const [notification] = await db
+      .update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    return notification;
+  }
+
+  // Transaction operations
+  async getTransactions(userId: string, limit = 20): Promise<Transaction[]> {
+    return await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.userId, userId))
+      .orderBy(desc(transactions.createdAt))
+      .limit(limit);
+  }
+
+  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    const [newTransaction] = await db
+      .insert(transactions)
+      .values(transaction)
+      .returning();
+    return newTransaction;
+  }
+
+  async getUserBalance(userId: string): Promise<number> {
+    const user = await this.getUser(userId);
+    return user ? parseFloat(user.balance || "0") : 0;
+  }
+
+  async updateUserBalance(userId: string, amount: number): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        balance: sql`${users.balance} + ${amount}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  // Achievement operations
+  async getAchievements(): Promise<Achievement[]> {
+    return await db.select().from(achievements);
+  }
+
+  async getUserAchievements(userId: string): Promise<(Achievement & { unlockedAt: Date })[]> {
+    return await db
+      .select({
+        id: achievements.id,
+        name: achievements.name,
+        description: achievements.description,
+        icon: achievements.icon,
+        category: achievements.category,
+        xpReward: achievements.xpReward,
+        pointsReward: achievements.pointsReward,
+        requirement: achievements.requirement,
+        createdAt: achievements.createdAt,
+        unlockedAt: userAchievements.unlockedAt,
+      })
+      .from(userAchievements)
+      .innerJoin(achievements, eq(userAchievements.achievementId, achievements.id))
+      .where(eq(userAchievements.userId, userId)) as any;
+  }
+
+  async unlockAchievement(userId: string, achievementId: number): Promise<void> {
+    await db
+      .insert(userAchievements)
+      .values({ userId, achievementId })
+      .onConflictDoNothing();
+  }
+
+  // Leaderboard operations
+  async getLeaderboard(limit = 10): Promise<(User & { rank: number })[]> {
+    const result = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        level: users.level,
+        xp: users.xp,
+        points: users.points,
+        rank: sql<number>`ROW_NUMBER() OVER (ORDER BY ${users.points} DESC)`,
+      })
+      .from(users)
+      .orderBy(desc(users.points))
+      .limit(limit);
+
+    return result as any;
+  }
+
+  // Referral operations
+  async createReferral(referrerId: string, referredId: string, code: string): Promise<void> {
+    await db.insert(referrals).values({
+      referrerId,
+      referredId,
+      code,
+    });
+  }
+
+  async getReferrals(userId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(referrals)
+      .where(eq(referrals.referrerId, userId));
+  }
+
+  // User stats
+  async getUserStats(userId: string): Promise<{
+    wins: number;
+    activeChallenges: number;
+    friendsOnline: number;
+  }> {
+    // Get wins count from completed events/challenges
+    const [winsResult] = await db
+      .select({ count: count() })
+      .from(challenges)
+      .where(
+        and(
+          or(eq(challenges.challenger, userId), eq(challenges.challenged, userId)),
+          eq(challenges.status, "completed"),
+          or(
+            and(eq(challenges.challenger, userId), eq(challenges.result, "challenger_won")),
+            and(eq(challenges.challenged, userId), eq(challenges.result, "challenged_won"))
+          )
+        )
+      );
+
+    // Get active challenges count
+    const [activeChallengesResult] = await db
+      .select({ count: count() })
+      .from(challenges)
+      .where(
+        and(
+          or(eq(challenges.challenger, userId), eq(challenges.challenged, userId)),
+          eq(challenges.status, "active")
+        )
+      );
+
+    // Get friends count (simplified - would need online status tracking in real app)
+    const [friendsResult] = await db
+      .select({ count: count() })
+      .from(friends)
+      .where(
+        and(
+          or(eq(friends.requesterId, userId), eq(friends.addresseeId, userId)),
+          eq(friends.status, "accepted")
+        )
+      );
+
+    return {
+      wins: winsResult?.count || 0,
+      activeChallenges: activeChallengesResult?.count || 0,
+      friendsOnline: Math.floor((friendsResult?.count || 0) * 0.35), // Simulate ~35% online
+    };
+  }
+
+  private generateReferralCode(): string {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+}
+
+export const storage = new DatabaseStorage();

@@ -1,0 +1,376 @@
+import type { Express, Request, Response } from "express";
+import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
+import { storage } from "./storage";
+import { setupAuth, isAuthenticated } from "./replitAuth";
+import { insertEventSchema, insertChallengeSchema, insertNotificationSchema } from "@shared/schema";
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    claims: {
+      sub: string;
+      email?: string;
+      first_name?: string;
+      last_name?: string;
+      profile_image_url?: string;
+    };
+  };
+}
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth middleware
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Event routes
+  app.get('/api/events', async (req, res) => {
+    try {
+      const events = await storage.getEvents(20);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      res.status(500).json({ message: "Failed to fetch events" });
+    }
+  });
+
+  app.get('/api/events/:id', async (req, res) => {
+    try {
+      const event = await storage.getEventById(parseInt(req.params.id));
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      res.json(event);
+    } catch (error) {
+      console.error("Error fetching event:", error);
+      res.status(500).json({ message: "Failed to fetch event" });
+    }
+  });
+
+  app.post('/api/events', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const eventData = insertEventSchema.parse({ ...req.body, creatorId: userId });
+      const event = await storage.createEvent(eventData);
+      res.json(event);
+    } catch (error) {
+      console.error("Error creating event:", error);
+      res.status(500).json({ message: "Failed to create event" });
+    }
+  });
+
+  app.post('/api/events/:id/join', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const eventId = parseInt(req.params.id);
+      const { prediction, amount } = req.body;
+      
+      const participant = await storage.joinEvent(eventId, userId, prediction, amount);
+      
+      // Create transaction record
+      await storage.createTransaction({
+        userId,
+        type: 'bet',
+        amount: `-${amount}`,
+        description: `Bet on event ${eventId}`,
+        relatedId: eventId,
+      });
+
+      res.json(participant);
+    } catch (error) {
+      console.error("Error joining event:", error);
+      res.status(500).json({ message: "Failed to join event" });
+    }
+  });
+
+  app.get('/api/events/:id/messages', async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const messages = await storage.getEventMessages(eventId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching event messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post('/api/events/:id/messages', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const eventId = parseInt(req.params.id);
+      const { message } = req.body;
+      
+      const newMessage = await storage.createEventMessage(eventId, userId, message);
+      res.json(newMessage);
+    } catch (error) {
+      console.error("Error creating event message:", error);
+      res.status(500).json({ message: "Failed to create message" });
+    }
+  });
+
+  // Challenge routes
+  app.get('/api/challenges', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const challenges = await storage.getChallenges(userId);
+      res.json(challenges);
+    } catch (error) {
+      console.error("Error fetching challenges:", error);
+      res.status(500).json({ message: "Failed to fetch challenges" });
+    }
+  });
+
+  app.post('/api/challenges', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const challengeData = insertChallengeSchema.parse({ ...req.body, challenger: userId });
+      const challenge = await storage.createChallenge(challengeData);
+      
+      // Create notification for challenged user
+      await storage.createNotification({
+        userId: challenge.challenged,
+        type: 'challenge',
+        title: 'New Challenge Request',
+        message: `You have been challenged by ${req.user.claims.first_name || 'someone'}!`,
+        data: { challengeId: challenge.id },
+      });
+
+      res.json(challenge);
+    } catch (error) {
+      console.error("Error creating challenge:", error);
+      res.status(500).json({ message: "Failed to create challenge" });
+    }
+  });
+
+  app.patch('/api/challenges/:id', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const challengeId = parseInt(req.params.id);
+      const updates = req.body;
+      const challenge = await storage.updateChallenge(challengeId, updates);
+      res.json(challenge);
+    } catch (error) {
+      console.error("Error updating challenge:", error);
+      res.status(500).json({ message: "Failed to update challenge" });
+    }
+  });
+
+  app.get('/api/challenges/:id/messages', async (req, res) => {
+    try {
+      const challengeId = parseInt(req.params.id);
+      const messages = await storage.getChallengeMessages(challengeId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching challenge messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post('/api/challenges/:id/messages', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const challengeId = parseInt(req.params.id);
+      const { message } = req.body;
+      
+      const newMessage = await storage.createChallengeMessage(challengeId, userId, message);
+      res.json(newMessage);
+    } catch (error) {
+      console.error("Error creating challenge message:", error);
+      res.status(500).json({ message: "Failed to create message" });
+    }
+  });
+
+  // Friend routes
+  app.get('/api/friends', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const friends = await storage.getFriends(userId);
+      res.json(friends);
+    } catch (error) {
+      console.error("Error fetching friends:", error);
+      res.status(500).json({ message: "Failed to fetch friends" });
+    }
+  });
+
+  app.post('/api/friends/request', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const requesterId = req.user.claims.sub;
+      const { addresseeId } = req.body;
+      
+      const friendRequest = await storage.sendFriendRequest(requesterId, addresseeId);
+      
+      // Create notification
+      await storage.createNotification({
+        userId: addresseeId,
+        type: 'friend',
+        title: 'Friend Request',
+        message: `${req.user.claims.first_name || 'Someone'} sent you a friend request!`,
+        data: { friendRequestId: friendRequest.id },
+      });
+
+      res.json(friendRequest);
+    } catch (error) {
+      console.error("Error sending friend request:", error);
+      res.status(500).json({ message: "Failed to send friend request" });
+    }
+  });
+
+  app.patch('/api/friends/:id/accept', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const friendRequestId = parseInt(req.params.id);
+      const friend = await storage.acceptFriendRequest(friendRequestId);
+      res.json(friend);
+    } catch (error) {
+      console.error("Error accepting friend request:", error);
+      res.status(500).json({ message: "Failed to accept friend request" });
+    }
+  });
+
+  // Notification routes
+  app.get('/api/notifications', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const notifications = await storage.getNotifications(userId);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.patch('/api/notifications/:id/read', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const notificationId = parseInt(req.params.id);
+      const notification = await storage.markNotificationRead(notificationId);
+      res.json(notification);
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  // Transaction routes
+  app.get('/api/transactions', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const transactions = await storage.getTransactions(userId);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      res.status(500).json({ message: "Failed to fetch transactions" });
+    }
+  });
+
+  app.get('/api/wallet/balance', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const balance = await storage.getUserBalance(userId);
+      res.json({ balance });
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+      res.status(500).json({ message: "Failed to fetch balance" });
+    }
+  });
+
+  // Achievement routes
+  app.get('/api/achievements', async (req, res) => {
+    try {
+      const achievements = await storage.getAchievements();
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+  });
+
+  app.get('/api/user/achievements', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const achievements = await storage.getUserAchievements(userId);
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching user achievements:", error);
+      res.status(500).json({ message: "Failed to fetch user achievements" });
+    }
+  });
+
+  // Leaderboard routes
+  app.get('/api/leaderboard', async (req, res) => {
+    try {
+      const leaderboard = await storage.getLeaderboard();
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  // User stats routes
+  app.get('/api/user/stats', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const stats = await storage.getUserStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      res.status(500).json({ message: "Failed to fetch user stats" });
+    }
+  });
+
+  // Referral routes
+  app.get('/api/referrals', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const referrals = await storage.getReferrals(userId);
+      res.json(referrals);
+    } catch (error) {
+      console.error("Error fetching referrals:", error);
+      res.status(500).json({ message: "Failed to fetch referrals" });
+    }
+  });
+
+  // Create HTTP server
+  const httpServer = createServer(app);
+
+  // Setup WebSocket server
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+
+  wss.on('connection', (ws: WebSocket, req) => {
+    console.log('WebSocket connection established');
+
+    ws.on('message', (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        console.log('Received WebSocket message:', message);
+
+        // Broadcast message to all connected clients
+        wss.clients.forEach((client) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(message));
+          }
+        });
+      } catch (error) {
+        console.error('Error handling WebSocket message:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      console.log('WebSocket connection closed');
+    });
+
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
+  });
+
+  return httpServer;
+}
