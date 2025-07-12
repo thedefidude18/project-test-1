@@ -1,4 +1,3 @@
-
 import { useParams } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +14,14 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { formatDistanceToNow } from "date-fns";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface MessageReaction {
   emoji: string;
@@ -67,6 +74,7 @@ export default function EventChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const [isBannerHidden, setIsBannerHidden] = useState(false);
 
   const { data: event } = useQuery({
     queryKey: ["/api/events", eventId],
@@ -254,10 +262,10 @@ export default function EventChatPage() {
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !isConnected) return;
-    
+
     // Extract mentions
     const mentions = extractMentions(newMessage);
-    
+
     sendMessageMutation.mutate({
       message: newMessage,
       replyToId: replyingTo?.id,
@@ -347,6 +355,10 @@ export default function EventChatPage() {
   const yesPercentage = totalPool > 0 ? (parseFloat(event.yesPool) / totalPool) * 100 : 50;
   const noPercentage = 100 - yesPercentage;
 
+  const toggleBannerVisibility = () => {
+    setIsBannerHidden(!isBannerHidden);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
       {/* Header with Event Info and Back Button */}
@@ -354,31 +366,69 @@ export default function EventChatPage() {
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.location.href = '/events'}
-                className="text-white hover:bg-white/20 p-2"
-              >
-                <i className="fas fa-arrow-left"></i>
-              </Button>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                  <i className="fas fa-users text-white text-sm"></i>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm">@{event.title}</h3>
-                  <p className="text-xs text-white/80">{messages.length} Members</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.href = '/events'}
+                  className="text-white hover:bg-white/20 p-2"
+                >
+                  <i className="fas fa-arrow-left"></i>
+                </Button>
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <i className="fas fa-users text-white text-sm"></i>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm">@{event.title}</h3>
+                    <p className="text-xs text-white/80">{messages.length} Members</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold">₦ {totalPool.toLocaleString()}</div>
-              <div className="text-xs text-white/80">Total Pool</div>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                  <span className="sr-only">Open menu</span>
+                  <i className="fas fa-ellipsis-v text-white"></i>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem>
+                  <i className="fas fa-search mr-2"></i>
+                  Search
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={toggleBannerVisibility}>
+                  {isBannerHidden ? (
+                    <>
+                      <i className="fas fa-eye mr-2"></i>
+                      Show Banner
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-eye-slash mr-2"></i>
+                      Hide Banner
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <i className="fas fa-flag mr-2"></i>
+                  Report
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigator.share({ url: window.location.href })}>
+                  <i className="fas fa-share mr-2"></i>
+                  Share
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <i className="fas fa-sign-out-alt mr-2"></i>
+                  Leave Event
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Betting Banner */}
+          {!isBannerHidden && (
           <div className="bg-black/30 rounded-xl p-3 mb-2">
             <div className="flex items-center justify-between">
               <div className="flex-1">
@@ -417,22 +467,23 @@ export default function EventChatPage() {
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
 
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2">
+      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2 flex flex-col-reverse">
         {messages.length === 0 ? (
           <div className="text-center text-slate-500 dark:text-slate-400 py-8">
             <i className="fas fa-comments text-2xl mb-2"></i>
             <p>No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message: ExtendedMessage, index: number) => {
-            const showAvatar = index === 0 || messages[index - 1]?.userId !== message.userId;
+          [...messages].reverse().map((message: ExtendedMessage, index: number) => {
+            const showAvatar = index === 0 || messages[messages.length - 2 - index]?.userId !== message.userId;
             const isCurrentUser = message.userId === user?.id;
-            const isConsecutive = index > 0 && messages[index - 1]?.userId === message.userId;
-            
+            const isConsecutive = index > 0 && messages[messages.length - 2 - index]?.userId === message.userId;
+
             return (
               <div key={message.id} className={`flex space-x-2 ${isCurrentUser ? 'flex-row-reverse space-x-reverse' : ''} ${isConsecutive ? 'mt-1' : 'mt-3'}`}>
                 {showAvatar && !isCurrentUser && (
@@ -446,7 +497,7 @@ export default function EventChatPage() {
                     </AvatarFallback>
                   </Avatar>
                 )}
-                
+
                 <div className={`flex-1 max-w-[75%] ${isCurrentUser ? 'text-right' : ''} ${!showAvatar && !isCurrentUser ? 'ml-8' : ''}`}>
                   {showAvatar && (
                     <div className={`flex items-center space-x-2 mb-1 ${isCurrentUser ? 'justify-end' : ''}`}>
@@ -458,7 +509,7 @@ export default function EventChatPage() {
                       </span>
                     </div>
                   )}
-                  
+
                   {/* Reply indicator */}
                   {message.replyTo && (
                     <div className={`text-xs text-slate-500 dark:text-slate-400 mb-1 ${isCurrentUser ? 'text-right' : ''}`}>
@@ -466,7 +517,7 @@ export default function EventChatPage() {
                       Replying to {message.replyTo.user.firstName || message.replyTo.user.username}
                     </div>
                   )}
-                  
+
                   <div className="group relative">
                     <div className={`inline-block px-3 py-2 rounded-2xl text-sm max-w-full break-words ${
                       isCurrentUser 
@@ -482,7 +533,7 @@ export default function EventChatPage() {
                       )}
                       <p className="break-words">{message.message}</p>
                     </div>
-                    
+
                     {/* Message actions */}
                     <div className={`absolute top-0 ${isCurrentUser ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 bg-white dark:bg-slate-800 shadow-lg rounded-lg px-2 py-1`}>
                       <Popover>
@@ -507,7 +558,7 @@ export default function EventChatPage() {
                           </div>
                         </PopoverContent>
                       </Popover>
-                      
+
                       <Button 
                         size="sm" 
                         variant="ghost" 
@@ -518,7 +569,7 @@ export default function EventChatPage() {
                       </Button>
                     </div>
                   </div>
-                  
+
                   {/* Reactions */}
                   {message.reactions && message.reactions.length > 0 && (
                     <div className={`flex flex-wrap gap-1 mt-1 ${isCurrentUser ? 'justify-end' : ''}`}>
@@ -541,7 +592,7 @@ export default function EventChatPage() {
             );
           })
         )}
-        
+
         {/* Typing Indicators */}
         {typingUsers.length > 0 && (
           <div className="flex space-x-2">
@@ -560,7 +611,7 @@ export default function EventChatPage() {
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -584,7 +635,7 @@ export default function EventChatPage() {
       )}
 
       {/* Message Input */}
-      <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3">
+      <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 sticky bottom-0">
         <div className="relative">
           {/* Mentions dropdown */}
           {showMentions && filteredParticipants.length > 0 && (
@@ -606,7 +657,7 @@ export default function EventChatPage() {
               ))}
             </div>
           )}
-          
+
           <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
@@ -615,7 +666,7 @@ export default function EventChatPage() {
             >
               <i className="fas fa-smile text-lg"></i>
             </Button>
-            
+
             <div className="flex-1 relative">
               <Input
                 ref={inputRef}
@@ -633,7 +684,7 @@ export default function EventChatPage() {
                 </div>
               )}
             </div>
-            
+
             <Button
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || !isConnected || sendMessageMutation.isPending}
@@ -671,7 +722,7 @@ export default function EventChatPage() {
                 </Button>
               </div>
             </div>
-            
+
             <div>
               <label className="text-sm font-medium">Bet Amount (₦)</label>
               <Input
@@ -686,7 +737,7 @@ export default function EventChatPage() {
                 Minimum bet: ₦{event.entryFee}
               </p>
             </div>
-            
+
             <div className="flex space-x-2">
               <Button
                 variant="outline"

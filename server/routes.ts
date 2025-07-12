@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertEventSchema, insertChallengeSchema, insertNotificationSchema } from "@shared/schema";
+import { and, eq } from "drizzle-orm";
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -123,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (event.isPrivate) {
         // Create join request for private events
         const joinRequest = await storage.requestEventJoin(eventId, userId, prediction, amount);
-        
+
         // Create notification for event creator
         await storage.createNotification({
           userId: event.creatorId,
@@ -172,7 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { message, replyToId, mentions } = req.body;
 
       const newMessage = await storage.createEventMessage(eventId, userId, message, replyToId, mentions);
-      
+
       // Create notifications for mentioned users
       if (mentions && mentions.length > 0) {
         for (const mentionedUsername of mentions) {
@@ -267,7 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // TODO: Add admin role check here
       // For now, any authenticated user can set result (you might want to add admin role checking)
-      
+
       const event = await storage.adminSetEventResult(eventId, result);
       const payoutResult = await storage.processEventPayout(eventId);
 
@@ -287,7 +288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const eventId = parseInt(req.params.id);
-      
+
       // Check if user is the event creator
       const event = await storage.getEventById(eventId);
       if (!event || event.creatorId !== userId) {
@@ -306,11 +307,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const requestId = parseInt(req.params.id);
-      
+
       // TODO: Add validation that user is the event creator
-      
+
       const participant = await storage.approveEventJoinRequest(requestId);
-      
+
       // Create notification for requester
       await storage.createNotification({
         userId: participant.userId,
@@ -331,11 +332,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const requestId = parseInt(req.params.id);
-      
+
       // TODO: Add validation that user is the event creator
-      
+
       const rejectedRequest = await storage.rejectEventJoinRequest(requestId);
-      
+
       // Create notification for requester
       await storage.createNotification({
         userId: rejectedRequest.userId,
@@ -760,7 +761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/wallet/withdraw', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { amount } = req.body;
+      const { amount } } = req.body;
 
       if (!amount || amount <= 0) {
         return res.status(400).json({ message: "Invalid amount" });
