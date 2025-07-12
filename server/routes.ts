@@ -340,7 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Paystack webhook for payment verification
-  app.post('/api/webhook/paystack', express.raw({ type: 'application/json' }), async (req, res) => {
+  app.post('/api/webhook/paystack', async (req, res) => {
     try {
       const hash = req.headers['x-paystack-signature'];
       const body = req.body;
