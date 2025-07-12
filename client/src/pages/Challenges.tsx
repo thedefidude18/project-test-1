@@ -69,6 +69,11 @@ export default function Challenges() {
     retry: false,
   });
 
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["/api/users"],
+    retry: false,
+  });
+
   const createChallengeMutation = useMutation({
     mutationFn: async (data: z.infer<typeof createChallengeSchema>) => {
       await apiRequest("POST", "/api/challenges", data);
@@ -303,7 +308,7 @@ export default function Challenges() {
 
         {/* Challenges Tabs */}
         <Tabs defaultValue="pending" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="pending">
               Pending ({pendingChallenges.length})
             </TabsTrigger>
@@ -312,6 +317,9 @@ export default function Challenges() {
             </TabsTrigger>
             <TabsTrigger value="completed">
               Completed ({completedChallenges.length})
+            </TabsTrigger>
+            <TabsTrigger value="users">
+              Users
             </TabsTrigger>
           </TabsList>
 
@@ -377,6 +385,62 @@ export default function Challenges() {
               completedChallenges.map((challenge: any) => (
                 <ChallengeCard key={challenge.id} challenge={challenge} />
               ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-4">
+            {allUsers.length === 0 ? (
+              <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                <CardContent className="text-center py-12">
+                  <i className="fas fa-users text-4xl text-slate-400 mb-4"></i>
+                  <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                    No users found
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    No users are currently available to challenge!
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {allUsers.filter((u: any) => u.id !== user?.id).map((userItem: any) => (
+                  <Card key={userItem.id} className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                          <span className="text-white font-semibold text-sm">
+                            {(userItem.firstName?.[0] || userItem.username?.[0] || 'U').toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                            {userItem.firstName || userItem.username || 'Anonymous'}
+                          </h3>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Balance: ₦{parseFloat(userItem.balance || '0').toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-slate-600 dark:text-slate-400">
+                          <i className="fas fa-trophy mr-1"></i>
+                          {userItem.wins || 0} wins
+                        </div>
+                        <Button
+                          size="sm"
+                          className="bg-primary text-white hover:bg-primary/90"
+                          onClick={() => {
+                            form.setValue('challenged', userItem.id);
+                            setIsCreateDialogOpen(true);
+                          }}
+                        >
+                          Challenge
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
           </TabsContent>
         </Tabs>

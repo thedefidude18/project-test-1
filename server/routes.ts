@@ -1,10 +1,20 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import Pusher from "pusher";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertEventSchema, insertChallengeSchema, insertNotificationSchema } from "@shared/schema";
 import { and, eq } from "drizzle-orm";
+
+// Initialize Pusher
+const pusher = new Pusher({
+  appId: "1879330",
+  key: "d4b6f6b7c6b0e4e8c7a2",
+  secret: "5e8c7a2d4b6f6b7c6b0e4e8c7a2d4b6f",
+  cluster: "eu",
+  useTLS: true,
+});
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -174,12 +184,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const newMessage = await storage.createEventMessage(eventId, userId, message, replyToId, mentions);
 
+      // Broadcast new message via Pusher
+      await pusher.trigger(`event-${eventId}`, 'new-message', {
+        message: newMessage,
+        eventId: eventId,
+        userId: userId,
+      });
+
       // Create notifications for mentioned users
       if (mentions && mentions.length > 0) {
         for (const mentionedUsername of mentions) {
           const mentionedUser = await storage.getUserByUsername(mentionedUsername);
           if (mentionedUser && mentionedUser.id !== userId) {
-            await storage.createNotification({
+            const notification = await storage.createNotification({
               userId: mentionedUser.id,
               type: 'mention',
               title: 'You were mentioned',
@@ -191,6 +208,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 eventTitle: 'Event Chat'
               },
             });
+
+            // Send notification via Pusher
+            await pusher.trigger(`user-${mentionedUser.id}`, 'event-notification', {
+              title: 'You were mentioned',
+              message: `${req.user.claims.first_name || 'Someone'} mentioned you in an event chat`,
+              eventId: eventId,
+              type: 'mention',
+            });
           }
         }
       }
@@ -199,7 +224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (replyToId) {
         const repliedMessage = await storage.getEventMessageById(replyToId);
         if (repliedMessage && repliedMessage.userId !== userId) {
-          await storage.createNotification({
+          const notification = await storage.createNotification({
             userId: repliedMessage.userId,
             type: 'reply',
             title: 'Someone replied to your message',
@@ -210,6 +235,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               repliedBy: userId,
               originalMessageId: replyToId
             },
+          });
+
+          // Send notification via Pusher
+          await pusher.trigger(`user-${repliedMessage.userId}`, 'event-notification', {
+            title: 'Someone replied to your message',
+            message: `${req.user.claims.first_name || 'Someone'} replied to your message`,
+            eventId: eventId,
+            type: 'reply',
           });
         }
       }
@@ -229,6 +262,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { emoji } = req.body;
 
       const reaction = await storage.toggleMessageReaction(messageId, userId, emoji);
+      
+      // Broadcast reaction update via Pusher
+      await pusher.trigger(`event-${eventId}`, 'reaction-update', {
+        messageId: messageId,
+        reactions: reaction,
+        userId: userId,
+      });
+
       res.json(reaction);
     } catch (error) {
       console.error("Error reacting to message:", error);
@@ -271,6 +312,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const event = await storage.adminSetEventResult(eventId, result);
       const payoutResult = await storage.processEventPayout(eventId);
+
+      // Notify all participants about the result
+      const participants = await storage.getEventParticipants(eventId);
+      for (const participant of participants) {
+        const isWinner = participant.prediction === result;
+        const notificationTitle = isWinner ? 'You Won!' : 'Event Result';
+        const notificationMessage = isWinner 
+          ? `Congratulations! You won ₦${(participant.amount * 1.94).toFixed(2)} from the event "${event.title}"`
+          : `Event "${event.title}" resolved with ${result ? 'YES' : 'NO'}. Better luck next time!`;
+
+        await storage.createNotification({
+          userId: participant.userId,
+          type: isWinner ? 'win' : 'loss',
+          title: notificationTitle,
+          message: notificationMessage,
+          data: { 
+            eventId: eventId, 
+            result: result,
+            winnings: isWinner ? participant.amount * 1.94 : 0
+          },
+        });
+
+        // Send notification via Pusher
+        await pusher.trigger(`user-${participant.userId}`, 'event-notification', {
+          title: notificationTitle,
+          message: notificationMessage,
+          eventId: eventId,
+          type: isWinner ? 'win' : 'loss',
+        });
+      }
 
       res.json({ 
         event, 
@@ -891,6 +962,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching referrals:", error);
       res.status(500).json({ message: "Failed to fetch referrals" });
+    }
+  });
+
+  app.get('/api/users', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
     }
   });
 

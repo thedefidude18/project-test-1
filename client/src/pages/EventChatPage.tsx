@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { getEventChannel, getUserChannel } from "@/lib/pusher";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -71,6 +72,8 @@ export default function EventChatPage() {
   const [replyingTo, setReplyingTo] = useState<ExtendedMessage | null>(null);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
+  const [hasUserBet, setHasUserBet] = useState(false);
+  const [userBetLocked, setUserBetLocked] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
@@ -105,6 +108,37 @@ export default function EventChatPage() {
     enabled: !!eventId,
     retry: false,
   });
+
+  // Check if user has already bet
+  useEffect(() => {
+    if (participants.length > 0 && user) {
+      const userParticipant = participants.find((p: any) => p.userId === user.id);
+      if (userParticipant) {
+        setHasUserBet(true);
+        setUserBetLocked(true);
+      }
+    }
+  }, [participants, user]);
+
+  // Pusher real-time messaging setup
+  useEffect(() => {
+    if (!eventId) return;
+
+    const channel = getEventChannel(eventId);
+    
+    channel.bind('new-message', (data: any) => {
+      refetchMessages();
+    });
+
+    channel.bind('reaction-update', (data: any) => {
+      refetchMessages();
+    });
+
+    return () => {
+      channel.unbind('new-message');
+      channel.unbind('reaction-update');
+    };
+  }, [eventId, refetchMessages]);
 
   const { sendMessage, isConnected } = useWebSocket({
     onMessage: (data) => {
@@ -182,12 +216,15 @@ export default function EventChatPage() {
     onSuccess: () => {
       toast({
         title: "Bet Placed!",
-        description: `You've bet ₦${betAmount} on ${prediction ? 'YES' : 'NO'}`,
+        description: `You've bet ₦${betAmount} on ${prediction ? 'YES' : 'NO'}. Your funds are now locked until the event concludes.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/events", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
       setIsBettingDialogOpen(false);
       setBetAmount("");
       setPrediction(null);
+      setHasUserBet(true);
+      setUserBetLocked(true);
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -284,6 +321,15 @@ export default function EventChatPage() {
   };
 
   const handlePlaceBet = () => {
+    if (hasUserBet || userBetLocked) {
+      toast({
+        title: "Already Bet",
+        description: "You have already placed a bet on this event. Your funds are locked until the event concludes.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (prediction !== null && betAmount && parseFloat(betAmount) > 0) {
       joinEventMutation.mutate();
     }
@@ -442,28 +488,40 @@ export default function EventChatPage() {
                 </div>
               </div>
               <div className="flex space-x-2 ml-3">
-                <Dialog open={isBettingDialogOpen} onOpenChange={setIsBettingDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-full font-medium"
-                      onClick={() => setPrediction(true)}
-                    >
-                      YES
-                      <div className="text-xs ml-1">{yesPercentage.toFixed(0)}%</div>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full font-medium"
-                      onClick={() => setPrediction(false)}
-                    >
-                      NO
-                      <div className="text-xs ml-1">{noPercentage.toFixed(0)}%</div>
-                    </Button>
-                  </DialogTrigger>
-                </Dialog>
+                {hasUserBet || userBetLocked ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-yellow-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                      <i className="fas fa-lock mr-1"></i>
+                      Bet Locked
+                    </div>
+                    <div className="text-xs text-white/80">
+                      Funds locked until event ends
+                    </div>
+                  </div>
+                ) : (
+                  <Dialog open={isBettingDialogOpen} onOpenChange={setIsBettingDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-full font-medium"
+                        onClick={() => setPrediction(true)}
+                      >
+                        YES
+                        <div className="text-xs ml-1">{yesPercentage.toFixed(0)}%</div>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full font-medium"
+                        onClick={() => setPrediction(false)}
+                      >
+                        NO
+                        <div className="text-xs ml-1">{noPercentage.toFixed(0)}%</div>
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
+                )}
               </div>
             </div>
           </div>
