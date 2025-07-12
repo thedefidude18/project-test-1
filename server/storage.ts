@@ -37,7 +37,10 @@ import { eq, desc, and, or, sql, count, sum } from "drizzle-orm";
 export interface IStorage {
   // User operations - Required for Replit Auth
   getUser(id: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserProfile(id: string, updates: Partial<User>): Promise<User>;
+  updateNotificationPreferences(userId: string, preferences: any): Promise<void>;
 
   // Event operations
   getEvents(limit?: number): Promise<Event[]>;
@@ -100,6 +103,11 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
@@ -116,6 +124,30 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async updateUserProfile(id: string, updates: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateNotificationPreferences(userId: string, preferences: any): Promise<void> {
+    // Store notification preferences in user preferences table or update user record
+    // For now, we'll store them as JSON in the user record or create a separate preferences system
+    await db
+      .update(users)
+      .set({
+        notificationPreferences: JSON.stringify(preferences),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
   }
 
   // Event operations

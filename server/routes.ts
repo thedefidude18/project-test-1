@@ -624,6 +624,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User profile update route
+  app.patch('/api/user/profile', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { firstName, lastName, username, email } = req.body;
+
+      // Validate required fields
+      if (!firstName || !username || !email) {
+        return res.status(400).json({ message: "First name, username, and email are required" });
+      }
+
+      // Check if username is already taken by another user
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(400).json({ message: "Username is already taken" });
+      }
+
+      // Update user profile
+      const updatedUser = await storage.updateUserProfile(userId, {
+        firstName,
+        lastName: lastName || null,
+        username,
+        email,
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // User notification preferences route
+  app.patch('/api/user/notifications', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const notificationSettings = req.body;
+
+      // Update notification preferences
+      await storage.updateNotificationPreferences(userId, notificationSettings);
+
+      res.json({ message: "Notification preferences updated successfully" });
+    } catch (error) {
+      console.error("Error updating notification preferences:", error);
+      res.status(500).json({ message: "Failed to update notification preferences" });
+    }
+  });
+
   // User stats routes
   app.get('/api/user/stats', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {

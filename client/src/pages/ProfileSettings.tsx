@@ -70,9 +70,19 @@ export default function ProfileSettings() {
         }, 500);
         return;
       }
+
+      // Handle specific error messages from server
+      let errorMessage = "Failed to update profile";
+      try {
+        const errorData = JSON.parse(error.message);
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        errorMessage = error.message || errorMessage;
+      }
+
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -123,7 +133,7 @@ export default function ProfileSettings() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
-      
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -188,7 +198,7 @@ export default function ProfileSettings() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="lastName"
