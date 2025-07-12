@@ -53,13 +53,18 @@ export const events = pgTable("events", {
   title: text("title").notNull(),
   description: text("description"),
   category: varchar("category").notNull(), // crypto, sports, gaming, music, politics
-  status: varchar("status").default("active"), // active, completed, cancelled
+  status: varchar("status").default("active"), // active, completed, cancelled, pending_admin
   creatorId: varchar("creator_id").notNull(),
-  yesPool: decimal("yes_pool", { precision: 10, scale: 2 }).default("0.00"),
-  noPool: decimal("no_pool", { precision: 10, scale: 2 }).default("0.00"),
+  eventPool: decimal("event_pool", { precision: 10, scale: 2 }).default("0.00"), // Single unified pool
+  yesPool: decimal("yes_pool", { precision: 10, scale: 2 }).default("0.00"), // For display purposes
+  noPool: decimal("no_pool", { precision: 10, scale: 2 }).default("0.00"), // For display purposes
   entryFee: decimal("entry_fee", { precision: 10, scale: 2 }).notNull(),
   endDate: timestamp("end_date").notNull(),
   result: boolean("result"), // true for yes, false for no, null for pending
+  adminResult: boolean("admin_result"), // Admin's final decision on event outcome
+  creatorFee: decimal("creator_fee", { precision: 10, scale: 2 }).default("0.00"), // 3% creator fee
+  isPrivate: boolean("is_private").default(false), // Private events need approval
+  maxParticipants: integer("max_participants").default(100), // FCFS limit
   imageUrl: varchar("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -72,7 +77,11 @@ export const eventParticipants = pgTable("event_participants", {
   userId: varchar("user_id").notNull(),
   prediction: boolean("prediction").notNull(), // true for yes, false for no
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status").default("active"), // active, matched, won, lost
+  matchedWith: varchar("matched_with"), // User ID of opponent (for FCFS matching)
+  payout: decimal("payout", { precision: 10, scale: 2 }).default("0.00"), // Winner payout amount
   joinedAt: timestamp("joined_at").defaultNow(),
+  payoutAt: timestamp("payout_at"),
 });
 
 // Event pool betting amounts
@@ -81,7 +90,21 @@ export const eventPools = pgTable("event_pools", {
   eventId: integer("event_id").notNull(),
   yesAmount: decimal("yes_amount", { precision: 10, scale: 2 }).default("0.00"),
   noAmount: decimal("no_amount", { precision: 10, scale: 2 }).default("0.00"),
+  totalPool: decimal("total_pool", { precision: 10, scale: 2 }).default("0.00"),
+  creatorFeeCollected: boolean("creator_fee_collected").default(false),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Event join requests for private events
+export const eventJoinRequests = pgTable("event_join_requests", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  prediction: boolean("prediction").notNull(), // true for yes, false for no
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status").default("pending"), // pending, approved, rejected
+  requestedAt: timestamp("requested_at").defaultNow(),
+  respondedAt: timestamp("responded_at"),
 });
 
 // Real-time chat messages in events
@@ -348,6 +371,12 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
   createdAt: true,
 });
 
+export const insertEventJoinRequestSchema = createInsertSchema(eventJoinRequests).omit({
+  id: true,
+  requestedAt: true,
+  respondedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -364,3 +393,5 @@ export type Friend = typeof friends.$inferSelect;
 export type EventParticipant = typeof eventParticipants.$inferSelect;
 export type EventMessage = typeof eventMessages.$inferSelect;
 export type ChallengeMessage = typeof challengeMessages.$inferSelect;
+export type EventJoinRequest = typeof eventJoinRequests.$inferSelect;
+export type InsertEventJoinRequest = z.infer<typeof insertEventJoinRequestSchema>;

@@ -89,6 +89,12 @@ export function Navigation() {
             >
               Leaderboard
             </button>
+            <button
+              onClick={() => handleNavigation('/admin')}
+              className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+            >
+              Admin
+            </button>
           </div>
 
           {/* Right Side Items */}

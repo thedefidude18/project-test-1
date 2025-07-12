@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,6 +25,8 @@ const createEventSchema = z.object({
   category: z.string().min(1, "Category is required"),
   entryFee: z.string().min(1, "Entry fee is required"),
   endDate: z.string().min(1, "End date is required"),
+  isPrivate: z.boolean().default(false),
+  maxParticipants: z.string().default("100"),
 });
 
 export default function Events() {
@@ -42,6 +45,8 @@ export default function Events() {
       category: "",
       entryFee: "",
       endDate: "",
+      isPrivate: false,
+      maxParticipants: "100",
     },
   });
 
@@ -228,6 +233,41 @@ export default function Events() {
                           />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="maxParticipants"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Maximum Participants</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="100" min="2" max="1000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="isPrivate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>Private Event</FormLabel>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">
+                            Require approval to join this event
+                          </p>
+                        </div>
                       </FormItem>
                     )}
                   />

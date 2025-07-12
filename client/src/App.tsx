@@ -20,6 +20,7 @@ import ReferralPage from "@/pages/ReferralPage";
 import EventChatPage from "@/pages/EventChatPage";
 import History from "@/pages/History";
 import Settings from "@/pages/Settings";
+import AdminDashboard from "@/pages/AdminDashboard";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -44,6 +45,7 @@ function Router() {
           <Route path="/referrals" component={ReferralPage} />
           <Route path="/history" component={History} />
           <Route path="/settings" component={Settings} />
+          <Route path="/admin" component={AdminDashboard} />
         </>
       )}
       <Route component={NotFound} />

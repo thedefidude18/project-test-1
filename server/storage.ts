@@ -15,6 +15,8 @@ import {
   referralRewards,
   userPreferences,
   userInteractions,
+  eventJoinRequests,
+  eventPools,
   type User,
   type UpsertUser,
   type Event,
@@ -30,6 +32,8 @@ import {
   type EventParticipant,
   type EventMessage,
   type ChallengeMessage,
+  type EventJoinRequest,
+  type InsertEventJoinRequest,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, sql, count, sum } from "drizzle-orm";
@@ -51,6 +55,17 @@ export interface IStorage {
   getEventParticipants(eventId: number): Promise<EventParticipant[]>;
   getEventMessages(eventId: number, limit?: number): Promise<(EventMessage & { user: User })[]>;
   createEventMessage(eventId: number, userId: string, message: string): Promise<EventMessage>;
+  
+  // Event Pool operations
+  adminSetEventResult(eventId: number, result: boolean): Promise<Event>;
+  processEventPayout(eventId: number): Promise<{ winnersCount: number; totalPayout: number; creatorFee: number }>;
+  getEventPoolStats(eventId: number): Promise<{ totalPool: number; yesPool: number; noPool: number; participantsCount: number }>;
+  
+  // Private event operations
+  requestEventJoin(eventId: number, userId: string, prediction: boolean, amount: number): Promise<EventJoinRequest>;
+  getEventJoinRequests(eventId: number): Promise<(EventJoinRequest & { user: User })[]>;
+  approveEventJoinRequest(requestId: number): Promise<EventParticipant>;
+  rejectEventJoinRequest(requestId: number): Promise<EventJoinRequest>;
 
   // Challenge operations
   getChallenges(userId: string, limit?: number): Promise<(Challenge & { challengerUser: User, challengedUser: User })[]>;
@@ -189,12 +204,13 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
 
-    // Update event pools
+    // Update event pools (both individual and total)
     if (prediction) {
       await db
         .update(events)
         .set({
           yesPool: sql`${events.yesPool} + ${amount}`,
+          eventPool: sql`${events.eventPool} + ${amount}`,
         })
         .where(eq(events.id, eventId));
     } else {
@@ -202,6 +218,7 @@ export class DatabaseStorage implements IStorage {
         .update(events)
         .set({
           noPool: sql`${events.noPool} + ${amount}`,
+          eventPool: sql`${events.eventPool} + ${amount}`,
         })
         .where(eq(events.id, eventId));
     }
@@ -569,6 +586,208 @@ export class DatabaseStorage implements IStorage {
       activeChallenges: activeChallengesResult?.count || 0,
       friendsOnline: Math.floor((friendsResult?.count || 0) * 0.35), // Simulate ~35% online
     };
+  }
+
+  // Event Pool operations
+  async adminSetEventResult(eventId: number, result: boolean): Promise<Event> {
+    const [event] = await db
+      .update(events)
+      .set({ 
+        adminResult: result,
+        result: result,
+        status: 'completed',
+        updatedAt: new Date() 
+      })
+      .where(eq(events.id, eventId))
+      .returning();
+    return event;
+  }
+
+  async processEventPayout(eventId: number): Promise<{ winnersCount: number; totalPayout: number; creatorFee: number }> {
+    const event = await this.getEventById(eventId);
+    if (!event || event.status !== 'completed' || event.adminResult === null) {
+      throw new Error('Event not ready for payout');
+    }
+
+    const participants = await this.getEventParticipants(eventId);
+    const winners = participants.filter(p => p.prediction === event.adminResult);
+    
+    const totalPool = parseFloat(event.eventPool);
+    const creatorFeeAmount = totalPool * 0.03; // 3% creator fee
+    const availablePayout = totalPool - creatorFeeAmount;
+
+    if (winners.length === 0) {
+      // No winners - creator gets the entire pool
+      await this.updateUserBalance(event.creatorId, totalPool);
+      await this.createTransaction({
+        userId: event.creatorId,
+        type: 'event_no_winners',
+        amount: totalPool.toString(),
+        description: `No winners bonus for event: ${event.title}`,
+        status: 'completed',
+        reference: `event_${eventId}_no_winners`,
+      });
+      
+      return { winnersCount: 0, totalPayout: totalPool, creatorFee: 0 };
+    }
+
+    // Calculate individual payouts
+    const totalWinnerBets = winners.reduce((sum, w) => sum + parseFloat(w.amount), 0);
+    
+    for (const winner of winners) {
+      const winnerBet = parseFloat(winner.amount);
+      const winnerShare = winnerBet / totalWinnerBets;
+      const payout = winnerBet + (availablePayout - totalWinnerBets) * winnerShare;
+      
+      // Update participant with payout info
+      await db
+        .update(eventParticipants)
+        .set({ 
+          status: 'won',
+          payout: payout.toString(),
+          payoutAt: new Date()
+        })
+        .where(eq(eventParticipants.id, winner.id));
+      
+      // Update user balance
+      await this.updateUserBalance(winner.userId, payout);
+      
+      // Create transaction record
+      await this.createTransaction({
+        userId: winner.userId,
+        type: 'event_win',
+        amount: payout.toString(),
+        description: `Won event: ${event.title}`,
+        status: 'completed',
+        reference: `event_${eventId}_win_${winner.id}`,
+      });
+    }
+
+    // Mark losers
+    const losers = participants.filter(p => p.prediction !== event.adminResult);
+    for (const loser of losers) {
+      await db
+        .update(eventParticipants)
+        .set({ status: 'lost' })
+        .where(eq(eventParticipants.id, loser.id));
+    }
+
+    // Pay creator fee
+    await this.updateUserBalance(event.creatorId, creatorFeeAmount);
+    await this.createTransaction({
+      userId: event.creatorId,
+      type: 'creator_fee',
+      amount: creatorFeeAmount.toString(),
+      description: `Creator fee for event: ${event.title}`,
+      status: 'completed',
+      reference: `event_${eventId}_creator_fee`,
+    });
+
+    // Update event creator fee collected
+    await db
+      .update(events)
+      .set({ creatorFee: creatorFeeAmount.toString() })
+      .where(eq(events.id, eventId));
+
+    return { 
+      winnersCount: winners.length, 
+      totalPayout: availablePayout, 
+      creatorFee: creatorFeeAmount 
+    };
+  }
+
+  async getEventPoolStats(eventId: number): Promise<{ totalPool: number; yesPool: number; noPool: number; participantsCount: number }> {
+    const event = await this.getEventById(eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    const [participantCount] = await db
+      .select({ count: count() })
+      .from(eventParticipants)
+      .where(eq(eventParticipants.eventId, eventId));
+
+    return {
+      totalPool: parseFloat(event.eventPool),
+      yesPool: parseFloat(event.yesPool),
+      noPool: parseFloat(event.noPool),
+      participantsCount: participantCount.count,
+    };
+  }
+
+  // Private event operations
+  async requestEventJoin(eventId: number, userId: string, prediction: boolean, amount: number): Promise<EventJoinRequest> {
+    const [request] = await db
+      .insert(eventJoinRequests)
+      .values({
+        eventId,
+        userId,
+        prediction,
+        amount: amount.toString(),
+      })
+      .returning();
+    return request;
+  }
+
+  async getEventJoinRequests(eventId: number): Promise<(EventJoinRequest & { user: User })[]> {
+    return await db
+      .select({
+        id: eventJoinRequests.id,
+        eventId: eventJoinRequests.eventId,
+        userId: eventJoinRequests.userId,
+        prediction: eventJoinRequests.prediction,
+        amount: eventJoinRequests.amount,
+        status: eventJoinRequests.status,
+        requestedAt: eventJoinRequests.requestedAt,
+        respondedAt: eventJoinRequests.respondedAt,
+        user: users,
+      })
+      .from(eventJoinRequests)
+      .innerJoin(users, eq(eventJoinRequests.userId, users.id))
+      .where(eq(eventJoinRequests.eventId, eventId))
+      .orderBy(desc(eventJoinRequests.requestedAt));
+  }
+
+  async approveEventJoinRequest(requestId: number): Promise<EventParticipant> {
+    const [request] = await db
+      .select()
+      .from(eventJoinRequests)
+      .where(eq(eventJoinRequests.id, requestId));
+    
+    if (!request) {
+      throw new Error('Join request not found');
+    }
+
+    // Create participant
+    const participant = await this.joinEvent(
+      request.eventId,
+      request.userId,
+      request.prediction,
+      parseFloat(request.amount)
+    );
+
+    // Update request status
+    await db
+      .update(eventJoinRequests)
+      .set({ 
+        status: 'approved',
+        respondedAt: new Date()
+      })
+      .where(eq(eventJoinRequests.id, requestId));
+
+    return participant;
+  }
+
+  async rejectEventJoinRequest(requestId: number): Promise<EventJoinRequest> {
+    const [request] = await db
+      .update(eventJoinRequests)
+      .set({ 
+        status: 'rejected',
+        respondedAt: new Date()
+      })
+      .where(eq(eventJoinRequests.id, requestId))
+      .returning();
+    return request;
   }
 
   private generateReferralCode(): string {

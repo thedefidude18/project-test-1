@@ -10,11 +10,16 @@ interface EventCardProps {
     description?: string;
     category: string;
     status: string;
+    eventPool: string;
     yesPool: string;
     noPool: string;
     entryFee: string;
     endDate: string;
     createdAt: string;
+    isPrivate?: boolean;
+    maxParticipants?: number;
+    result?: boolean;
+    creatorFee?: string;
   };
   featured?: boolean;
 }
@@ -47,7 +52,7 @@ export function EventCard({ event, featured = false }: EventCardProps) {
       case 'active':
         return <Badge className="bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300">Active</Badge>;
       case 'completed':
-        return <Badge className="bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300">Completed</Badge>;
+        return <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">Completed</Badge>;
       case 'cancelled':
         return <Badge className="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300">Cancelled</Badge>;
       default:
@@ -55,7 +60,7 @@ export function EventCard({ event, featured = false }: EventCardProps) {
     }
   };
 
-  const totalPool = parseFloat(event.yesPool) + parseFloat(event.noPool);
+  const totalPool = parseFloat(event.eventPool || '0') || (parseFloat(event.yesPool) + parseFloat(event.noPool));
   const yesPercentage = totalPool > 0 ? (parseFloat(event.yesPool) / totalPool) * 100 : 50;
   const noPercentage = 100 - yesPercentage;
 
@@ -79,7 +84,15 @@ export function EventCard({ event, featured = false }: EventCardProps) {
                 <i className={`${getCategoryIcon(event.category)} ${getCategoryColor(event.category)}`}></i>
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900 dark:text-slate-100">{event.title}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-100">{event.title}</h3>
+                  {event.isPrivate && (
+                    <Badge variant="outline" className="text-xs">
+                      <i className="fas fa-lock text-xs mr-1"></i>
+                      Private
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400 capitalize">
                   {event.category} • Ends {timeLeft}
                 </p>
@@ -119,13 +132,52 @@ export function EventCard({ event, featured = false }: EventCardProps) {
                 <i className="fas fa-ticket-alt mr-1"></i>
                 Entry: ₦{parseFloat(event.entryFee).toLocaleString()}
               </span>
+              {event.maxParticipants && (
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  <i className="fas fa-users mr-1"></i>
+                  Max: {event.maxParticipants}
+                </span>
+              )}
             </div>
             <Button 
               className="bg-primary text-white hover:bg-primary/90"
               onClick={() => window.location.href = `/events/${event.id}/chat`}
             >
-              Join Event
+              {event.isPrivate ? 'Request Join' : 'Join Event'}
             </Button>
+          </div>
+          
+          {/* Show additional info for completed events */}
+          {event.status === 'completed' && (
+            <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  Result: {event.result ? 'YES' : 'NO'} Won
+                </span>
+                {event.creatorFee && (
+                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                    Creator Fee: ₦{parseFloat(event.creatorFee).toLocaleString()}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Show total pool information */}
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Total Event Pool
+              </span>
+              <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                ₦{totalPool.toLocaleString()}
+              </span>
+            </div>
+            {event.status === 'active' && (
+              <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                Creator will receive 3% fee (₦{(totalPool * 0.03).toLocaleString()}) upon completion
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -87,7 +87,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entryFee: entryFee.toString(),
         endDate: endDate,
         creatorId: userId,
-        status: 'active'
+        status: 'active',
+        isPrivate: req.body.isPrivate || false,
+        maxParticipants: req.body.maxParticipants || 100,
       };
 
       console.log("Parsed event data:", eventData);
@@ -111,6 +113,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const eventId = parseInt(req.params.id);
       const { prediction, amount } = req.body;
+
+      const event = await storage.getEventById(eventId);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      // Check if event is private
+      if (event.isPrivate) {
+        // Create join request for private events
+        const joinRequest = await storage.requestEventJoin(eventId, userId, prediction, amount);
+        
+        // Create notification for event creator
+        await storage.createNotification({
+          userId: event.creatorId,
+          type: 'event_join_request',
+          title: 'New Event Join Request',
+          message: `${req.user.claims.first_name || 'Someone'} wants to join your private event: ${event.title}`,
+          data: { eventId: eventId, requestId: joinRequest.id },
+        });
+
+        return res.json({ message: "Join request sent to event creator", request: joinRequest });
+      }
 
       const participant = await storage.joinEvent(eventId, userId, prediction, amount);
 
@@ -152,6 +176,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating event message:", error);
       res.status(500).json({ message: "Failed to create message" });
+    }
+  });
+
+  // Event Pool Management Routes
+  app.get('/api/events/:id/stats', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const stats = await storage.getEventPoolStats(eventId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching event stats:", error);
+      res.status(500).json({ message: "Failed to fetch event stats" });
+    }
+  });
+
+  // Admin Route: Set event result and trigger payout
+  app.post('/api/admin/events/:id/result', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const eventId = parseInt(req.params.id);
+      const { result } = req.body; // true for YES, false for NO
+
+      // TODO: Add admin role check here
+      // For now, any authenticated user can set result (you might want to add admin role checking)
+      
+      const event = await storage.adminSetEventResult(eventId, result);
+      const payoutResult = await storage.processEventPayout(eventId);
+
+      res.json({ 
+        event, 
+        payout: payoutResult,
+        message: `Event result set to ${result ? 'YES' : 'NO'}. Payout processed: ${payoutResult.winnersCount} winners, ₦${payoutResult.totalPayout} total payout, ₦${payoutResult.creatorFee} creator fee.`
+      });
+    } catch (error) {
+      console.error("Error setting event result:", error);
+      res.status(500).json({ message: "Failed to set event result" });
+    }
+  });
+
+  // Private Event Management Routes
+  app.get('/api/events/:id/join-requests', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const eventId = parseInt(req.params.id);
+      
+      // Check if user is the event creator
+      const event = await storage.getEventById(eventId);
+      if (!event || event.creatorId !== userId) {
+        return res.status(403).json({ message: "Only event creator can view join requests" });
+      }
+
+      const requests = await storage.getEventJoinRequests(eventId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching join requests:", error);
+      res.status(500).json({ message: "Failed to fetch join requests" });
+    }
+  });
+
+  app.post('/api/events/join-requests/:id/approve', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = parseInt(req.params.id);
+      
+      // TODO: Add validation that user is the event creator
+      
+      const participant = await storage.approveEventJoinRequest(requestId);
+      
+      // Create notification for requester
+      await storage.createNotification({
+        userId: participant.userId,
+        type: 'event_join_approved',
+        title: 'Event Join Request Approved',
+        message: `Your request to join the event has been approved!`,
+        data: { eventId: participant.eventId },
+      });
+
+      res.json(participant);
+    } catch (error) {
+      console.error("Error approving join request:", error);
+      res.status(500).json({ message: "Failed to approve join request" });
+    }
+  });
+
+  app.post('/api/events/join-requests/:id/reject', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = parseInt(req.params.id);
+      
+      // TODO: Add validation that user is the event creator
+      
+      const rejectedRequest = await storage.rejectEventJoinRequest(requestId);
+      
+      // Create notification for requester
+      await storage.createNotification({
+        userId: rejectedRequest.userId,
+        type: 'event_join_rejected',
+        title: 'Event Join Request Rejected',
+        message: `Your request to join the event has been rejected.`,
+        data: { eventId: rejectedRequest.eventId },
+      });
+
+      res.json(rejectedRequest);
+    } catch (error) {
+      console.error("Error rejecting join request:", error);
+      res.status(500).json({ message: "Failed to reject join request" });
     }
   });
 
