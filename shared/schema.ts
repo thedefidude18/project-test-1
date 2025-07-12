@@ -391,44 +391,6 @@ export const insertEventJoinRequestSchema = createInsertSchema(eventJoinRequests
 });
 
 // Types
-import {
-  users,
-  events,
-  challenges,
-  notifications,
-  transactions,
-  friends,
-  achievements,
-  userAchievements,
-  eventParticipants,
-  eventMessages,
-  challengeMessages,
-  dailyLogins,
-  referrals,
-  referralRewards,
-  userPreferences,
-  userInteractions,
-  eventJoinRequests,
-  eventPools,
-  messageReactions,
-  type User,
-  type UpsertUser,
-  type Event,
-  type InsertEvent,
-  type Challenge,
-  type InsertChallenge,
-  type Notification,
-  type InsertNotification,
-  type Transaction,
-  type InsertTransaction,
-  type Achievement,
-  type Friend,
-  type EventParticipant,
-  type EventMessage,
-  type ChallengeMessage,
-  type EventJoinRequest,
-  type InsertEventJoinRequest,
-} from "@shared/schema";
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Event = typeof events.$inferSelect;
