@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,10 @@ export function Navigation() {
 
   const unreadCount = notifications.filter((n: any) => !n.read).length;
 
+  const [, navigate] = useLocation();
+  
   const handleNavigation = (path: string) => {
-    window.location.href = path;
+    navigate(path);
   };
 
   if (!user) return null;

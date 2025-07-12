@@ -25,7 +25,8 @@ function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
   return (
-    <Switch>
+    <div className="min-h-screen transition-all duration-300 ease-in-out">
+      <Switch>
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
@@ -47,6 +48,7 @@ function Router() {
       )}
       <Route component={NotFound} />
     </Switch>
+    </div>
   );
 }
 

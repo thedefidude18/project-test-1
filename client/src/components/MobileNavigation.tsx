@@ -1,7 +1,9 @@
+
 import { useLocation } from "wouter";
+import { cn } from "@/lib/utils";
 
 export function MobileNavigation() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
 
   const navItems = [
     { 
@@ -37,27 +39,43 @@ export function MobileNavigation() {
   ];
 
   const handleNavigation = (path: string) => {
-    window.location.href = path;
+    navigate(path);
   };
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 theme-transition z-50">
-      <div className="grid grid-cols-5 h-16">
+    <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border md:hidden z-50">
+      <div className="flex items-center justify-around px-2 py-2">
         {navItems.map((item) => (
           <button
             key={item.path}
             onClick={() => handleNavigation(item.path)}
-            className={`flex flex-col items-center justify-center theme-transition ${
-              item.isActive
-                ? "text-primary"
-                : "text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary"
-            }`}
+            className={cn(
+              "flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out min-w-[60px]",
+              "hover:bg-accent/50 active:scale-95",
+              item.isActive 
+                ? "text-primary bg-primary/10 scale-105" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
           >
-            <i className={`${item.icon} text-lg`}></i>
-            <span className="text-xs mt-1">{item.label}</span>
+            <i 
+              className={cn(
+                item.icon, 
+                "text-lg mb-1 transition-transform duration-200",
+                item.isActive && "scale-110"
+              )} 
+            />
+            <span className={cn(
+              "text-xs font-medium transition-all duration-200",
+              item.isActive && "font-semibold"
+            )}>
+              {item.label}
+            </span>
+            {item.isActive && (
+              <div className="absolute -top-0.5 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full" />
+            )}
           </button>
         ))}
       </div>
-    </nav>
+    </div>
   );
 }
