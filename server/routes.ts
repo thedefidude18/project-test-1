@@ -169,13 +169,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const eventId = parseInt(req.params.id);
-      const { message } = req.body;
+      const { message, replyToId, mentions } = req.body;
 
-      const newMessage = await storage.createEventMessage(eventId, userId, message);
+      const newMessage = await storage.createEventMessage(eventId, userId, message, replyToId, mentions);
+      
+      // Create notifications for mentioned users
+      if (mentions && mentions.length > 0) {
+        for (const mentionedUsername of mentions) {
+          const mentionedUser = await storage.getUserByUsername(mentionedUsername);
+          if (mentionedUser && mentionedUser.id !== userId) {
+            await storage.createNotification({
+              userId: mentionedUser.id,
+              type: 'mention',
+              title: 'You were mentioned',
+              message: `${req.user.claims.first_name || 'Someone'} mentioned you in an event chat`,
+              data: { 
+                eventId: eventId, 
+                messageId: newMessage.id,
+                mentionedBy: userId,
+                eventTitle: 'Event Chat'
+              },
+            });
+          }
+        }
+      }
+
+      // Create notification for replied user
+      if (replyToId) {
+        const repliedMessage = await storage.getEventMessageById(replyToId);
+        if (repliedMessage && repliedMessage.userId !== userId) {
+          await storage.createNotification({
+            userId: repliedMessage.userId,
+            type: 'reply',
+            title: 'Someone replied to your message',
+            message: `${req.user.claims.first_name || 'Someone'} replied to your message`,
+            data: { 
+              eventId: eventId, 
+              messageId: newMessage.id,
+              repliedBy: userId,
+              originalMessageId: replyToId
+            },
+          });
+        }
+      }
+
       res.json(newMessage);
     } catch (error) {
       console.error("Error creating event message:", error);
       res.status(500).json({ message: "Failed to create message" });
+    }
+  });
+
+  app.post('/api/events/:id/messages/:messageId/react', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const eventId = parseInt(req.params.id);
+      const messageId = req.params.messageId;
+      const { emoji } = req.body;
+
+      const reaction = await storage.toggleMessageReaction(messageId, userId, emoji);
+      res.json(reaction);
+    } catch (error) {
+      console.error("Error reacting to message:", error);
+      res.status(500).json({ message: "Failed to react to message" });
+    }
+  });
+
+  app.get('/api/events/:id/participants', async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const participants = await storage.getEventParticipantsWithUsers(eventId);
+      res.json(participants);
+    } catch (error) {
+      console.error("Error fetching event participants:", error);
+      res.status(500).json({ message: "Failed to fetch participants" });
     }
   });
 
@@ -861,12 +928,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const message = JSON.parse(data.toString());
         console.log('Received WebSocket message:', message);
 
-        // Broadcast message to all connected clients
-        wss.clients.forEach((client) => {
-          if (client !== ws && client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(message));
-          }
-        });
+        // Handle different message types
+        if (message.type === 'user_typing') {
+          // Broadcast typing indicators to users in the same event
+          wss.clients.forEach((client) => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify({
+                type: 'user_typing',
+                eventId: message.eventId,
+                userId: message.userId,
+                isTyping: message.isTyping,
+              }));
+            }
+          });
+        } else {
+          // Broadcast other messages to all connected clients
+          wss.clients.forEach((client) => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(message));
+            }
+          });
+        }
       } catch (error) {
         console.error('Error handling WebSocket message:', error);
       }

@@ -9,11 +9,46 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { formatDistanceToNow } from "date-fns";
+
+interface MessageReaction {
+  emoji: string;
+  count: number;
+  users: string[];
+  userReacted: boolean;
+}
+
+interface ExtendedMessage {
+  id: string;
+  eventId: number;
+  userId: string;
+  message: string;
+  createdAt: string;
+  user: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    profileImageUrl?: string;
+  };
+  reactions?: MessageReaction[];
+  replyTo?: {
+    id: string;
+    message: string;
+    user: {
+      firstName?: string;
+      username?: string;
+    };
+  };
+  mentions?: string[];
+}
+
+const COMMON_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '😡'];
 
 export default function EventChatPage() {
   const params = useParams();
@@ -25,7 +60,13 @@ export default function EventChatPage() {
   const [prediction, setPrediction] = useState<boolean | null>(null);
   const [betAmount, setBetAmount] = useState("");
   const [isBettingDialogOpen, setIsBettingDialogOpen] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [replyingTo, setReplyingTo] = useState<ExtendedMessage | null>(null);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   const { data: event } = useQuery({
     queryKey: ["/api/events", eventId],
@@ -51,20 +92,36 @@ export default function EventChatPage() {
     retry: false,
   });
 
+  const { data: participants = [] } = useQuery({
+    queryKey: ["/api/events", eventId, "participants"],
+    enabled: !!eventId,
+    retry: false,
+  });
+
   const { sendMessage, isConnected } = useWebSocket({
     onMessage: (data) => {
       if (data.type === 'event_message' && data.eventId === eventId) {
+        refetchMessages();
+      } else if (data.type === 'user_typing' && data.eventId === eventId) {
+        if (data.userId !== user?.id) {
+          setTypingUsers(prev => {
+            const filtered = prev.filter(id => id !== data.userId);
+            return data.isTyping ? [...filtered, data.userId] : filtered;
+          });
+        }
+      } else if (data.type === 'message_reaction' && data.eventId === eventId) {
         refetchMessages();
       }
     }
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (message: string) => {
-      await apiRequest("POST", `/api/events/${eventId}/messages`, { message });
+    mutationFn: async (messageData: { message: string; replyToId?: string; mentions?: string[] }) => {
+      await apiRequest("POST", `/api/events/${eventId}/messages`, messageData);
     },
     onSuccess: () => {
       setNewMessage("");
+      setReplyingTo(null);
       refetchMessages();
       sendMessage({
         type: 'event_message',
@@ -89,6 +146,20 @@ export default function EventChatPage() {
         title: "Error",
         description: error.message,
         variant: "destructive",
+      });
+    },
+  });
+
+  const reactToMessageMutation = useMutation({
+    mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
+      await apiRequest("POST", `/api/events/${eventId}/messages/${messageId}/react`, { emoji });
+    },
+    onSuccess: () => {
+      refetchMessages();
+      sendMessage({
+        type: 'message_reaction',
+        eventId,
+        userId: user?.id,
       });
     },
   });
@@ -134,14 +205,73 @@ export default function EventChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Handle typing indicators
+  const handleTyping = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    sendMessage({
+      type: 'user_typing',
+      eventId,
+      userId: user?.id,
+      isTyping: true,
+    });
+
+    typingTimeoutRef.current = setTimeout(() => {
+      sendMessage({
+        type: 'user_typing',
+        eventId,
+        userId: user?.id,
+        isTyping: false,
+      });
+    }, 3000);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewMessage(value);
+
+    // Handle @ mentions
+    const lastAtIndex = value.lastIndexOf('@');
+    if (lastAtIndex !== -1 && lastAtIndex === value.length - 1) {
+      setShowMentions(true);
+      setMentionQuery("");
+    } else if (lastAtIndex !== -1) {
+      const query = value.slice(lastAtIndex + 1);
+      if (query.includes(' ')) {
+        setShowMentions(false);
+      } else {
+        setMentionQuery(query);
+        setShowMentions(true);
+      }
+    } else {
+      setShowMentions(false);
+    }
+
+    handleTyping();
+  };
+
   const handleSendMessage = () => {
     if (!newMessage.trim() || !isConnected) return;
-    sendMessageMutation.mutate(newMessage);
+    
+    // Extract mentions
+    const mentions = extractMentions(newMessage);
+    
+    sendMessageMutation.mutate({
+      message: newMessage,
+      replyToId: replyingTo?.id,
+      mentions,
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleSendMessage();
+    } else if (e.key === 'Escape') {
+      setReplyingTo(null);
+      setShowMentions(false);
     }
   };
 
@@ -150,6 +280,39 @@ export default function EventChatPage() {
       joinEventMutation.mutate();
     }
   };
+
+  const handleReaction = (messageId: string, emoji: string) => {
+    reactToMessageMutation.mutate({ messageId, emoji });
+  };
+
+  const handleReply = (message: ExtendedMessage) => {
+    setReplyingTo(message);
+    inputRef.current?.focus();
+  };
+
+  const handleMention = (username: string) => {
+    const lastAtIndex = newMessage.lastIndexOf('@');
+    const beforeAt = newMessage.slice(0, lastAtIndex);
+    const afterQuery = newMessage.slice(lastAtIndex + 1 + mentionQuery.length);
+    setNewMessage(`${beforeAt}@${username} ${afterQuery}`);
+    setShowMentions(false);
+    inputRef.current?.focus();
+  };
+
+  const extractMentions = (text: string): string[] => {
+    const mentionRegex = /@(\w+)/g;
+    const mentions = [];
+    let match;
+    while ((match = mentionRegex.exec(text)) !== null) {
+      mentions.push(match[1]);
+    }
+    return mentions;
+  };
+
+  const filteredParticipants = participants.filter((p: any) =>
+    p.user.username?.toLowerCase().includes(mentionQuery.toLowerCase()) ||
+    p.user.firstName?.toLowerCase().includes(mentionQuery.toLowerCase())
+  );
 
   if (!eventId || !user) {
     return (
@@ -258,21 +421,22 @@ export default function EventChatPage() {
       </div>
 
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-4 py-4 space-y-3">
+      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2">
         {messages.length === 0 ? (
           <div className="text-center text-slate-500 dark:text-slate-400 py-8">
             <i className="fas fa-comments text-2xl mb-2"></i>
             <p>No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message: any, index: number) => {
+          messages.map((message: ExtendedMessage, index: number) => {
             const showAvatar = index === 0 || messages[index - 1]?.userId !== message.userId;
             const isCurrentUser = message.userId === user?.id;
+            const isConsecutive = index > 0 && messages[index - 1]?.userId === message.userId;
             
             return (
-              <div key={message.id} className={`flex space-x-3 ${isCurrentUser ? 'flex-row-reverse space-x-reverse' : ''}`}>
+              <div key={message.id} className={`flex space-x-2 ${isCurrentUser ? 'flex-row-reverse space-x-reverse' : ''} ${isConsecutive ? 'mt-1' : 'mt-3'}`}>
                 {showAvatar && !isCurrentUser && (
-                  <Avatar className="w-8 h-8 flex-shrink-0">
+                  <Avatar className="w-6 h-6 flex-shrink-0 mt-1">
                     <AvatarImage 
                       src={message.user.profileImageUrl || undefined} 
                       alt={message.user.firstName || message.user.username || 'User'} 
@@ -283,10 +447,10 @@ export default function EventChatPage() {
                   </Avatar>
                 )}
                 
-                <div className={`flex-1 max-w-xs ${isCurrentUser ? 'text-right' : ''} ${!showAvatar && !isCurrentUser ? 'ml-11' : ''}`}>
+                <div className={`flex-1 max-w-[75%] ${isCurrentUser ? 'text-right' : ''} ${!showAvatar && !isCurrentUser ? 'ml-8' : ''}`}>
                   {showAvatar && (
                     <div className={`flex items-center space-x-2 mb-1 ${isCurrentUser ? 'justify-end' : ''}`}>
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                         {message.user.firstName || message.user.username || 'Anonymous'}
                       </span>
                       <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -295,68 +459,189 @@ export default function EventChatPage() {
                     </div>
                   )}
                   
-                  <div className={`inline-block px-3 py-2 rounded-2xl ${
-                    isCurrentUser 
-                      ? 'bg-primary text-white' 
-                      : 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100'
-                  }`}>
-                    <p className="text-sm break-words">{message.message}</p>
+                  {/* Reply indicator */}
+                  {message.replyTo && (
+                    <div className={`text-xs text-slate-500 dark:text-slate-400 mb-1 ${isCurrentUser ? 'text-right' : ''}`}>
+                      <i className="fas fa-reply mr-1"></i>
+                      Replying to {message.replyTo.user.firstName || message.replyTo.user.username}
+                    </div>
+                  )}
+                  
+                  <div className="group relative">
+                    <div className={`inline-block px-3 py-2 rounded-2xl text-sm max-w-full break-words ${
+                      isCurrentUser 
+                        ? 'bg-primary text-white' 
+                        : 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100'
+                    }`}>
+                      {message.replyTo && (
+                        <div className={`text-xs opacity-75 mb-1 p-2 rounded border-l-2 ${
+                          isCurrentUser ? 'border-white/30 bg-white/10' : 'border-slate-300 bg-slate-50 dark:bg-slate-600'
+                        }`}>
+                          "{message.replyTo.message.length > 50 ? message.replyTo.message.substring(0, 50) + '...' : message.replyTo.message}"
+                        </div>
+                      )}
+                      <p className="break-words">{message.message}</p>
+                    </div>
+                    
+                    {/* Message actions */}
+                    <div className={`absolute top-0 ${isCurrentUser ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 bg-white dark:bg-slate-800 shadow-lg rounded-lg px-2 py-1`}>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                            <i className="fas fa-smile text-xs"></i>
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-2">
+                          <div className="flex space-x-1">
+                            {COMMON_REACTIONS.map((emoji) => (
+                              <Button
+                                key={emoji}
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-lg hover:bg-slate-100"
+                                onClick={() => handleReaction(message.id, emoji)}
+                              >
+                                {emoji}
+                              </Button>
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-6 w-6 p-0"
+                        onClick={() => handleReply(message)}
+                      >
+                        <i className="fas fa-reply text-xs"></i>
+                      </Button>
+                    </div>
                   </div>
                   
-                  {/* Emoji reactions placeholder */}
-                  <div className="flex items-center space-x-1 mt-1">
-                    <button className="text-xs bg-slate-200 dark:bg-slate-600 rounded-full px-2 py-1 flex items-center space-x-1 hover:bg-slate-300 dark:hover:bg-slate-500">
-                      <span>😊</span>
-                      <span>12</span>
-                    </button>
-                    <button className="text-xs bg-slate-200 dark:bg-slate-600 rounded-full px-2 py-1 flex items-center space-x-1 hover:bg-slate-300 dark:hover:bg-slate-500">
-                      <span>🔥</span>
-                      <span>12</span>
-                    </button>
-                  </div>
+                  {/* Reactions */}
+                  {message.reactions && message.reactions.length > 0 && (
+                    <div className={`flex flex-wrap gap-1 mt-1 ${isCurrentUser ? 'justify-end' : ''}`}>
+                      {message.reactions.map((reaction, idx) => (
+                        <Badge
+                          key={idx}
+                          variant={reaction.userReacted ? "default" : "secondary"}
+                          className={`text-xs px-2 py-0 h-5 cursor-pointer hover:scale-105 transition-transform ${
+                            reaction.userReacted ? 'bg-primary text-white' : 'bg-slate-200 dark:bg-slate-600'
+                          }`}
+                          onClick={() => handleReaction(message.id, reaction.emoji)}
+                        >
+                          {reaction.emoji} {reaction.count}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })
         )}
+        
+        {/* Typing Indicators */}
+        {typingUsers.length > 0 && (
+          <div className="flex space-x-2">
+            <div className="w-6 h-6 bg-slate-200 dark:bg-slate-600 rounded-full flex-shrink-0"></div>
+            <div className="flex-1">
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-slate-500 dark:text-slate-400 italic">
+                  {typingUsers.length === 1 ? 'Someone is' : `${typingUsers.length} people are`} typing...
+                </span>
+                <div className="flex space-x-1">
+                  <div className="w-1 h-1 bg-slate-400 rounded-full animate-bounce"></div>
+                  <div className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4">
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-primary hover:bg-primary/10 p-2"
-          >
-            <i className="fas fa-smile text-lg"></i>
-          </Button>
-          
-          <div className="flex-1 relative">
-            <Input
-              type="text"
-              placeholder="Start a message"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={handleKeyPress}
-              className="bg-slate-100 dark:bg-slate-700 border-none rounded-full pl-4 pr-12 py-3"
-              disabled={!isConnected}
-            />
-            {!isConnected && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              </div>
-            )}
+      {/* Reply indicator */}
+      {replyingTo && (
+        <div className="bg-slate-200 dark:bg-slate-700 px-4 py-2 border-l-4 border-primary">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <span className="text-xs text-slate-600 dark:text-slate-400">
+                Replying to {replyingTo.user.firstName || replyingTo.user.username}
+              </span>
+              <p className="text-sm text-slate-800 dark:text-slate-200 truncate">
+                {replyingTo.message}
+              </p>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => setReplyingTo(null)}>
+              <i className="fas fa-times text-xs"></i>
+            </Button>
           </div>
+        </div>
+      )}
+
+      {/* Message Input */}
+      <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3">
+        <div className="relative">
+          {/* Mentions dropdown */}
+          {showMentions && filteredParticipants.length > 0 && (
+            <div className="absolute bottom-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-t-lg shadow-lg max-h-40 overflow-y-auto z-10">
+              {filteredParticipants.slice(0, 5).map((participant: any) => (
+                <div
+                  key={participant.user.id}
+                  className="px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer flex items-center space-x-2"
+                  onClick={() => handleMention(participant.user.username || participant.user.firstName)}
+                >
+                  <Avatar className="w-5 h-5">
+                    <AvatarImage src={participant.user.profileImageUrl} />
+                    <AvatarFallback className="text-xs">
+                      {(participant.user.firstName?.[0] || participant.user.username?.[0] || 'U').toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm">{participant.user.firstName || participant.user.username}</span>
+                </div>
+              ))}
+            </div>
+          )}
           
-          <Button
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim() || !isConnected || sendMessageMutation.isPending}
-            className="bg-primary text-white hover:bg-primary/90 rounded-full p-3"
-          >
-            <i className="fas fa-paper-plane"></i>
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary hover:bg-primary/10 p-2"
+            >
+              <i className="fas fa-smile text-lg"></i>
+            </Button>
+            
+            <div className="flex-1 relative">
+              <Input
+                ref={inputRef}
+                type="text"
+                placeholder="Type a message..."
+                value={newMessage}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyPress}
+                className="bg-slate-100 dark:bg-slate-700 border-none rounded-full pl-4 pr-12 py-2"
+                disabled={!isConnected}
+              />
+              {!isConnected && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                </div>
+              )}
+            </div>
+            
+            <Button
+              onClick={handleSendMessage}
+              disabled={!newMessage.trim() || !isConnected || sendMessageMutation.isPending}
+              className="bg-primary text-white hover:bg-primary/90 rounded-full p-2"
+            >
+              <i className="fas fa-paper-plane"></i>
+            </Button>
+          </div>
         </div>
       </div>
 

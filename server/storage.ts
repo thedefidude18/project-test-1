@@ -53,8 +53,11 @@ export interface IStorage {
   updateEvent(id: number, updates: Partial<Event>): Promise<Event>;
   joinEvent(eventId: number, userId: string, prediction: boolean, amount: number): Promise<EventParticipant>;
   getEventParticipants(eventId: number): Promise<EventParticipant[]>;
-  getEventMessages(eventId: number, limit?: number): Promise<(EventMessage & { user: User })[]>;
-  createEventMessage(eventId: number, userId: string, message: string): Promise<EventMessage>;
+  getEventMessages(eventId: number, limit?: number): Promise<any[]>;
+  createEventMessage(eventId: number, userId: string, message: string, replyToId?: string, mentions?: string[]): Promise<EventMessage>;
+  getEventMessageById(messageId: string): Promise<EventMessage | undefined>;
+  toggleMessageReaction(messageId: string, userId: string, emoji: string): Promise<any>;
+  getEventParticipantsWithUsers(eventId: number): Promise<any[]>;
   
   // Event Pool operations
   adminSetEventResult(eventId: number, result: boolean): Promise<Event>;
@@ -233,13 +236,15 @@ export class DatabaseStorage implements IStorage {
       .where(eq(eventParticipants.eventId, eventId));
   }
 
-  async getEventMessages(eventId: number, limit = 50): Promise<(EventMessage & { user: User })[]> {
-    return await db
+  async getEventMessages(eventId: number, limit = 50): Promise<any[]> {
+    const messages = await db
       .select({
         id: eventMessages.id,
         eventId: eventMessages.eventId,
         userId: eventMessages.userId,
         message: eventMessages.message,
+        replyToId: eventMessages.replyToId,
+        mentions: eventMessages.mentions,
         createdAt: eventMessages.createdAt,
         user: users,
       })
@@ -248,14 +253,141 @@ export class DatabaseStorage implements IStorage {
       .where(eq(eventMessages.eventId, eventId))
       .orderBy(desc(eventMessages.createdAt))
       .limit(limit);
+
+    // Get reactions for each message
+    const messageIds = messages.map(m => m.id);
+    const reactions = await db
+      .select({
+        messageId: messageReactions.messageId,
+        emoji: messageReactions.emoji,
+        userId: messageReactions.userId,
+        user: {
+          id: users.id,
+          username: users.username,
+          firstName: users.firstName,
+        }
+      })
+      .from(messageReactions)
+      .innerJoin(users, eq(messageReactions.userId, users.id))
+      .where(sql`${messageReactions.messageId} IN (${messageIds.join(',')})`);
+
+    // Get reply-to messages
+    const replyToIds = messages.filter(m => m.replyToId).map(m => m.replyToId);
+    const replyToMessages = replyToIds.length > 0 ? await db
+      .select({
+        id: eventMessages.id,
+        message: eventMessages.message,
+        user: {
+          id: users.id,
+          username: users.username,
+          firstName: users.firstName,
+        }
+      })
+      .from(eventMessages)
+      .innerJoin(users, eq(eventMessages.userId, users.id))
+      .where(sql`${eventMessages.id} IN (${replyToIds.join(',')})`) : [];
+
+    // Combine data
+    return messages.map(message => {
+      const messageReactions = reactions.filter(r => r.messageId === message.id);
+      const reactionSummary = messageReactions.reduce((acc: any[], reaction) => {
+        const existing = acc.find(r => r.emoji === reaction.emoji);
+        if (existing) {
+          existing.count++;
+          existing.users.push(reaction.user.username || reaction.user.firstName);
+          if (reaction.userId === message.userId) {
+            existing.userReacted = true;
+          }
+        } else {
+          acc.push({
+            emoji: reaction.emoji,
+            count: 1,
+            users: [reaction.user.username || reaction.user.firstName],
+            userReacted: reaction.userId === message.userId,
+          });
+        }
+        return acc;
+      }, []);
+
+      const replyTo = message.replyToId ? 
+        replyToMessages.find(r => r.id === message.replyToId) : null;
+
+      return {
+        ...message,
+        reactions: reactionSummary,
+        replyTo,
+      };
+    });
   }
 
-  async createEventMessage(eventId: number, userId: string, message: string): Promise<EventMessage> {
+  async createEventMessage(eventId: number, userId: string, message: string, replyToId?: string, mentions?: string[]): Promise<EventMessage> {
     const [newMessage] = await db
       .insert(eventMessages)
-      .values({ eventId, userId, message })
+      .values({ 
+        eventId, 
+        userId, 
+        message, 
+        replyToId: replyToId ? parseInt(replyToId) : null,
+        mentions: mentions || []
+      })
       .returning();
     return newMessage;
+  }
+
+  async getEventMessageById(messageId: string): Promise<EventMessage | undefined> {
+    const [message] = await db
+      .select()
+      .from(eventMessages)
+      .where(eq(eventMessages.id, parseInt(messageId)));
+    return message;
+  }
+
+  async toggleMessageReaction(messageId: string, userId: string, emoji: string): Promise<any> {
+    // Check if reaction already exists
+    const [existingReaction] = await db
+      .select()
+      .from(messageReactions)
+      .where(
+        and(
+          eq(messageReactions.messageId, parseInt(messageId)),
+          eq(messageReactions.userId, userId),
+          eq(messageReactions.emoji, emoji)
+        )
+      );
+
+    if (existingReaction) {
+      // Remove reaction
+      await db
+        .delete(messageReactions)
+        .where(eq(messageReactions.id, existingReaction.id));
+      return { action: 'removed' };
+    } else {
+      // Add reaction
+      const [newReaction] = await db
+        .insert(messageReactions)
+        .values({
+          messageId: parseInt(messageId),
+          userId,
+          emoji,
+        })
+        .returning();
+      return { action: 'added', reaction: newReaction };
+    }
+  }
+
+  async getEventParticipantsWithUsers(eventId: number): Promise<any[]> {
+    return await db
+      .select({
+        id: eventParticipants.id,
+        eventId: eventParticipants.eventId,
+        userId: eventParticipants.userId,
+        prediction: eventParticipants.prediction,
+        amount: eventParticipants.amount,
+        user: users,
+      })
+      .from(eventParticipants)
+      .innerJoin(users, eq(eventParticipants.userId, users.id))
+      .where(eq(eventParticipants.eventId, eventId));
   }
 
   // Challenge operations

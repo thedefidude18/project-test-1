@@ -11,6 +11,7 @@ import {
   decimal,
   primaryKey,
   unique,
+  json,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -110,11 +111,23 @@ export const eventJoinRequests = pgTable("event_join_requests", {
 // Real-time chat messages in events
 export const eventMessages = pgTable("event_messages", {
   id: serial("id").primaryKey(),
-  eventId: integer("event_id").notNull(),
-  userId: varchar("user_id").notNull(),
+  eventId: integer("event_id").references(() => events.id, { onDelete: "cascade" }),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
   message: text("message").notNull(),
+  replyToId: integer("reply_to_id").references(() => eventMessages.id, { onDelete: "set null" }),
+  mentions: json("mentions").$type<string[]>(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const messageReactions = pgTable("message_reactions", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").references(() => eventMessages.id, { onDelete: "cascade" }),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+  emoji: text("emoji").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqueUserMessageEmoji: unique().on(table.messageId, table.userId, table.emoji),
+}));
 
 // Live typing indicators
 export const eventTyping = pgTable("event_typing", {
@@ -378,6 +391,44 @@ export const insertEventJoinRequestSchema = createInsertSchema(eventJoinRequests
 });
 
 // Types
+import {
+  users,
+  events,
+  challenges,
+  notifications,
+  transactions,
+  friends,
+  achievements,
+  userAchievements,
+  eventParticipants,
+  eventMessages,
+  challengeMessages,
+  dailyLogins,
+  referrals,
+  referralRewards,
+  userPreferences,
+  userInteractions,
+  eventJoinRequests,
+  eventPools,
+  messageReactions,
+  type User,
+  type UpsertUser,
+  type Event,
+  type InsertEvent,
+  type Challenge,
+  type InsertChallenge,
+  type Notification,
+  type InsertNotification,
+  type Transaction,
+  type InsertTransaction,
+  type Achievement,
+  type Friend,
+  type EventParticipant,
+  type EventMessage,
+  type ChallengeMessage,
+  type EventJoinRequest,
+  type InsertEventJoinRequest,
+} from "@shared/schema";
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Event = typeof events.$inferSelect;
@@ -394,4 +445,6 @@ export type EventParticipant = typeof eventParticipants.$inferSelect;
 export type EventMessage = typeof eventMessages.$inferSelect;
 export type ChallengeMessage = typeof challengeMessages.$inferSelect;
 export type EventJoinRequest = typeof eventJoinRequests.$inferSelect;
-export type InsertEventJoinRequest = z.infer<typeof insertEventJoinRequestSchema>;
+export type InsertEventJoinRequest = typeof eventJoinRequests.$inferInsert;
+export type MessageReaction = typeof messageReactions.$inferSelect;
+export type InsertMessageReaction = typeof messageReactions.$inferInsert;
