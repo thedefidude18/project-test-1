@@ -60,13 +60,16 @@ export default function WalletPage() {
   const depositMutation = useMutation({
     mutationFn: async (amount: number) => {
       const response = await apiRequest("POST", "/api/wallet/deposit", { amount });
-      return response;
+      return await response.json();
     },
     onSuccess: (data: any) => {
+      console.log("Deposit response:", data);
       // Redirect to Paystack payment page
       if (data.authorization_url) {
+        console.log("Redirecting to:", data.authorization_url);
         window.location.href = data.authorization_url;
       } else {
+        console.log("No authorization_url found in response");
         toast({
           title: "Deposit Successful",
           description: "Funds have been added to your wallet!",

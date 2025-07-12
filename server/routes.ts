@@ -291,6 +291,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid amount" });
       }
 
+      if (!process.env.PAYSTACK_SECRET_KEY) {
+        console.error("PAYSTACK_SECRET_KEY environment variable not set");
+        return res.status(500).json({ message: "Payment service not configured" });
+      }
+
+      console.log("Initializing Paystack transaction for user:", userId, "amount:", amount);
+
       // Initialize Paystack transaction
       const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', {
         method: 'POST',
@@ -303,7 +310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           amount: amount * 100, // Paystack expects amount in kobo
           currency: 'NGN',
           reference: `dep_${userId}_${Date.now()}`,
-          callback_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/wallet`,
+          callback_url: `${process.env.FRONTEND_URL || 'https://'+req.get('host')}/wallet`,
           metadata: {
             userId,
             type: 'deposit'
@@ -312,11 +319,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const paystackData = await paystackResponse.json();
+      console.log("Paystack response:", paystackData);
       
       if (!paystackData.status) {
-        return res.status(400).json({ message: "Failed to initialize payment" });
+        console.error("Paystack error:", paystackData);
+        return res.status(400).json({ message: paystackData.message || "Failed to initialize payment" });
       }
 
+      console.log("Sending authorization URL:", paystackData.data.authorization_url);
       res.json({ 
         authorization_url: paystackData.data.authorization_url,
         reference: paystackData.data.reference 
