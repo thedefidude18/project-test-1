@@ -62,13 +62,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       console.log("Creating event with data:", req.body);
       console.log("User ID:", userId);
-      
+
       const eventData = insertEventSchema.parse({ ...req.body, creatorId: userId });
       console.log("Parsed event data:", eventData);
-      
+
       const event = await storage.createEvent(eventData);
       console.log("Created event:", event);
-      
+
       res.json(event);
     } catch (error) {
       console.error("Error creating event:", error);
@@ -85,9 +85,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const eventId = parseInt(req.params.id);
       const { prediction, amount } = req.body;
-      
+
       const participant = await storage.joinEvent(eventId, userId, prediction, amount);
-      
+
       // Create transaction record
       await storage.createTransaction({
         userId,
@@ -120,7 +120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const eventId = parseInt(req.params.id);
       const { message } = req.body;
-      
+
       const newMessage = await storage.createEventMessage(eventId, userId, message);
       res.json(newMessage);
     } catch (error) {
@@ -146,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const challengeData = insertChallengeSchema.parse({ ...req.body, challenger: userId });
       const challenge = await storage.createChallenge(challengeData);
-      
+
       // Create notification for challenged user
       await storage.createNotification({
         userId: challenge.challenged,
@@ -182,7 +182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(messages);
     } catch (error) {
       console.error("Error fetching challenge messages:", error);
-      res.status(500).json({ message: "Failed to fetch messages" });
+      res.status(500).json({ message: "Failed to fetch challenge messages" });
     }
   });
 
@@ -191,7 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const challengeId = parseInt(req.params.id);
       const { message } = req.body;
-      
+
       const newMessage = await storage.createChallengeMessage(challengeId, userId, message);
       res.json(newMessage);
     } catch (error) {
@@ -216,9 +216,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const requesterId = req.user.claims.sub;
       const { addresseeId } = req.body;
-      
+
       const friendRequest = await storage.sendFriendRequest(requesterId, addresseeId);
-      
+
       // Create notification
       await storage.createNotification({
         userId: addresseeId,
@@ -297,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { amount } = req.body;
-      
+
       if (!amount || amount <= 0) {
         return res.status(400).json({ message: "Invalid amount" });
       }
@@ -331,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const paystackData = await paystackResponse.json();
       console.log("Paystack response:", paystackData);
-      
+
       if (!paystackData.status) {
         console.error("Paystack error:", paystackData);
         return res.status(400).json({ message: paystackData.message || "Failed to initialize payment" });
@@ -355,7 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const hash = req.headers['x-paystack-signature'];
       const body = req.body;
-      
+
       console.log('Webhook received:', {
         headers: req.headers,
         bodyType: typeof body,
@@ -364,7 +364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle both string and buffer bodies
       const bodyString = Buffer.isBuffer(body) ? body.toString() : (typeof body === 'string' ? body : JSON.stringify(body));
-      
+
       // Verify signature if secret key is available
       if (process.env.PAYSTACK_SECRET_KEY) {
         const expectedHash = require('crypto')
@@ -396,17 +396,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('Webhook event:', event);
-      
+
       if (event.event === 'charge.success') {
         const { reference, amount, metadata, status } = event.data;
-        
+
         console.log('Processing charge.success:', {
           reference,
           amount,
           metadata,
           status
         });
-        
+
         if (status === 'success' && metadata && metadata.userId) {
           const userId = metadata.userId;
           const depositAmount = amount / 100; // Convert from kobo to naira
@@ -484,7 +484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (verifyData.status && verifyData.data.status === 'success') {
         const { amount, metadata } = verifyData.data;
-        
+
         if (metadata && metadata.userId === userId) {
           const depositAmount = amount / 100; // Convert from kobo to naira
 
@@ -536,13 +536,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { amount } = req.body;
-      
+
       if (!amount || amount <= 0) {
         return res.status(400).json({ message: "Invalid amount" });
       }
 
       const currentBalance = await storage.getUserBalance(userId);
-      
+
       if (amount > currentBalance) {
         return res.status(400).json({ message: "Insufficient funds" });
       }
@@ -625,7 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { type = 'achievement', title = 'Test Notification', message = 'This is a test notification' } = req.body;
-      
+
       const notification = await storage.createNotification({
         userId,
         type,

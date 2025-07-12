@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export function MobileNavigation() {
   const { user } = useAuth();
-  const { navigateTo, isActive } = useAppNavigation();
+  const { navigateTo } = useAppNavigation();
   const { unreadCount } = useNotifications();
 
   const { data: balance = 0 } = useQuery({
@@ -91,14 +91,27 @@ export function MobileNavigation() {
         ))}
          <button
             onClick={() => navigateTo('/wallet')}
-            className={`flex flex-col items-center space-y-1 p-2 rounded-lg transition-colors ${
-              isActive('/wallet')
-                ? 'text-primary bg-primary/10'
-                : 'text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary'
-            }`}
+            className={cn(
+              "flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out min-w-[60px]",
+              "hover:bg-accent/50 active:scale-95",
+              location.startsWith('/wallet')
+                ? "text-primary bg-primary/10 scale-105" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
           >
-            <i className="fas fa-wallet text-xl"></i>
-            <span className="text-xs">₦{(typeof balance === 'object' ? (balance.balance || 0) : (balance || 0)).toLocaleString()}</span>
+            <i className={cn(
+              "fas fa-wallet text-lg mb-1 transition-transform duration-200",
+              location.startsWith('/wallet') && "scale-110"
+            )}></i>
+            <span className={cn(
+              "text-xs font-medium transition-all duration-200",
+              location.startsWith('/wallet') && "font-semibold"
+            )}>
+              ₦{(typeof balance === 'object' ? (balance.balance || 0) : (balance || 0)).toLocaleString()}
+            </span>
+            {location.startsWith('/wallet') && (
+              <div className="absolute -top-0.5 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full" />
+            )}
           </button>
       </div>
     </div>
