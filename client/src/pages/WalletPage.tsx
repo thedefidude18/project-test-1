@@ -13,6 +13,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { formatDistanceToNow } from "date-fns";
+import { PaymentTestPanel } from "@/components/PaymentTestPanel";
 
 export default function WalletPage() {
   const { user } = useAuth();
@@ -386,6 +387,13 @@ export default function WalletPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Payment Testing (Development Only) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-8">
+            <PaymentTestPanel />
+          </div>
+        )}
 
         {/* Transactions */}
         <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
