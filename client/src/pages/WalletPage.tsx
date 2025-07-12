@@ -59,18 +59,23 @@ export default function WalletPage() {
 
   const depositMutation = useMutation({
     mutationFn: async (amount: number) => {
-      // In a real app, this would integrate with Paystack
-      await apiRequest("POST", "/api/wallet/deposit", { amount });
+      const response = await apiRequest("POST", "/api/wallet/deposit", { amount });
+      return response;
     },
-    onSuccess: () => {
-      toast({
-        title: "Deposit Successful",
-        description: "Funds have been added to your wallet!",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-      setIsDepositDialogOpen(false);
-      setDepositAmount("");
+    onSuccess: (data: any) => {
+      // Redirect to Paystack payment page
+      if (data.authorization_url) {
+        window.location.href = data.authorization_url;
+      } else {
+        toast({
+          title: "Deposit Successful",
+          description: "Funds have been added to your wallet!",
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+        setIsDepositDialogOpen(false);
+        setDepositAmount("");
+      }
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {

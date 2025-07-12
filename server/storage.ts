@@ -156,7 +156,7 @@ export class DatabaseStorage implements IStorage {
         amount: amount.toString(),
       })
       .returning();
-    
+
     // Update event pools
     if (prediction) {
       await db
@@ -237,8 +237,7 @@ export class DatabaseStorage implements IStorage {
           id: sql`challenged_user.id`,
           username: sql`challenged_user.username`,
           firstName: sql`challenged_user.first_name`,
-          lastName: sql`challenged_user.last_name`,
-          profileImageUrl: sql`challenged_user.profile_image_url`,
+          lastName: sql`challenged_user.profile_image_url`,
         },
       })
       .from(challenges)
@@ -370,14 +369,6 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
-    const [newTransaction] = await db
-      .insert(transactions)
-      .values(transaction)
-      .returning();
-    return newTransaction;
-  }
-
   async getUserBalance(userId: string): Promise<number> {
     const user = await this.getUser(userId);
     return user ? parseFloat(user.balance || "0") : 0;
@@ -393,6 +384,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    const [newTransaction] = await db
+      .insert(transactions)
+      .values(transaction)
+      .returning();
+    return newTransaction;
   }
 
   // Achievement operations

@@ -281,6 +281,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Wallet deposit route
+  app.post('/api/wallet/deposit', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { amount } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+      }
+
+      // Initialize Paystack transaction
+      const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: req.user.claims.email,
+          amount: amount * 100, // Paystack expects amount in kobo
+          currency: 'NGN',
+          reference: `dep_${userId}_${Date.now()}`,
+          callback_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/wallet`,
+          metadata: {
+            userId,
+            type: 'deposit'
+          }
+        })
+      });
+
+      const paystackData = await paystackResponse.json();
+      
+      if (!paystackData.status) {
+        return res.status(400).json({ message: "Failed to initialize payment" });
+      }
+
+      res.json({ 
+        authorization_url: paystackData.data.authorization_url,
+        reference: paystackData.data.reference 
+      });
+    } catch (error) {
+      console.error("Error processing deposit:", error);
+      res.status(500).json({ message: "Failed to process deposit" });
+    }
+  });
+
+  // Paystack webhook for payment verification
+  app.post('/api/webhook/paystack', async (req, res) => {
+    try {
+      const hash = req.headers['x-paystack-signature'];
+      const body = JSON.stringify(req.body);
+      const expectedHash = require('crypto')
+        .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
+        .update(body)
+        .digest('hex');
+
+      if (hash !== expectedHash) {
+        return res.status(400).json({ message: "Invalid signature" });
+      }
+
+      const event = req.body;
+      
+      if (event.event === 'charge.success') {
+        const { reference, amount, metadata } = event.data;
+        const userId = metadata.userId;
+        const depositAmount = amount / 100; // Convert from kobo to naira
+
+        // Create transaction record
+        await storage.createTransaction({
+          userId,
+          type: 'deposit',
+          amount: depositAmount.toString(),
+          description: `Deposit via Paystack - ${reference}`,
+          status: 'completed',
+        });
+
+        console.log(`Deposit completed for user ${userId}: ₦${depositAmount}`);
+      }
+
+      res.status(200).json({ message: "Webhook processed" });
+    } catch (error) {
+      console.error("Error processing webhook:", error);
+      res.status(500).json({ message: "Webhook processing failed" });
+    }
+  });
+
+  // Wallet withdrawal route
+  app.post('/api/wallet/withdraw', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { amount } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+      }
+
+      const currentBalance = await storage.getUserBalance(userId);
+      
+      if (amount > currentBalance) {
+        return res.status(400).json({ message: "Insufficient funds" });
+      }
+
+      // Create withdrawal transaction record
+      await storage.createTransaction({
+        userId,
+        type: 'withdrawal',
+        amount: `-${amount}`,
+        description: `Withdrawal request - ₦${amount}`,
+        status: 'pending',
+      });
+
+      res.json({ message: "Withdrawal request submitted successfully" });
+    } catch (error) {
+      console.error("Error processing withdrawal:", error);
+      res.status(500).json({ message: "Failed to process withdrawal" });
+    }
+  });
+
   // Achievement routes
   app.get('/api/achievements', async (req, res) => {
     try {
