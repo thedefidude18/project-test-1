@@ -329,7 +329,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Sending authorization URL:", paystackData.data.authorization_url);
       res.json({ 
         authorization_url: paystackData.data.authorization_url,
-        reference: paystackData.data.reference 
+        access_code: paystackData.data.access_code,
+        reference: paystackData.data.reference,
+        publicKey: process.env.PAYSTACK_PUBLIC_KEY || 'pk_test_' // You'll need to set this in secrets
       });
     } catch (error) {
       console.error("Error processing deposit:", error);

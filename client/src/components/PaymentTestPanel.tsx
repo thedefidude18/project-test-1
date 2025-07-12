@@ -47,12 +47,37 @@ export function PaymentTestPanel() {
       
       const data = await response.json();
       
-      if (data.authorization_url) {
-        addTestResult('Deposit Test', 'success', 'Paystack URL generated successfully');
-        toast({
-          title: "Deposit Test Passed",
-          description: "Payment URL generated. Check console for details.",
+      if (data.authorization_url && data.access_code && data.publicKey) {
+        addTestResult('Deposit Test', 'success', 'Paystack inline popup ready');
+        
+        // Test the inline popup
+        const handler = (window as any).PaystackPop.setup({
+          key: data.publicKey,
+          email: user?.email || 'test@example.com',
+          amount: parseFloat(testAmount) * 100,
+          currency: 'NGN',
+          ref: data.reference,
+          callback: function(response: any) {
+            addTestResult('Deposit Test', 'success', `Payment completed: ${response.reference}`);
+            toast({
+              title: "Test Payment Successful",
+              description: "Test payment completed successfully!",
+            });
+          },
+          onClose: function() {
+            addTestResult('Deposit Test', 'error', 'Payment popup was closed');
+          }
         });
+        
+        handler.openIframe();
+        
+        toast({
+          title: "Deposit Test Started",
+          description: "Paystack popup should appear. Use test cards for testing.",
+        });
+        console.log('Test payment popup opened');
+      } else if (data.authorization_url) {
+        addTestResult('Deposit Test', 'success', 'Paystack URL generated (fallback mode)');
         console.log('Test payment URL:', data.authorization_url);
       } else {
         addTestResult('Deposit Test', 'error', 'No authorization URL returned');

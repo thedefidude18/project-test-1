@@ -65,20 +65,50 @@ export default function WalletPage() {
     },
     onSuccess: (data: any) => {
       console.log("Deposit response:", data);
-      // Redirect to Paystack payment page
-      if (data.authorization_url) {
-        console.log("Redirecting to:", data.authorization_url);
+      
+      if (data.authorization_url && data.access_code && data.publicKey) {
+        // Use Paystack inline popup
+        const handler = (window as any).PaystackPop.setup({
+          key: data.publicKey,
+          email: user?.email,
+          amount: parseFloat(depositAmount) * 100, // Amount in kobo
+          currency: 'NGN',
+          ref: data.reference,
+          callback: function(response: any) {
+            console.log('Payment successful:', response);
+            toast({
+              title: "Payment Successful",
+              description: "Your deposit is being processed!",
+            });
+            
+            // Refresh balance and transactions
+            queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+            setIsDepositDialogOpen(false);
+            setDepositAmount("");
+          },
+          onClose: function() {
+            console.log('Payment popup closed');
+            toast({
+              title: "Payment Cancelled",
+              description: "Payment was cancelled or closed.",
+              variant: "destructive",
+            });
+          }
+        });
+        
+        handler.openIframe();
+      } else if (data.authorization_url) {
+        // Fallback to redirect if inline doesn't work
+        console.log("Fallback: Redirecting to:", data.authorization_url);
         window.location.href = data.authorization_url;
       } else {
-        console.log("No authorization_url found in response");
+        console.log("No payment URL found in response");
         toast({
-          title: "Deposit Successful",
-          description: "Funds have been added to your wallet!",
+          title: "Payment Error",
+          description: "Unable to initialize payment. Please try again.",
+          variant: "destructive",
         });
-        queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-        setIsDepositDialogOpen(false);
-        setDepositAmount("");
       }
     },
     onError: (error: Error) => {
