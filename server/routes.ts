@@ -583,6 +583,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test notification creation (for development)
+  app.post('/api/test/notification', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { type = 'achievement', title = 'Test Notification', message = 'This is a test notification' } = req.body;
+      
+      const notification = await storage.createNotification({
+        userId,
+        type,
+        title,
+        message,
+        data: { testData: true },
+      });
+
+      res.json(notification);
+    } catch (error) {
+      console.error("Error creating test notification:", error);
+      res.status(500).json({ message: "Failed to create test notification" });
+    }
+  });
+
   // Create HTTP server
   const httpServer = createServer(app);
 

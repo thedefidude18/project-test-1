@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
@@ -16,11 +17,15 @@ export default function Notifications() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: notifications = [], isLoading } = useQuery({
+  const { data: notifications = [], isLoading, error } = useQuery({
     queryKey: ["/api/notifications"],
     retry: false,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
+  });
+
+  // Handle errors in useEffect
+  React.useEffect(() => {
+    if (error) {
+      if (isUnauthorizedError(error as Error)) {
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
@@ -29,9 +34,16 @@ export default function Notifications() {
         setTimeout(() => {
           window.location.href = "/api/login";
         }, 500);
+      } else {
+        console.error("Error fetching notifications:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load notifications",
+          variant: "destructive",
+        });
       }
-    },
-  });
+    }
+  }, [error, toast]);
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: number) => {
@@ -52,6 +64,30 @@ export default function Notifications() {
         }, 500);
         return;
       }
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createTestNotificationMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/test/notification", {
+        type: "achievement",
+        title: "🎉 Test Achievement",
+        message: "You successfully created a test notification!"
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      toast({
+        title: "Success",
+        description: "Test notification created!",
+      });
+    },
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
@@ -119,19 +155,29 @@ export default function Notifications() {
             </p>
           </div>
           
-          {unreadNotifications.length > 0 && (
+          <div className="flex gap-2">
+            {unreadNotifications.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  unreadNotifications.forEach((notification: any) => {
+                    handleMarkAsRead(notification.id);
+                  });
+                }}
+                disabled={markAsReadMutation.isPending}
+              >
+                Mark All as Read
+              </Button>
+            )}
             <Button
-              variant="outline"
-              onClick={() => {
-                unreadNotifications.forEach((notification: any) => {
-                  handleMarkAsRead(notification.id);
-                });
-              }}
-              disabled={markAsReadMutation.isPending}
+              onClick={() => createTestNotificationMutation.mutate()}
+              disabled={createTestNotificationMutation.isPending}
+              className="bg-primary text-white hover:bg-primary/90"
             >
-              Mark All as Read
+              <i className="fas fa-plus mr-2"></i>
+              Test Notification
             </Button>
-          )}
+          </div>
         </div>
 
         {/* Notifications Tabs */}
