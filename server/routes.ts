@@ -60,12 +60,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/events', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.claims.sub;
+      console.log("Creating event with data:", req.body);
+      console.log("User ID:", userId);
+      
       const eventData = insertEventSchema.parse({ ...req.body, creatorId: userId });
+      console.log("Parsed event data:", eventData);
+      
       const event = await storage.createEvent(eventData);
+      console.log("Created event:", event);
+      
       res.json(event);
     } catch (error) {
       console.error("Error creating event:", error);
-      res.status(500).json({ message: "Failed to create event" });
+      if (error instanceof Error) {
+        res.status(500).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "Failed to create event" });
+      }
     }
   });
 
@@ -412,6 +423,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
               status: 'completed',
             });
 
+            // Create notification for successful deposit
+            await storage.createNotification({
+              userId,
+              type: 'achievement',
+              title: '💰 Deposit Successful',
+              message: `Your deposit of ₦${depositAmount.toLocaleString()} has been credited to your account!`,
+              data: { 
+                amount: depositAmount,
+                reference: reference,
+                type: 'deposit'
+              },
+            });
+
             console.log(`✅ Deposit completed for user ${userId}: ₦${depositAmount}`);
           } catch (dbError) {
             console.error('Database error while creating transaction:', dbError);
@@ -475,6 +499,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
               amount: depositAmount.toString(),
               description: `Deposit via Paystack - ${reference}`,
               status: 'completed',
+            });
+
+            // Create notification for successful deposit
+            await storage.createNotification({
+              userId,
+              type: 'achievement',
+              title: '💰 Deposit Verified',
+              message: `Your deposit of ₦${depositAmount.toLocaleString()} has been verified and credited!`,
+              data: { 
+                amount: depositAmount,
+                reference: reference,
+                type: 'deposit'
+              },
             });
 
             console.log(`✅ Manual verification completed for user ${userId}: ₦${depositAmount}`);

@@ -1,8 +1,22 @@
-
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { Badge } from "@/components/ui/badge";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useQuery } from "@tanstack/react-query";
 
 export function MobileNavigation() {
+  const { user } = useAuth();
+  const { navigateTo, isActive } = useAppNavigation();
+  const { unreadCount } = useNotifications();
+
+  const { data: balance = 0 } = useQuery({
+    queryKey: ["/api/wallet/balance"],
+    retry: false,
+    enabled: !!user,
+  });
+
   const [location, navigate] = useLocation();
 
   const navItems = [
@@ -75,6 +89,17 @@ export function MobileNavigation() {
             )}
           </button>
         ))}
+         <button
+            onClick={() => navigateTo('/wallet')}
+            className={`flex flex-col items-center space-y-1 p-2 rounded-lg transition-colors ${
+              isActive('/wallet')
+                ? 'text-primary bg-primary/10'
+                : 'text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary'
+            }`}
+          >
+            <i className="fas fa-wallet text-xl"></i>
+            <span className="text-xs">₦{(typeof balance === 'object' ? (balance.balance || 0) : (balance || 0)).toLocaleString()}</span>
+          </button>
       </div>
     </div>
   );

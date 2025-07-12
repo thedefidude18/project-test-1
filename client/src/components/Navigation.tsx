@@ -15,7 +15,7 @@ import {
 
 export function Navigation() {
   const { user } = useAuth();
-  
+
   const { data: notifications = [] } = useQuery({
     queryKey: ["/api/notifications"],
     retry: false,
@@ -24,7 +24,7 @@ export function Navigation() {
   const unreadCount = notifications.filter((n: any) => !n.read).length;
 
   const [, navigate] = useLocation();
-  
+
   const handleNavigation = (path: string) => {
     navigate(path);
   };
