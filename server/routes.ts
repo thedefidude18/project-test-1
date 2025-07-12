@@ -63,7 +63,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Creating event with data:", req.body);
       console.log("User ID:", userId);
 
-      const eventData = insertEventSchema.parse({ ...req.body, creatorId: userId });
+      // Validate required fields
+      if (!req.body.title || !req.body.category || !req.body.entryFee || !req.body.endDate) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Convert entryFee to proper decimal format
+      const entryFee = parseFloat(req.body.entryFee);
+      if (isNaN(entryFee) || entryFee <= 0) {
+        return res.status(400).json({ message: "Invalid entry fee" });
+      }
+
+      // Validate end date
+      const endDate = new Date(req.body.endDate);
+      if (endDate <= new Date()) {
+        return res.status(400).json({ message: "End date must be in the future" });
+      }
+
+      const eventData = {
+        title: req.body.title,
+        description: req.body.description || null,
+        category: req.body.category,
+        entryFee: entryFee.toString(),
+        endDate: endDate,
+        creatorId: userId,
+        status: 'active'
+      };
+
       console.log("Parsed event data:", eventData);
 
       const event = await storage.createEvent(eventData);
@@ -426,13 +452,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create notification for successful deposit
             await storage.createNotification({
               userId,
-              type: 'achievement',
+              type: 'deposit',
               title: '💰 Deposit Successful',
-              message: `Your deposit of ₦${depositAmount.toLocaleString()} has been credited to your account!`,
+              message: `Your deposit of ₦${depositAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has been credited to your account!`,
               data: { 
                 amount: depositAmount,
                 reference: reference,
-                type: 'deposit'
+                type: 'deposit',
+                timestamp: new Date().toISOString()
               },
             });
 
@@ -504,13 +531,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Create notification for successful deposit
             await storage.createNotification({
               userId,
-              type: 'achievement',
+              type: 'deposit',
               title: '💰 Deposit Verified',
-              message: `Your deposit of ₦${depositAmount.toLocaleString()} has been verified and credited!`,
+              message: `Your deposit of ₦${depositAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has been verified and credited!`,
               data: { 
                 amount: depositAmount,
                 reference: reference,
-                type: 'deposit'
+                type: 'deposit',
+                timestamp: new Date().toISOString()
               },
             });
 

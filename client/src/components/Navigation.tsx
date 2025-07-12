@@ -25,6 +25,7 @@ export function Navigation() {
     queryKey: ["/api/wallet/balance"],
     retry: false,
     enabled: !!user,
+    refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
   });
 
   const unreadCount = notifications.filter((n: any) => !n.read).length;
