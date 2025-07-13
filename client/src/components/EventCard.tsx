@@ -3,11 +3,7 @@ import { Lock, Users, Clock } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/use-toast';
-import { formatCurrency } from '../lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { supabase } from '../lib/supabase';
-import { getAvatarUrl } from '../utils/avatarUtils';
-import { formatBalance } from '../utils/currencyUtils';
 
 const DEFAULT_BANNER = 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&auto=format&fit=crop';
 
