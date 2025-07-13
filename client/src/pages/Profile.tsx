@@ -74,7 +74,7 @@ export default function Profile() {
 
   const getAchievementIcon = (icon: string, category: string) => {
     if (icon) return icon;
-    
+
     switch (category?.toLowerCase()) {
       case 'first':
         return 'fas fa-star';
@@ -96,7 +96,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Header */}
         <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 mb-8">
@@ -111,7 +111,7 @@ export default function Profile() {
                   {(user.firstName?.[0] || user.username?.[0] || 'U').toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              
+
               <div className="flex-1 text-center md:text-left">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                   <div>
@@ -125,7 +125,7 @@ export default function Profile() {
                       Joined {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
                     </p>
                   </div>
-                  
+
                   <Button 
                     onClick={() => window.location.href = '/profile/settings'}
                     className="bg-primary text-white hover:bg-primary/90 mt-4 md:mt-0"
@@ -134,7 +134,7 @@ export default function Profile() {
                     Edit Profile
                   </Button>
                 </div>
-                
+
                 {/* Level Progress */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">

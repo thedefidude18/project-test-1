@@ -20,12 +20,12 @@ const getLevelColor = (level: number) => {
 };
 
 const getLevelIcon = (level: number) => {
-  if (level >= 50) return '👑';
-  if (level >= 30) return '⭐';
-  if (level >= 20) return '🏆';
-  if (level >= 10) return '🥇';
-  if (level >= 5) return '🎯';
-  return '🎮';
+  if (level >= 50) return '/assets/master.svg';
+  if (level >= 30) return '/assets/expert.svg';
+  if (level >= 20) return '/assets/advanced.svg';
+  if (level >= 10) return '/assets/amateur.svg';
+  if (level >= 5) return '/assets/star.svg';
+  return '/assets/Beginner.svg';
 };
 
 export const LevelBadge: React.FC<LevelBadgeProps> = ({ 
@@ -44,7 +44,11 @@ export const LevelBadge: React.FC<LevelBadgeProps> = ({
   return (
     <div className="flex items-center space-x-2">
       <Badge className={`${getLevelColor(level)} ${sizeClasses[size]} font-semibold border-0 shadow-lg`}>
-        <span className="mr-1">{getLevelIcon(level)}</span>
+        <img 
+          src={getLevelIcon(level)} 
+          alt={`Level ${level} badge`} 
+          className="w-4 h-4 mr-1" 
+        />
         Level {level}
       </Badge>
       {showXP && currentXP !== undefined && nextLevelXP !== undefined && (
