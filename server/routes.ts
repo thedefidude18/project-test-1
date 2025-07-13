@@ -1,3 +1,4 @@
+
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
@@ -23,6 +24,7 @@ import {
 } from "../shared/schema";
 import { sql } from "drizzle-orm";
 import crypto from "crypto";
+
 // Initialize Pusher
 const pusher = new Pusher({
   appId: "1553294",
@@ -1531,6 +1533,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching challenge escrow status:", error);
       res.status(500).json({ message: "Failed to fetch escrow status" });
+    }
+  });
+
+  // Admin notifications routes
+  app.get('/api/admin/notifications', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const notifications = await storage.getAdminNotifications(limit);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching admin notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.post('/api/admin/notifications/broadcast', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { title, message, type, targetUserIds } = req.body;
+
+      const result = await storage.broadcastNotification({
+        title,
+        message,
+        type: type || 'admin_announcement',
+        targetUserIds: targetUserIds || null, // null means all users
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error broadcasting notification:", error);
+      res.status(500).json({ message: "Failed to broadcast notification" });
+    }
+  });
+
+  // Admin user search routes
+  app.get('/api/admin/users/search', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { query, limit = 50 } = req.query;
+      
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+
+      const users = await storage.searchUsers(query, parseInt(limit as string));
+      res.json(users);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      res.status(500).json({ message: "Failed to search users" });
     }
   });
 
