@@ -438,6 +438,15 @@ export default function Challenges() {
           </TabsContent>
 
           <TabsContent value="users" className="space-y-4">
+            <div className="mb-4">
+              <Input
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-slate-50 dark:bg-slate-700"
+              />
+            </div>
+            
             {allUsers.length === 0 ? (
               <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 <CardContent className="text-center py-12">
@@ -452,43 +461,98 @@ export default function Challenges() {
               </Card>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {allUsers.filter((u: any) => u.id !== user?.id).map((userItem: any) => (
-                  <Card key={userItem.id} className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">
-                            {(userItem.firstName?.[0] || userItem.username?.[0] || 'U').toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-                            {userItem.firstName || userItem.username || 'Anonymous'}
-                          </h3>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            Balance: ₦{parseFloat(userItem.balance || '0').toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm text-slate-600 dark:text-slate-400">
-                          <i className="fas fa-trophy mr-1"></i>
-                          {userItem.wins || 0} wins
-                        </div>
-                        <Button
-                          size="sm"
-                          className="bg-primary text-white hover:bg-primary/90"
-                          onClick={() => {
-                            form.setValue('challenged', userItem.id);
-                            setIsCreateDialogOpen(true);
-                          }}
-                        >
-                          Challenge
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {allUsers
+                  .filter((u: any) => u.id !== user?.id)
+                  .filter((u: any) => 
+                    !searchTerm || 
+                    (u.firstName || u.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (u.username || '').toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((userItem: any) => {
+                    // Check if this user is a friend
+                    const isFriend = friends.some((friend: any) => {
+                      const friendUser = friend.requesterId === user.id ? friend.addressee : friend.requester;
+                      return friendUser.id === userItem.id;
+                    });
+
+                    return (
+                      <Card key={userItem.id} className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-center space-x-3 mb-3">
+                            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center relative">
+                              <span className="text-white font-semibold">
+                                {(userItem.firstName?.[0] || userItem.username?.[0] || 'U').toUpperCase()}
+                              </span>
+                              {isFriend && (
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                                  <i className="fas fa-user-friends text-xs text-white"></i>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                                  {userItem.firstName || userItem.username || 'Anonymous'}
+                                </h3>
+                                {isFriend && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    Friend
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-600 dark:text-slate-400">
+                                @{userItem.username || 'unknown'}
+                              </p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">
+                                Balance: ₦{parseFloat(userItem.balance || '0').toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-4">
+                                <span className="text-slate-600 dark:text-slate-400">
+                                  <i className="fas fa-trophy mr-1 text-amber-500"></i>
+                                  {userItem.wins || 0} wins
+                                </span>
+                                <span className="text-slate-600 dark:text-slate-400">
+                                  <i className="fas fa-star mr-1 text-blue-500"></i>
+                                  Level {userItem.level || 1}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                                onClick={() => {
+                                  form.setValue('challenged', userItem.id);
+                                  setIsCreateDialogOpen(true);
+                                }}
+                              >
+                                <i className="fas fa-swords mr-1"></i>
+                                Challenge
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => {
+                                  // Navigate to user profile or show profile modal
+                                  console.log('View profile:', userItem.id);
+                                }}
+                              >
+                                <i className="fas fa-user mr-1"></i>
+                                Profile
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
               </div>
             )}
           </TabsContent>

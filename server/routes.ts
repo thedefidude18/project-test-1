@@ -621,13 +621,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const challengeId = parseInt(req.params.id);
       const userId = req.user.claims.sub;
-      
+
       const challenge = await storage.acceptChallenge(challengeId, userId);
-      
+
       // Get user info for notifications
       const challenger = await storage.getUser(challenge.challenger);
       const challenged = await storage.getUser(challenge.challenged);
-      
+
       // Create notifications for both users
       await storage.createNotification({
         userId: challenge.challenger,
@@ -716,7 +716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const newMessage = await storage.createChallengeMessage(challengeId, userId, message);
-      
+
       // Get user info for real-time message
       const user = await storage.getUser(userId);
       const messageWithUser = {
@@ -731,7 +731,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send real-time message to both participants
       const otherUserId = challenge.challenger === userId ? challenge.challenged : challenge.challenger;
-      
+
       try {
         await pusher.trigger(`challenge-${challengeId}`, 'new-message', {
           message: messageWithUser,
@@ -860,8 +860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { amount } = req.body;
 
       if (!amount || amount <= 0) {
-        return res.status(400).json({ message: "Invalid amount" });
-      }
+        return res.status(400).json({ message: "Invalid amount" });      }
 
       if (!process.env.PAYSTACK_SECRET_KEY) {
         console.error("PAYSTACK_SECRET_KEY environment variable not set");
@@ -1342,7 +1341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const { action, value, reason } = req.body;
-      
+
       let result;
       switch (action) {
         case 'ban':
@@ -1363,7 +1362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         default:
           return res.status(400).json({ message: "Invalid action type" });
       }
-      
+
       res.json(result);
     } catch (error) {
       console.error("Error executing user action:", error);
@@ -1398,7 +1397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const challengeId = parseInt(req.params.id);
       const { result } = req.body; // 'challenger_won', 'challenged_won', 'draw'
-      
+
       if (!['challenger_won', 'challenged_won', 'draw'].includes(result)) {
         return res.status(400).json({ message: "Invalid result. Must be 'challenger_won', 'challenged_won', or 'draw'" });
       }

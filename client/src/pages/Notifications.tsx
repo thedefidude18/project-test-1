@@ -101,7 +101,7 @@ export default function Notifications() {
       case 'achievement':
         return 'fas fa-trophy';
       case 'challenge':
-        return 'fas fa-swords';
+        return 'fas fa-sword';
       case 'event':
         return 'fas fa-calendar';
       case 'match':
@@ -118,7 +118,7 @@ export default function Notifications() {
       case 'achievement':
         return 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900';
       case 'challenge':
-        return 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900';
+        return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900';
       case 'event':
         return 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900';
       case 'match':
@@ -265,7 +265,23 @@ export default function Notifications() {
                               className="bg-emerald-600 text-white hover:bg-emerald-700"
                               onClick={() => window.location.href = '/challenges'}
                             >
+                              <i className="fas fa-eye mr-1"></i>
                               View Challenge
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-red-500 text-red-600 hover:bg-red-50"
+                              onClick={() => {
+                                // Mark as read and navigate to challenges
+                                if (!notification.read) {
+                                  handleMarkAsRead(notification.id);
+                                }
+                                window.location.href = '/challenges';
+                              }}
+                            >
+                              <i className="fas fa-swords mr-1"></i>
+                              Respond
                             </Button>
                           </div>
                         )}
@@ -352,6 +368,57 @@ export default function Notifications() {
                             </Button>
                           </div>
                         </div>
+                        
+                        {/* Action buttons based on notification type */}
+                        {notification.type === 'challenge' && notification.data?.challengeId && (
+                          <div className="mt-3 flex space-x-2">
+                            <Button
+                              size="sm"
+                              className="bg-emerald-600 text-white hover:bg-emerald-700"
+                              onClick={() => window.location.href = '/challenges'}
+                            >
+                              <i className="fas fa-eye mr-1"></i>
+                              View Challenge
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-red-500 text-red-600 hover:bg-red-50"
+                              onClick={() => {
+                                // Mark as read and navigate to challenges
+                                handleMarkAsRead(notification.id);
+                                window.location.href = '/challenges';
+                              }}
+                            >
+                              <i className="fas fa-swords mr-1"></i>
+                              Respond
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {notification.type === 'friend' && notification.data?.friendRequestId && (
+                          <div className="mt-3 flex space-x-2">
+                            <Button
+                              size="sm"
+                              className="bg-primary text-white hover:bg-primary/90"
+                              onClick={() => window.location.href = '/friends'}
+                            >
+                              View Request
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {notification.type === 'event' && notification.data?.eventId && (
+                          <div className="mt-3 flex space-x-2">
+                            <Button
+                              size="sm"
+                              className="bg-blue-600 text-white hover:bg-blue-700"
+                              onClick={() => window.location.href = '/events'}
+                            >
+                              View Event
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
