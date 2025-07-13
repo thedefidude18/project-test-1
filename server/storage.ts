@@ -512,7 +512,34 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createChallenge(challenge: InsertChallenge): Promise<Challenge> {
+    // Check challenger balance
+    const balance = await this.getUserBalance(challenge.challenger);
+    const challengeAmount = parseFloat(challenge.amount);
+    
+    if (balance.balance < challengeAmount) {
+      throw new Error("Insufficient balance to create challenge");
+    }
+
+    // Create the challenge
     const [newChallenge] = await db.insert(challenges).values(challenge).returning();
+    
+    // Deduct challenger's stake and create escrow
+    await this.createTransaction({
+      userId: challenge.challenger,
+      type: 'challenge_escrow',
+      amount: `-${challengeAmount}`,
+      description: `Challenge escrow: ${challenge.title}`,
+      relatedId: newChallenge.id,
+      status: 'completed',
+    });
+
+    // Create escrow record
+    await db.insert(escrow).values({
+      challengeId: newChallenge.id,
+      amount: challengeAmount.toString(),
+      status: 'holding',
+    });
+
     return newChallenge;
   }
 
@@ -523,6 +550,55 @@ export class DatabaseStorage implements IStorage {
       .where(eq(challenges.id, id))
       .returning();
     return challenge;
+  }
+
+  async acceptChallenge(challengeId: number, userId: string): Promise<Challenge> {
+    const challenge = await this.getChallengeById(challengeId);
+    if (!challenge) {
+      throw new Error("Challenge not found");
+    }
+
+    if (challenge.status !== 'pending') {
+      throw new Error("Challenge cannot be accepted");
+    }
+
+    if (challenge.challenged !== userId) {
+      throw new Error("You are not the challenged user");
+    }
+
+    // Check challenged user balance
+    const balance = await this.getUserBalance(userId);
+    const challengeAmount = parseFloat(challenge.amount);
+    
+    if (balance.balance < challengeAmount) {
+      throw new Error("Insufficient balance to accept challenge");
+    }
+
+    // Deduct challenged user's stake
+    await this.createTransaction({
+      userId: userId,
+      type: 'challenge_escrow',
+      amount: `-${challengeAmount}`,
+      description: `Challenge escrow: ${challenge.title}`,
+      relatedId: challengeId,
+      status: 'completed',
+    });
+
+    // Add to existing escrow
+    await db.insert(escrow).values({
+      challengeId: challengeId,
+      amount: challengeAmount.toString(),
+      status: 'holding',
+    });
+
+    // Update challenge status to active
+    const [updatedChallenge] = await db
+      .update(challenges)
+      .set({ status: 'active' })
+      .where(eq(challenges.id, challengeId))
+      .returning();
+
+    return updatedChallenge;
   }
 
   async getChallengeMessages(challengeId: number): Promise<(ChallengeMessage & { user: User })[]> {

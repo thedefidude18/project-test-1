@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import { ChallengeCard } from "@/components/ChallengeCard";
+import { ChallengeChat } from "@/components/ChallengeChat";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,12 +13,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { MessageCircle, Clock, Trophy, TrendingUp, Zap, Users, Shield } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 const createChallengeSchema = z.object({
   challenged: z.string().min(1, "Please select who to challenge"),
@@ -34,6 +38,8 @@ export default function Challenges() {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedChallenge, setSelectedChallenge] = useState<any>(null);
+  const [showChat, setShowChat] = useState(false);
 
   const form = useForm<z.infer<typeof createChallengeSchema>>({
     resolver: zodResolver(createChallengeSchema),
@@ -71,6 +77,11 @@ export default function Challenges() {
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ["/api/users"],
+    retry: false,
+  });
+
+  const { data: balance = 0 } = useQuery({
+    queryKey: ["/api/wallet/balance"],
     retry: false,
   });
 
@@ -121,7 +132,45 @@ export default function Challenges() {
   const completedChallenges = challenges.filter((c: any) => c.status === "completed");
 
   const onSubmit = (data: z.infer<typeof createChallengeSchema>) => {
+    const amount = parseFloat(data.amount);
+    const currentBalance = typeof balance === 'object' ? balance.balance : balance;
+    
+    if (amount > currentBalance) {
+      toast({
+        title: "Insufficient Balance",
+        description: "You don't have enough funds to create this challenge.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     createChallengeMutation.mutate(data);
+  };
+
+  const handleChallengeClick = (challenge: any) => {
+    setSelectedChallenge(challenge);
+    setShowChat(true);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-500';
+      case 'active': return 'bg-green-500';
+      case 'completed': return 'bg-blue-500';
+      case 'disputed': return 'bg-red-500';
+      case 'cancelled': return 'bg-gray-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending': return Clock;
+      case 'active': return Zap;
+      case 'completed': return Trophy;
+      case 'disputed': return Shield;
+      default: return Clock;
+    }
   };
 
   if (!user) return null;
@@ -343,7 +392,7 @@ export default function Challenges() {
               </Card>
             ) : (
               pendingChallenges.map((challenge: any) => (
-                <ChallengeCard key={challenge.id} challenge={challenge} />
+                <ChallengeCard key={challenge.id} challenge={challenge} onChatClick={handleChallengeClick} />
               ))
             )}
           </TabsContent>
@@ -363,7 +412,7 @@ export default function Challenges() {
               </Card>
             ) : (
               activeChallenges.map((challenge: any) => (
-                <ChallengeCard key={challenge.id} challenge={challenge} />
+                <ChallengeCard key={challenge.id} challenge={challenge} onChatClick={handleChallengeClick} />
               ))
             )}
           </TabsContent>
@@ -383,7 +432,7 @@ export default function Challenges() {
               </Card>
             ) : (
               completedChallenges.map((challenge: any) => (
-                <ChallengeCard key={challenge.id} challenge={challenge} />
+                <ChallengeCard key={challenge.id} challenge={challenge} onChatClick={handleChallengeClick} />
               ))
             )}
           </TabsContent>
@@ -445,6 +494,18 @@ export default function Challenges() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Challenge Chat Dialog */}
+      {showChat && selectedChallenge && (
+        <Dialog open={showChat} onOpenChange={setShowChat}>
+          <DialogContent className="sm:max-w-4xl max-h-[80vh] p-0">
+            <ChallengeChat 
+              challenge={selectedChallenge} 
+              onClose={() => setShowChat(false)} 
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       <MobileNavigation />
     </div>

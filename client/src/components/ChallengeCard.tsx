@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { MessageCircle, Check, X, Eye, Trophy } from "lucide-react";
 
 interface ChallengeCardProps {
   challenge: {
@@ -34,16 +35,17 @@ interface ChallengeCardProps {
       profileImageUrl?: string;
     };
   };
+  onChatClick?: (challenge: any) => void;
 }
 
-export function ChallengeCard({ challenge }: ChallengeCardProps) {
+export function ChallengeCard({ challenge, onChatClick }: ChallengeCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const acceptChallengeMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest('PATCH', `/api/challenges/${challenge.id}`, {
-        status: 'active'
+      return await apiRequest(`/api/challenges/${challenge.id}/accept`, {
+        method: "POST",
       });
     },
     onSuccess: () => {
@@ -153,6 +155,7 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
                   onClick={() => acceptChallengeMutation.mutate()}
                   disabled={acceptChallengeMutation.isPending}
                 >
+                  <Check className="w-4 h-4 mr-1" />
                   Accept
                 </Button>
                 <Button
@@ -161,17 +164,31 @@ export function ChallengeCard({ challenge }: ChallengeCardProps) {
                   onClick={() => declineChallengeMutation.mutate()}
                   disabled={declineChallengeMutation.isPending}
                 >
+                  <X className="w-4 h-4 mr-1" />
                   Decline
                 </Button>
               </>
             )}
-            {challenge.status === 'active' && (
+            {(challenge.status === 'active' || challenge.status === 'pending') && onChatClick && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => onChatClick(challenge)}
+                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+              >
+                <MessageCircle className="w-4 h-4 mr-1" />
+                Chat
+              </Button>
+            )}
+            {challenge.status === 'active' && !onChatClick && (
               <Button size="sm" className="bg-primary text-white hover:bg-primary/90">
+                <Eye className="w-4 h-4 mr-1" />
                 View Details
               </Button>
             )}
             {challenge.status === 'completed' && (
               <Button size="sm" variant="outline">
+                <Trophy className="w-4 h-4 mr-1" />
                 View Results
               </Button>
             )}

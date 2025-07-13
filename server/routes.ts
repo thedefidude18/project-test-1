@@ -613,9 +613,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/challenges/:id/messages', async (req, res) => {
+  app.post('/api/challenges/:id/accept', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const challengeId = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      
+      const challenge = await storage.acceptChallenge(challengeId, userId);
+      
+      // Get user info for notifications
+      const challenger = await storage.getUser(challenge.challenger);
+      const challenged = await storage.getUser(challenge.challenged);
+      
+      // Create notifications for both users
+      await storage.createNotification({
+        userId: challenge.challenger,
+        type: 'challenge_accepted',
+        title: '🎯 Challenge Accepted!',
+        message: `${challenged?.firstName || challenged?.username} accepted your challenge "${challenge.title}"! The challenge is now active.`,
+        data: { 
+          challengeId: challengeId,
+          challengeTitle: challenge.title,
+          amount: parseFloat(challenge.amount),
+          acceptedBy: challenged?.firstName || challenged?.username
+        },
+      });
+
+      await storage.createNotification({
+        userId: challenge.challenged,
+        type: 'challenge_active',
+        title: '🔒 Challenge Active',
+        message: `Your stake of ₦${parseFloat(challenge.amount).toLocaleString()} has been escrowed for challenge "${challenge.title}". Good luck!`,
+        data: { 
+          challengeId: challengeId,
+          challengeTitle: challenge.title,
+          amount: parseFloat(challenge.amount)
+        },
+      });
+
+      // Send real-time notifications via Pusher
+      try {
+        await pusher.trigger(`user-${challenge.challenger}`, 'challenge-accepted', {
+          id: Date.now(),
+          type: 'challenge_accepted',
+          title: '🎯 Challenge Accepted!',
+          message: `${challenged?.firstName || challenged?.username} accepted your challenge "${challenge.title}"!`,
+          data: { challengeId: challengeId },
+          timestamp: new Date().toISOString(),
+        });
+
+        await pusher.trigger(`user-${challenge.challenged}`, 'challenge-active', {
+          id: Date.now(),
+          type: 'challenge_active',
+          title: '🔒 Challenge Active',
+          message: `Challenge "${challenge.title}" is now active! Your funds are secured in escrow.`,
+          data: { challengeId: challengeId },
+          timestamp: new Date().toISOString(),
+        });
+      } catch (pusherError) {
+        console.error("Error sending Pusher notifications:", pusherError);
+      }
+
+      res.json(challenge);
+    } catch (error) {
+      console.error("Error accepting challenge:", error);
+      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to accept challenge" });
+    }
+  });
+
+  app.get('/api/challenges/:id/messages', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const challengeId = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+
+      // Verify user is part of the challenge
+      const challenge = await storage.getChallengeById(challengeId);
+      if (!challenge || (challenge.challenger !== userId && challenge.challenged !== userId)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
       const messages = await storage.getChallengeMessages(challengeId);
       res.json(messages);
     } catch (error) {
@@ -626,12 +701,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/challenges/:id/messages', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
       const challengeId = parseInt(req.params.id);
-      const { message } = req.body;
+      const userId = req.user.claims.sub;
+      const { message, type = 'text', evidence } = req.body;
+
+      // Verify user is part of the challenge
+      const challenge = await storage.getChallengeById(challengeId);
+      if (!challenge || (challenge.challenger !== userId && challenge.challenged !== userId)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
 
       const newMessage = await storage.createChallengeMessage(challengeId, userId, message);
-      res.json(newMessage);
+      
+      // Get user info for real-time message
+      const user = await storage.getUser(userId);
+      const messageWithUser = {
+        ...newMessage,
+        user: {
+          id: user?.id,
+          username: user?.username,
+          firstName: user?.firstName,
+          profileImageUrl: user?.profileImageUrl
+        }
+      };
+
+      // Send real-time message to both participants
+      const otherUserId = challenge.challenger === userId ? challenge.challenged : challenge.challenger;
+      
+      try {
+        await pusher.trigger(`challenge-${challengeId}`, 'new-message', {
+          message: messageWithUser,
+          timestamp: new Date().toISOString(),
+        });
+
+        // Send notification to other participant
+        await storage.createNotification({
+          userId: otherUserId,
+          type: 'challenge_message',
+          title: '💬 New Challenge Message',
+          message: `${user?.firstName || user?.username} sent a message in challenge "${challenge.title}"`,
+          data: { 
+            challengeId: challengeId,
+            challengeTitle: challenge.title,
+            messagePreview: message.substring(0, 50) + (message.length > 50 ? '...' : '')
+          },
+        });
+      } catch (pusherError) {
+        console.error("Error sending real-time message:", pusherError);
+      }
+
+      res.json(messageWithUser);
     } catch (error) {
       console.error("Error creating challenge message:", error);
       res.status(500).json({ message: "Failed to create message" });
