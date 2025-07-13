@@ -59,14 +59,21 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
   const queryClient = useQueryClient();
 
   // Fetch user profile
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, error } = useQuery({
     queryKey: [`/api/users/${userId}/profile`],
     queryFn: async () => {
-      const response = await apiRequest("GET", `/api/users/${userId}/profile`);
-      return response as UserProfile;
+      try {
+        const response = await apiRequest("GET", `/api/users/${userId}/profile`);
+        return response as UserProfile;
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        throw err;
+      }
     },
     retry: false,
+    enabled: !!userId,
     onError: (error: Error) => {
+      console.error("Profile query error:", error);
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -104,6 +111,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
   // Tip mutation
   const tipMutation = useMutation({
     mutationFn: async (amount: number) => {
+      if (!userId || !profile) {
+        throw new Error("User information not available");
+      }
       return await apiRequest("POST", `/api/wallet/transfer`, {
         recipientId: userId,
         amount,
@@ -112,17 +122,19 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/profile`] });
       toast({
         title: "Tip Sent",
-        description: `Successfully sent ${formatBalance(parseInt(tipAmount))} to ${profile?.firstName || profile?.username}`,
+        description: `Successfully sent ${formatBalance(parseInt(tipAmount))} to ${profile?.firstName || profile?.username || 'User'}`,
       });
       setShowTipModal(false);
       setTipAmount('');
     },
     onError: (error: Error) => {
+      console.error("Tip error:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to send tip",
         variant: "destructive",
       });
     },
@@ -262,6 +274,27 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+        <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <CardContent className="p-6 text-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="absolute top-2 right-2 h-6 w-6 p-0"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+            <p className="text-red-500">Failed to load user profile</p>
+            <Button onClick={onClose} className="mt-4">Close</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!profile) {
     return null;
   }
@@ -293,19 +326,21 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
               <div className="flex flex-col items-center space-y-2">
                 <Avatar className="w-16 h-16">
                   <AvatarImage 
-                    src={getAvatarUrl(profile.id, profile.profileImageUrl, profile.username)} 
-                    alt={profile.firstName || profile.username} 
+                    src={getAvatarUrl(profile.id || userId, profile.profileImageUrl, profile.username)} 
+                    alt={profile.firstName || profile.username || 'User'} 
                   />
-                  <AvatarFallback className="text-lg">
-                    <img src={getAvatarUrl(profile.id, profile.profileImageUrl, profile.username)} alt="Avatar" />
+                  <AvatarFallback className="text-lg bg-primary/10 text-primary">
+                    {(profile.firstName?.[0] || profile.username?.[0] || 'U').toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
 
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    {profile.firstName || profile.username || 'Unknown'}
+                    {profile.firstName || profile.username || 'User'}
                   </h2>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">@{profile.username || 'unknown'}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    @{profile.username || `user_${profile.id?.slice(0, 8)}`}
+                  </p>
                   <p className="text-xs text-slate-500 mt-1">
                     Joined {profile.createdAt && !isNaN(new Date(profile.createdAt).getTime()) 
                       ? formatDistanceToNow(new Date(profile.createdAt), { addSuffix: true })
