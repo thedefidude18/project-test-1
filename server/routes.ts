@@ -146,6 +146,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Event not found" });
       }
 
+      // Check user balance
+      const balance = await storage.getUserBalance(userId);
+      if (balance.balance < amount) {
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+
       // Check if event is private
       if (event.isPrivate) {
         // Create join request for private events
@@ -160,18 +166,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
           data: { eventId: eventId, requestId: joinRequest.id },
         });
 
+        // Create notification for user about pending request
+        await storage.createNotification({
+          userId,
+          type: 'event_join_pending',
+          title: '⏳ Join Request Submitted',
+          message: `Your request to join "${event.title}" is pending approval. Funds will be locked once approved.`,
+          data: { 
+            eventId: eventId, 
+            amount: amount,
+            prediction: prediction ? 'YES' : 'NO',
+            eventTitle: event.title
+          },
+        });
+
         return res.json({ message: "Join request sent to event creator", request: joinRequest });
       }
 
       const participant = await storage.joinEvent(eventId, userId, prediction, amount);
 
-      // Create transaction record
+      // Create transaction record for escrow
       await storage.createTransaction({
         userId,
-        type: 'bet',
+        type: 'event_escrow',
         amount: `-${amount}`,
-        description: `Bet on event ${eventId}`,
+        description: `Funds locked in escrow for event: ${event.title}`,
         relatedId: eventId,
+        status: 'completed',
+      });
+
+      // Create comprehensive notifications
+      await storage.createNotification({
+        userId,
+        type: 'funds_locked',
+        title: '🔒 Funds Locked in Escrow',
+        message: `₦${amount.toLocaleString()} locked for your ${prediction ? 'YES' : 'NO'} prediction on "${event.title}". Funds will be released when the event ends.`,
+        data: { 
+          eventId: eventId,
+          amount: amount,
+          prediction: prediction ? 'YES' : 'NO',
+          eventTitle: event.title,
+          eventEndDate: event.endDate,
+          type: 'escrow_lock'
+        },
+      });
+
+      // Notify event creator about new participant
+      await storage.createNotification({
+        userId: event.creatorId,
+        type: 'event_participant_joined',
+        title: '🎯 New Event Participant',
+        message: `${req.user.claims.first_name || 'Someone'} joined your event "${event.title}" with a ${prediction ? 'YES' : 'NO'} prediction!`,
+        data: { 
+          eventId: eventId,
+          participantId: userId,
+          amount: amount,
+          prediction: prediction ? 'YES' : 'NO',
+          eventTitle: event.title
+        },
+      });
+
+      // Send real-time notifications via Pusher
+      await pusher.trigger(`user-${userId}`, 'event-notification', {
+        title: '🔒 Funds Locked in Escrow',
+        message: `₦${amount.toLocaleString()} locked for your ${prediction ? 'YES' : 'NO'} prediction on "${event.title}"`,
+        eventId: eventId,
+        type: 'funds_locked',
+      });
+
+      await pusher.trigger(`user-${event.creatorId}`, 'event-notification', {
+        title: '🎯 New Event Participant',
+        message: `${req.user.claims.first_name || 'Someone'} joined your event "${event.title}"`,
+        eventId: eventId,
+        type: 'participant_joined',
       });
 
       res.json(participant);
@@ -1043,6 +1110,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending tip:", error);
       res.status(500).json({ message: "Failed to send tip" });
+    }
+  });
+
+  // Event lifecycle management routes
+  app.post('/api/admin/events/:id/notify-starting', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      await storage.notifyEventStarting(eventId);
+      res.json({ message: "Event starting notifications sent" });
+    } catch (error) {
+      console.error("Error sending event starting notifications:", error);
+      res.status(500).json({ message: "Failed to send notifications" });
+    }
+  });
+
+  app.post('/api/admin/events/:id/notify-ending', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      await storage.notifyEventEnding(eventId);
+      res.json({ message: "Event ending notifications sent" });
+    } catch (error) {
+      console.error("Error sending event ending notifications:", error);
+      res.status(500).json({ message: "Failed to send notifications" });
     }
   });
 

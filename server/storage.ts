@@ -643,8 +643,10 @@ export class DatabaseStorage implements IStorage {
       .values(transaction)
       .returning();
 
-    // Update user balance for deposit/withdrawal transactions
-    if (transaction.type === 'deposit' || transaction.type === 'withdrawal' || transaction.type === 'win') {
+    // Update user balance for specific transaction types
+    if (transaction.type === 'deposit' || transaction.type === 'withdrawal' || transaction.type === 'win' || 
+        transaction.type === 'event_escrow' || transaction.type === 'event_win' || transaction.type === 'tip_received' ||
+        transaction.type === 'tip_sent') {
       const amount = parseFloat(transaction.amount);
       if (!isNaN(amount)) {
         await db
@@ -873,6 +875,12 @@ export class DatabaseStorage implements IStorage {
       reference: `event_${eventId}_creator_fee`,
     });
 
+    // Notify losers about funds release (they get nothing back)
+    for (const loser of losers) {
+      await this.notifyFundsReleased(loser.userId, eventId, 0, false);
+    }
+
+    // Notify winners about their winnings (already handled above in winner loop)
     // Update event creator fee collected
     await db
       .update(events)
@@ -985,7 +993,78 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await this.db.select().from(users);
+    return await db.select().from(users);
+  }
+
+  // Event lifecycle notification methods
+  async notifyEventStarting(eventId: number): Promise<void> {
+    const event = await this.getEventById(eventId);
+    if (!event) return;
+
+    const participants = await this.getEventParticipants(eventId);
+    
+    for (const participant of participants) {
+      await this.createNotification({
+        userId: participant.userId,
+        type: 'event_starting',
+        title: '🚀 Event Started',
+        message: `The event "${event.title}" has officially started! Your funds are secure in escrow until results are announced.`,
+        data: { 
+          eventId: eventId,
+          eventTitle: event.title,
+          prediction: participant.prediction ? 'YES' : 'NO',
+          amount: parseFloat(participant.amount),
+          endDate: event.endDate
+        },
+      });
+    }
+  }
+
+  async notifyEventEnding(eventId: number): Promise<void> {
+    const event = await this.getEventById(eventId);
+    if (!event) return;
+
+    const participants = await this.getEventParticipants(eventId);
+    
+    for (const participant of participants) {
+      await this.createNotification({
+        userId: participant.userId,
+        type: 'event_ending',
+        title: '⏰ Event Ending Soon',
+        message: `The event "${event.title}" is ending soon! Results will be announced shortly and your escrowed funds will be released.`,
+        data: { 
+          eventId: eventId,
+          eventTitle: event.title,
+          prediction: participant.prediction ? 'YES' : 'NO',
+          amount: parseFloat(participant.amount),
+          endDate: event.endDate
+        },
+      });
+    }
+  }
+
+  async notifyFundsReleased(userId: string, eventId: number, amount: number, won: boolean): Promise<void> {
+    const event = await this.getEventById(eventId);
+    if (!event) return;
+
+    const title = won ? '💰 You Won!' : '📤 Funds Released';
+    const message = won 
+      ? `Congratulations! You won ₦${amount.toLocaleString()} from "${event.title}"!`
+      : `Your escrowed funds of ₦${amount.toLocaleString()} have been released from "${event.title}".`;
+
+    await this.createNotification({
+      userId,
+      type: won ? 'event_won' : 'funds_released',
+      title,
+      message,
+      data: { 
+        eventId: eventId,
+        eventTitle: event.title,
+        amount: amount,
+        won: won,
+        type: 'escrow_release'
+      },
+    });
   }
 }
 
