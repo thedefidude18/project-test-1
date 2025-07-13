@@ -30,7 +30,7 @@ export function Navigation() {
     refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
   });
 
-  const unreadCount = notifications.filter((n: any) => !n.read).length;
+  const unreadCount = Array.isArray(notifications) ? notifications.filter((n: any) => !n.read).length : 0;
 
   const [, navigate] = useLocation();
 
