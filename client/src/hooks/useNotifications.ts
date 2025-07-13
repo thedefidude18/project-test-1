@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { useAuth } from './useAuth';
 import { getUserChannel } from '@/lib/pusher';
 import { useToast } from '@/hooks/use-toast';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 export interface NotificationData {
   id: number;
@@ -19,6 +20,13 @@ export function useNotifications() {
   const queryClient = useQueryClient();
   const channelRef = useRef<any>(null);
   const notificationSound = useRef<HTMLAudioElement | null>(null);
+
+  // Fetch notifications
+  const { data: notifications = [] } = useQuery({
+    queryKey: ["/api/notifications"],
+    queryFn: () => apiRequest("GET", "/api/notifications"),
+    enabled: !!user?.id,
+  });
 
   useEffect(() => {
     // Initialize notification sound
@@ -126,6 +134,7 @@ export function useNotifications() {
   }, [user?.id, toast, queryClient]);
 
   return {
+    notifications,
     // Utility function to manually trigger notifications for testing
     triggerTestNotification: (type: string, title: string, message: string) => {
       if (notificationSound.current) {
