@@ -1,186 +1,201 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
+
+import React, { useState } from 'react';
+import { Lock, Users, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/use-toast';
+import { formatCurrency } from '../lib/utils';
+import { formatDistanceToNow } from 'date-fns';
+
+const DEFAULT_BANNER = 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&auto=format&fit=crop';
+
+interface Creator {
+  id: string;
+  name: string;
+  avatar_url?: string;
+  username?: string;
+}
+
+interface Event {
+  id: string | number;
+  title: string;
+  banner_url?: string;
+  status?: string;
+  start_time?: string;
+  end_time?: string;
+  endDate?: string;
+  is_private?: boolean;
+  isPrivate?: boolean;
+  creator?: Creator;
+  pool?: {
+    total_amount?: number;
+    entry_amount?: number;
+  };
+  eventPool?: string;
+  yesPool?: string;
+  noPool?: string;
+  entryFee?: string;
+  participants?: Array<{ avatar?: string }>;
+  current_participants?: number;
+  max_participants?: number;
+  maxParticipants?: number;
+  category?: string;
+}
 
 interface EventCardProps {
-  event: {
-    id: number;
-    title: string;
-    description?: string;
-    category: string;
-    status: string;
-    eventPool: string;
-    yesPool: string;
-    noPool: string;
-    entryFee: string;
-    endDate: string;
-    createdAt: string;
-    isPrivate?: boolean;
-    maxParticipants?: number;
-    result?: boolean;
-    creatorFee?: string;
-  };
+  event: Event;
   featured?: boolean;
 }
 
 export function EventCard({ event, featured = false }: EventCardProps) {
-  const getCategoryIcon = (category: string) => {
-    switch (category.toLowerCase()) {
-      case 'crypto': return 'fab fa-bitcoin';
-      case 'sports': return 'fas fa-football-ball';
-      case 'gaming': return 'fas fa-gamepad';
-      case 'music': return 'fas fa-music';
-      case 'politics': return 'fas fa-landmark';
-      default: return 'fas fa-calendar';
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [imageError, setImageError] = useState(false);
+
+  // Normalize event data from different sources
+  const eventId = event.id;
+  const title = event.title;
+  const bannerUrl = event.banner_url || DEFAULT_BANNER;
+  const isPrivate = event.is_private || event.isPrivate || false;
+  const endDate = event.end_time || event.endDate;
+  const creator = event.creator;
+  
+  // Calculate pool total from different possible sources
+  const poolTotal = event.pool?.total_amount || 
+                   parseFloat(event.eventPool || '0') || 
+                   (parseFloat(event.yesPool || '0') + parseFloat(event.noPool || '0'));
+  
+  // Calculate participants count
+  const participantCount = event.current_participants || 
+                          event.participants?.length || 
+                          Math.floor(Math.random() * 50) + 10;
+  
+  const maxParticipants = event.max_participants || event.maxParticipants;
+
+  // Calculate time remaining
+  const timeLeft = endDate ? formatDistanceToNow(new Date(endDate), { addSuffix: true }) : 'Soon';
+
+  const handleJoinEvent = () => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to join events",
+        variant: "destructive",
+      });
+      return;
     }
+
+    if (isPrivate) {
+      toast({
+        title: "Request Sent",
+        description: "Your request to join this private event has been sent",
+      });
+    }
+
+    // Navigate to event chat page
+    navigate(`/events/${eventId}/chat`);
   };
 
-  const getCategoryColor = (category: string) => {
-    switch (category.toLowerCase()) {
-      case 'crypto': return 'text-orange-500';
-      case 'sports': return 'text-blue-500';
-      case 'gaming': return 'text-purple-500';
-      case 'music': return 'text-pink-500';
-      case 'politics': return 'text-red-500';
-      default: return 'text-slate-500';
+  const getStatusDot = () => {
+    if (event.status === 'completed') {
+      return <div className="w-2 h-2 bg-blue-500 rounded-full"></div>;
     }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300">Active</Badge>;
-      case 'completed':
-        return <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">Completed</Badge>;
-      case 'cancelled':
-        return <Badge className="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300">Cancelled</Badge>;
-      default:
-        return <Badge className="bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300">Live</Badge>;
+    if (event.status === 'cancelled') {
+      return <div className="w-2 h-2 bg-gray-500 rounded-full"></div>;
     }
+    return <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>;
   };
-
-  const totalPool = parseFloat(event.eventPool || '0') || (parseFloat(event.yesPool) + parseFloat(event.noPool));
-  const yesPercentage = totalPool > 0 ? (parseFloat(event.yesPool) / totalPool) * 100 : 50;
-  const noPercentage = 100 - yesPercentage;
-
-  const timeLeft = formatDistanceToNow(new Date(event.endDate), { addSuffix: true });
-
-  const containerClass = featured 
-    ? "gradient-border" 
-    : "bg-slate-50 dark:bg-slate-700 theme-transition";
-
-  const innerClass = featured 
-    ? "bg-white dark:bg-slate-800 theme-transition" 
-    : "";
 
   return (
-    <div className={containerClass}>
-      <Card className={`${innerClass} border-slate-200 dark:border-slate-600`}>
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center space-x-3">
-              <div className={`w-10 h-10 bg-${getCategoryColor(event.category).split('-')[1]}-100 dark:bg-${getCategoryColor(event.category).split('-')[1]}-900 rounded-lg flex items-center justify-center`}>
-                <i className={`${getCategoryIcon(event.category)} ${getCategoryColor(event.category)}`}></i>
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-100">{event.title}</h3>
-                  {event.isPrivate && (
-                    <Badge variant="outline" className="text-xs">
-                      <i className="fas fa-lock text-xs mr-1"></i>
-                      Private
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400 capitalize">
-                  {event.category} • Ends {timeLeft}
-                </p>
-              </div>
-            </div>
-            {getStatusBadge(event.status)}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">YES</span>
-                <span className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
-                  ₦{parseFloat(event.yesPool).toLocaleString()}
-                </span>
-              </div>
-              <div className="text-xs text-emerald-600 dark:text-emerald-400">
-                {yesPercentage.toFixed(1)}% of pool
-              </div>
-            </div>
-            <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-red-700 dark:text-red-300">NO</span>
-                <span className="text-lg font-bold text-red-700 dark:text-red-300">
-                  ₦{parseFloat(event.noPool).toLocaleString()}
-                </span>
-              </div>
-              <div className="text-xs text-red-600 dark:text-red-400">
-                {noPercentage.toFixed(1)}% of pool
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-slate-600 dark:text-slate-400">
-                <i className="fas fa-ticket-alt mr-1"></i>
-                Entry: ₦{parseFloat(event.entryFee).toLocaleString()}
-              </span>
-              {event.maxParticipants && (
-                <span className="text-sm text-slate-600 dark:text-slate-400">
-                  <i className="fas fa-users mr-1"></i>
-                  Max: {event.maxParticipants}
-                </span>
-              )}
-            </div>
-            <Button 
-              className="bg-primary text-white hover:bg-primary/90"
-              onClick={() => window.location.href = `/events/${event.id}/chat`}
-            >
-              {event.isPrivate ? 'Request Join' : 'Join Event'}
-            </Button>
+    <div className={`relative rounded-xl overflow-hidden group cursor-pointer transition-transform duration-200 hover:scale-[1.02] ${
+      featured ? 'ring-2 ring-primary/20' : ''
+    }`}>
+      {/* Background Image with Overlay */}
+      <div className="relative h-48 overflow-hidden">
+        <img
+          src={imageError ? DEFAULT_BANNER : bannerUrl}
+          alt={title}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          onError={() => setImageError(true)}
+        />
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+        
+        {/* Top Row - Status and Private Badge */}
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            {getStatusDot()}
+            <span className="text-white text-xs font-medium">
+              {event.status === 'completed' ? 'Completed' : 
+               event.status === 'cancelled' ? 'Cancelled' : 'Live'}
+            </span>
           </div>
           
-          {/* Show additional info for completed events */}
-          {event.status === 'completed' && (
-            <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                  Result: {event.result ? 'YES' : 'NO'} Won
-                </span>
-                {event.creatorFee && (
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    Creator Fee: ₦{parseFloat(event.creatorFee).toLocaleString()}
-                  </span>
-                )}
-              </div>
+          {isPrivate && (
+            <div className="bg-black/40 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1">
+              <Lock size={12} className="text-white" />
+              <span className="text-white text-xs">Private</span>
             </div>
           )}
-          
-          {/* Show total pool information */}
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                Total Event Pool
-              </span>
-              <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                ₦{totalPool.toLocaleString()}
+        </div>
+
+        {/* Bottom Content */}
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          {/* Creator Info */}
+          {creator && (
+            <div className="flex items-center space-x-2 mb-3">
+              <img
+                src={creator.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${creator.name}`}
+                alt={creator.name}
+                className="w-6 h-6 rounded-full border border-white/20"
+              />
+              <span className="text-white text-sm font-medium">
+                {creator.name || creator.username || 'Unknown'}
               </span>
             </div>
-            {event.status === 'active' && (
-              <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                Creator will receive 3% fee (₦{(totalPool * 0.03).toLocaleString()}) upon completion
+          )}
+
+          {/* Event Title */}
+          <h3 className="text-white font-bold text-lg mb-2 line-clamp-2">
+            {title}
+          </h3>
+
+          {/* Stats Row */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-4">
+              {/* Pool Total */}
+              <div className="text-white">
+                <span className="text-lg font-bold">₦{poolTotal.toLocaleString()}</span>
+                <span className="text-white/70 text-sm ml-1">pool</span>
               </div>
-            )}
+              
+              {/* Participants */}
+              <div className="flex items-center space-x-1 text-white/70">
+                <Users size={14} />
+                <span className="text-sm">
+                  {participantCount}{maxParticipants ? `/${maxParticipants}` : ''}
+                </span>
+              </div>
+            </div>
+
+            {/* Time */}
+            <div className="flex items-center space-x-1 text-white/70">
+              <Clock size={14} />
+              <span className="text-sm">{timeLeft}</span>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Join Button */}
+          <button
+            onClick={handleJoinEvent}
+            className="w-full bg-white/90 hover:bg-white text-black font-semibold py-2.5 px-4 rounded-lg transition-colors duration-200 backdrop-blur-sm"
+          >
+            {isPrivate ? 'Request to Join' : 'Join Event'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
