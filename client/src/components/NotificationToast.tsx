@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useToast } from '@/hooks/use-toast';
@@ -12,15 +11,15 @@ export function NotificationToast() {
       return;
     }
 
-    const unreadNotifications = notifications.filter(n => !n.read);
-    
+    const unreadNotifications = (notifications || []).filter(n => !n.isRead);
+
     unreadNotifications.forEach((notification) => {
       toast({
         title: notification.title,
         description: notification.message,
         duration: 5000,
       });
-      
+
       // Mark as read after showing toast
       markAsRead(notification.id);
     });

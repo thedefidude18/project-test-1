@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { formatDistanceToNow } from 'date-fns';
-import AdminLayout from '@/components/AdminLayout';
+import AdminLayout from "@/components/AdminLayout";
 import { 
   DollarSign, 
   TrendingUp, 

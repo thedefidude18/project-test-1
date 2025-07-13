@@ -17,7 +17,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import AdminLayout from '@/components/AdminLayout';
+import AdminLayout from "@/components/AdminLayout";
 
 interface Event {
   id: number;
