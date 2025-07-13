@@ -263,14 +263,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const reaction = await storage.toggleMessageReaction(messageId, userId, emoji);
       
-      // Broadcast reaction update via Pusher
+      // Get updated reaction summary for the message
+      const message = await storage.getEventMessageById(messageId);
+      const updatedReactions = await storage.getMessageReactions(messageId);
+      
+      // Broadcast reaction update via Pusher with complete reaction data
       await pusher.trigger(`event-${eventId}`, 'reaction-update', {
         messageId: messageId,
-        reactions: reaction,
+        reactions: updatedReactions,
         userId: userId,
+        action: reaction.action,
+        emoji: emoji,
+        timestamp: new Date().toISOString(),
       });
 
-      res.json(reaction);
+      res.json({ 
+        ...reaction, 
+        messageId: messageId,
+        reactions: updatedReactions,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error("Error reacting to message:", error);
       res.status(500).json({ message: "Failed to react to message" });
@@ -442,14 +454,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const challengeData = insertChallengeSchema.parse({ ...req.body, challenger: userId });
       const challenge = await storage.createChallenge(challengeData);
 
+      // Get challenger and challenged user info
+      const challenger = await storage.getUser(userId);
+      const challenged = await storage.getUser(challenge.challenged);
+
       // Create notification for challenged user
-      await storage.createNotification({
+      const challengedNotification = await storage.createNotification({
         userId: challenge.challenged,
         type: 'challenge',
-        title: 'New Challenge Request',
-        message: `You have been challenged by ${req.user.claims.first_name || 'someone'}!`,
-        data: { challengeId: challenge.id },
+        title: '🎯 New Challenge Request',
+        message: `${challenger?.firstName || challenger?.username || 'Someone'} challenged you to "${challenge.title}"`,
+        data: { 
+          challengeId: challenge.id,
+          challengerName: challenger?.firstName || challenger?.username,
+          challengeTitle: challenge.title,
+          amount: challenge.amount,
+          type: challenge.type
+        },
       });
+
+      // Create notification for challenger (confirmation)
+      const challengerNotification = await storage.createNotification({
+        userId: userId,
+        type: 'challenge_sent',
+        title: '🚀 Challenge Sent',
+        message: `Your challenge "${challenge.title}" was sent to ${challenged?.firstName || challenged?.username}`,
+        data: { 
+          challengeId: challenge.id,
+          challengedName: challenged?.firstName || challenged?.username,
+          challengeTitle: challenge.title,
+          amount: challenge.amount,
+          type: challenge.type
+        },
+      });
+
+      // Send instant real-time notifications via Pusher
+      try {
+        await pusher.trigger(`user-${challenge.challenged}`, 'challenge-notification', {
+          id: challengedNotification.id,
+          type: 'challenge',
+          title: '🎯 New Challenge Request',
+          message: `${challenger?.firstName || challenger?.username || 'Someone'} challenged you to "${challenge.title}"`,
+          data: challengedNotification.data,
+          timestamp: new Date().toISOString(),
+        });
+
+        await pusher.trigger(`user-${userId}`, 'challenge-notification', {
+          id: challengerNotification.id,
+          type: 'challenge_sent',
+          title: '🚀 Challenge Sent',
+          message: `Your challenge "${challenge.title}" was sent to ${challenged?.firstName || challenged?.username}`,
+          data: challengerNotification.data,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (pusherError) {
+        console.error("Error sending Pusher notifications:", pusherError);
+      }
 
       res.json(challenge);
     } catch (error) {

@@ -62,6 +62,7 @@ export interface IStorage {
   createEventMessage(eventId: number, userId: string, message: string, replyToId?: string, mentions?: string[]): Promise<EventMessage>;
   getEventMessageById(messageId: string): Promise<EventMessage | undefined>;
   toggleMessageReaction(messageId: string, userId: string, emoji: string): Promise<any>;
+  getMessageReactions(messageId: string): Promise<any[]>;
   getEventParticipantsWithUsers(eventId: number): Promise<any[]>;
   
   // Event Pool operations
@@ -385,6 +386,44 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return { action: 'added', reaction: newReaction };
     }
+  }
+
+  async getMessageReactions(messageId: string): Promise<any[]> {
+    const reactions = await db
+      .select({
+        id: messageReactions.id,
+        messageId: messageReactions.messageId,
+        userId: messageReactions.userId,
+        emoji: messageReactions.emoji,
+        createdAt: messageReactions.createdAt,
+        user: {
+          id: users.id,
+          username: users.username,
+          firstName: users.firstName,
+        }
+      })
+      .from(messageReactions)
+      .innerJoin(users, eq(messageReactions.userId, users.id))
+      .where(eq(messageReactions.messageId, parseInt(messageId)));
+
+    // Group reactions by emoji
+    const groupedReactions = reactions.reduce((acc: any[], reaction) => {
+      const existing = acc.find(r => r.emoji === reaction.emoji);
+      if (existing) {
+        existing.count++;
+        existing.users.push(reaction.user.username || reaction.user.firstName);
+      } else {
+        acc.push({
+          emoji: reaction.emoji,
+          count: 1,
+          users: [reaction.user.username || reaction.user.firstName],
+          userReacted: false, // Will be set by caller based on current user
+        });
+      }
+      return acc;
+    }, []);
+
+    return groupedReactions;
   }
 
   async getEventParticipantsWithUsers(eventId: number): Promise<any[]> {

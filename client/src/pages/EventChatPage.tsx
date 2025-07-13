@@ -198,8 +198,66 @@ export default function EventChatPage() {
     mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
       await apiRequest("POST", `/api/events/${eventId}/messages/${messageId}/react`, { emoji });
     },
-    onSuccess: () => {
-      refetchMessages();
+    onMutate: async ({ messageId, emoji }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/events", eventId, "messages"] });
+      
+      // Snapshot the previous value
+      const previousMessages = queryClient.getQueryData(["/api/events", eventId, "messages"]);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData(["/api/events", eventId, "messages"], (old: any) => {
+        if (!old) return old;
+        
+        return old.map((message: any) => {
+          if (message.id === messageId) {
+            const reactions = message.reactions || [];
+            const existingReaction = reactions.find((r: any) => r.emoji === emoji);
+            
+            if (existingReaction) {
+              // Toggle existing reaction
+              if (existingReaction.userReacted) {
+                // Remove user's reaction
+                return {
+                  ...message,
+                  reactions: existingReaction.count === 1 
+                    ? reactions.filter((r: any) => r.emoji !== emoji)
+                    : reactions.map((r: any) => r.emoji === emoji 
+                        ? { ...r, count: r.count - 1, userReacted: false }
+                        : r)
+                };
+              } else {
+                // Add user's reaction
+                return {
+                  ...message,
+                  reactions: reactions.map((r: any) => r.emoji === emoji 
+                    ? { ...r, count: r.count + 1, userReacted: true }
+                    : r)
+                };
+              }
+            } else {
+              // Add new reaction
+              return {
+                ...message,
+                reactions: [...reactions, { emoji, count: 1, userReacted: true }]
+              };
+            }
+          }
+          return message;
+        });
+      });
+      
+      return { previousMessages };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      queryClient.setQueryData(["/api/events", eventId, "messages"], context?.previousMessages);
+    },
+    onSettled: () => {
+      // Refetch to ensure data consistency
+      queryClient.invalidateQueries({ queryKey: ["/api/events", eventId, "messages"] });
+      
+      // Send WebSocket message for real-time updates
       sendMessage({
         type: 'message_reaction',
         eventId,

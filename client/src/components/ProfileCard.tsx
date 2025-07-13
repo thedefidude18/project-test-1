@@ -295,7 +295,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                     alt={profile.firstName || profile.username} 
                   />
                   <AvatarFallback className="text-2xl">
-                    {(profile.firstName?.[0] || profile.username[0]).toUpperCase()}
+                    {(profile.firstName?.[0] || profile.username?.[0] || '?').toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 
@@ -303,7 +303,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                   <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
                     {profile.firstName || profile.username}
                   </h2>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">@{profile.username}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">@{profile.username || 'unknown'}</p>
                   <p className="text-xs text-slate-500 mt-1">
                     Joined {formatDistanceToNow(new Date(profile.createdAt), { addSuffix: true })}
                   </p>
