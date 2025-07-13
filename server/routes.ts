@@ -6,7 +6,23 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertEventSchema, insertChallengeSchema, insertNotificationSchema } from "@shared/schema";
 import { and, eq } from "drizzle-orm";
-
+import {
+  users,
+  events,
+  bets,
+  messages,
+  userAchievements,
+  challenges,
+  challengeParticipants,
+  notifications,
+  reactions,
+  userFeedback,
+  walletBalances,
+  walletTransactions,
+  followers,
+} from "../shared/schema";
+import { sql } from "drizzle-orm";
+import crypto from "crypto";
 // Initialize Pusher
 const pusher = new Pusher({
   appId: "1553294",
@@ -262,11 +278,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { emoji } = req.body;
 
       const reaction = await storage.toggleMessageReaction(messageId, userId, emoji);
-      
+
       // Get updated reaction summary for the message
       const message = await storage.getEventMessageById(messageId);
       const updatedReactions = await storage.getMessageReactions(messageId);
-      
+
       // Broadcast reaction update via Pusher with complete reaction data
       await pusher.trigger(`event-${eventId}`, 'reaction-update', {
         messageId: messageId,
@@ -859,347 +875,3 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             // Create notification for successful deposit
             await storage.createNotification({
-              userId,
-              type: 'deposit',
-              title: '💰 Deposit Verified',
-              message: `Your deposit of ₦${depositAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has been verified and credited!`,
-              data: { 
-                amount: depositAmount,
-                reference: reference,
-                type: 'deposit',
-                timestamp: new Date().toISOString()
-              },
-            });
-
-            console.log(`✅ Manual verification completed for user ${userId}: ₦${depositAmount}`);
-            res.json({ message: "Payment verified and credited", amount: depositAmount });
-          } else {
-            res.json({ message: "Payment already processed", amount: depositAmount });
-          }
-        } else {
-          res.status(400).json({ message: "Payment user mismatch" });
-        }
-      } else {
-        res.status(400).json({ message: "Payment verification failed" });
-      }
-    } catch (error) {
-      console.error("Error verifying payment:", error);
-      res.status(500).json({ message: "Failed to verify payment" });
-    }
-  });
-
-  // Wallet transfer route
-  app.post('/api/wallet/transfer', isAuthenticated, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { recipientId, amount, type } = req.body;
-
-      if (!amount || amount <= 0) {
-        return res.status(400).json({ message: "Invalid amount" });
-      }
-
-      if (!recipientId) {
-        return res.status(400).json({ message: "Recipient ID is required" });
-      }
-
-      // Check if user has sufficient balance
-      const balance = await storage.getUserBalance(userId);
-      if (balance < amount) {
-        return res.status(400).json({ message: "Insufficient balance" });
-      }
-
-      // Get recipient user
-      const recipient = await storage.getUser(recipientId);
-      if (!recipient) {
-        return res.status(404).json({ message: "Recipient not found" });
-      }
-
-      // Create transaction records
-      await storage.createTransaction({
-        userId,
-        type: 'transfer_out',
-        amount: `-${amount}`,
-        description: `${type || 'Transfer'} to ${recipient.firstName || recipient.username}`,
-        status: 'completed',
-      });
-
-      await storage.createTransaction({
-        userId: recipientId,
-        type: 'transfer_in',
-        amount: amount.toString(),
-        description: `${type || 'Transfer'} from ${req.user.claims.first_name || 'Someone'}`,
-        status: 'completed',
-      });
-
-      // Update balances
-      await storage.updateUserBalance(userId, -amount);
-      await storage.updateUserBalance(recipientId, amount);
-
-      // Create notification for recipient
-      await storage.createNotification({
-        userId: recipientId,
-        type: 'transfer',
-        title: `${type || 'Transfer'} Received`,
-        message: `You received ₦${amount} from ${req.user.claims.first_name || 'Someone'}`,
-        data: { senderId: userId, amount, type },
-      });
-
-      res.json({ message: "Transfer successful" });
-    } catch (error) {
-      console.error("Error processing transfer:", error);
-      res.status(500).json({ message: "Failed to process transfer" });
-    }
-  });
-
-  // Wallet withdrawal route
-  app.post('/api/wallet/withdraw', isAuthenticated, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { amount } = req.body;
-
-      if (!amount || amount <= 0) {
-        return res.status(400).json({ message: "Invalid amount" });
-      }
-
-      const currentBalance = await storage.getUserBalance(userId);
-
-      if (amount > currentBalance) {
-        return res.status(400).json({ message: "Insufficient funds" });
-      }
-
-      // Create withdrawal transaction record
-      await storage.createTransaction({
-        userId,
-        type: 'withdrawal',
-        amount: `-${amount}`,
-        description: `Withdrawal request - ₦${amount}`,
-        status: 'pending',
-      });
-
-      res.json({ message: "Withdrawal request submitted successfully" });
-    } catch (error) {
-      console.error("Error processing withdrawal:", error);
-      res.status(500).json({ message: "Failed to process withdrawal" });
-    }
-  });
-
-  // Achievement routes
-  app.get('/api/achievements', async (req, res) => {
-    try {
-      const achievements = await storage.getAchievements();
-      res.json(achievements);
-    } catch (error) {
-      console.error("Error fetching achievements:", error);
-      res.status(500).json({ message: "Failed to fetch achievements" });
-    }
-  });
-
-  app.get('/api/user/achievements', isAuthenticated, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const achievements = await storage.getUserAchievements(userId);
-      res.json(achievements);
-    } catch (error) {
-      console.error("Error fetching user achievements:", error);
-      res.status(500).json({ message: "Failed to fetch user achievements" });
-    }
-  });
-
-  // Leaderboard routes
-  app.get('/api/leaderboard', async (req, res) => {
-    try {
-      const leaderboard = await storage.getLeaderboard();
-      res.json(leaderboard);
-    } catch (error) {
-      console.error("Error fetching leaderboard:", error);
-      res.status(500).json({ message: "Failed to fetch leaderboard" });
-    }
-  });
-
-  // Get user profile by ID
-  app.get('/api/users/:id/profile', isAuthenticated, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.params.id;
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Get user stats
-      const stats = await storage.getUserStats(userId);
-      
-      // Get follower/following counts (placeholder for now)
-      const followerCount = 0;
-      const followingCount = 0;
-      const isFollowing = false;
-
-      const profileData = {
-        ...user,
-        stats,
-        followerCount,
-        followingCount,
-        isFollowing,
-      };
-
-      res.json(profileData);
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-      res.status(500).json({ message: "Failed to fetch user profile" });
-    }
-  });
-
-  // User profile update route
-  app.patch('/api/user/profile', isAuthenticated, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { firstName, lastName, username, email } = req.body;
-
-      // Validate required fields
-      if (!firstName || !username || !email) {
-        return res.status(400).json({ message: "First name, username, and email are required" });
-      }
-
-      // Check if username is already taken by another user
-      const existingUser = await storage.getUserByUsername(username);
-      if (existingUser && existingUser.id !== userId) {
-        return res.status(400).json({ message: "Username is already taken" });
-      }
-
-      // Update user profile
-      const updatedUser = await storage.updateUserProfile(userId, {
-        firstName,
-        lastName: lastName || null,
-        username,
-        email,
-      });
-
-      res.json(updatedUser);
-    } catch (error) {
-      console.error("Error updating user profile:", error);
-      res.status(500).json({ message: "Failed to update profile" });
-    }
-  });
-
-  // User notification preferences route
-  app.patch('/api/user/notifications', isAuthenticated, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const notificationSettings = req.body;
-
-      // Update notification preferences
-      await storage.updateNotificationPreferences(userId, notificationSettings);
-
-      res.json({ message: "Notification preferences updated successfully" });
-    } catch (error) {
-      console.error("Error updating notification preferences:", error);
-      res.status(500).json({ message: "Failed to update notification preferences" });
-    }
-  });
-
-  // User stats routes
-  app.get('/api/user/stats', isAuthenticated, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const stats = await storage.getUserStats(userId);
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching user stats:", error);
-      res.status(500).json({ message: "Failed to fetch user stats" });
-    }
-  });
-
-  // Referral routes
-  app.get('/api/referrals', isAuthenticated, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const referrals = await storage.getReferrals(userId);
-      res.json(referrals);
-    } catch (error) {
-      console.error("Error fetching referrals:", error);
-      res.status(500).json({ message: "Failed to fetch referrals" });
-    }
-  });
-
-  app.get('/api/users', isAuthenticated, async (req: AuthenticatedRequest, res) => {
-    try {
-      const users = await storage.getAllUsers();
-      res.json(users);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ message: "Failed to fetch users" });
-    }
-  });
-
-  // Test notification creation (for development)
-  app.post('/api/test/notification', isAuthenticated, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { type = 'achievement', title = 'Test Notification', message = 'This is a test notification' } = req.body;
-
-      const notification = await storage.createNotification({
-        userId,
-        type,
-        title,
-        message,
-        data: { testData: true },
-      });
-
-      res.json(notification);
-    } catch (error) {
-      console.error("Error creating test notification:", error);
-      res.status(500).json({ message: "Failed to create test notification" });
-    }
-  });
-
-  // Create HTTP server
-  const httpServer = createServer(app);
-
-  // Setup WebSocket server
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-
-  wss.on('connection', (ws: WebSocket, req) => {
-    console.log('WebSocket connection established');
-
-    ws.on('message', (data) => {
-      try {
-        const message = JSON.parse(data.toString());
-        console.log('Received WebSocket message:', message);
-
-        // Handle different message types
-        if (message.type === 'user_typing') {
-          // Broadcast typing indicators to users in the same event
-          wss.clients.forEach((client) => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify({
-                type: 'user_typing',
-                eventId: message.eventId,
-                userId: message.userId,
-                isTyping: message.isTyping,
-              }));
-            }
-          });
-        } else {
-          // Broadcast other messages to all connected clients
-          wss.clients.forEach((client) => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(message));
-            }
-          });
-        }
-      } catch (error) {
-        console.error('Error handling WebSocket message:', error);
-      }
-    });
-
-    ws.on('close', () => {
-      console.log('WebSocket connection closed');
-    });
-
-    ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
-    });
-  });
-
-  return httpServer;
-}

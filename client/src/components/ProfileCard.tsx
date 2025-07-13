@@ -267,43 +267,45 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
   }
 
   const calculateLevel = (xp: number) => Math.floor(xp / 1000) + 1;
-  const currentLevelXP = (profile.level - 1) * 1000;
-  const nextLevelXP = profile.level * 1000;
-  const progressXP = profile.xp - currentLevelXP;
-  const levelProgress = (progressXP / (nextLevelXP - currentLevelXP)) * 100;
+  const currentLevel = profile?.level || 1;
+  const currentXP = profile?.xp || 0;
+  const currentLevelXP = (currentLevel - 1) * 1000;
+  const nextLevelXP = currentLevel * 1000;
+  const progressXP = currentXP - currentLevelXP;
+  const levelProgress = Math.max(0, Math.min(100, (progressXP / (nextLevelXP - currentLevelXP)) * 100));
 
   return (
     <>
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
-        <Card className="w-full max-w-md bg-white dark:bg-slate-800" onClick={(e) => e.stopPropagation()}>
-          <CardContent className="p-6 relative">
+        <Card className="w-full max-w-sm bg-white dark:bg-slate-800" onClick={(e) => e.stopPropagation()}>
+          <CardContent className="p-4 relative">
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="absolute top-2 right-2 h-8 w-8 p-0"
+              className="absolute top-1 right-1 h-6 w-6 p-0"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3" />
             </Button>
 
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-3">
               {/* Avatar and Basic Info */}
-              <div className="flex flex-col items-center space-y-3">
-                <Avatar className="w-20 h-20">
+              <div className="flex flex-col items-center space-y-2">
+                <Avatar className="w-16 h-16">
                   <AvatarImage 
                     src={profile.profileImageUrl || undefined} 
                     alt={profile.firstName || profile.username} 
                   />
-                  <AvatarFallback className="text-2xl">
+                  <AvatarFallback className="text-lg">
                     {(profile.firstName?.[0] || profile.username?.[0] || '?').toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                    {profile.firstName || profile.username}
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    {profile.firstName || profile.username || 'Unknown'}
                   </h2>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">@{profile.username || 'unknown'}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">@{profile.username || 'unknown'}</p>
                   <p className="text-xs text-slate-500 mt-1">
                     Joined {profile.createdAt && !isNaN(new Date(profile.createdAt).getTime()) 
                       ? formatDistanceToNow(new Date(profile.createdAt), { addSuffix: true })
@@ -313,38 +315,38 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
 
                 {/* Level and Points */}
                 <div className="flex items-center space-x-2">
-                  <Badge className="bg-primary/10 text-primary border-primary/20">
-                    <Star className="w-3 h-3 mr-1" />
-                    Level {profile.level}
+                  <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">
+                    <Star className="w-2 h-2 mr-1" />
+                    Level {profile.level || 1}
                   </Badge>
-                  <Badge variant="secondary">
-                    {profile.points} Points
+                  <Badge variant="secondary" className="text-xs">
+                    {profile.points || 0} Points
                   </Badge>
                 </div>
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="text-center bg-slate-50 dark:bg-slate-700 rounded-lg p-3">
-                  <Trophy className="w-4 h-4 text-amber-500 mx-auto mb-1" />
-                  <div className="font-semibold text-slate-900 dark:text-slate-100">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="text-center bg-slate-50 dark:bg-slate-700 rounded-lg p-2">
+                  <Trophy className="w-3 h-3 text-amber-500 mx-auto mb-1" />
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {profile.stats?.wins || 0}
                   </div>
                   <div className="text-xs text-slate-600 dark:text-slate-400">Wins</div>
                 </div>
                 
-                <div className="text-center bg-slate-50 dark:bg-slate-700 rounded-lg p-3">
-                  <Users className="w-4 h-4 text-blue-500 mx-auto mb-1" />
-                  <div className="font-semibold text-slate-900 dark:text-slate-100">
+                <div className="text-center bg-slate-50 dark:bg-slate-700 rounded-lg p-2">
+                  <Users className="w-3 h-3 text-blue-500 mx-auto mb-1" />
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {profile.followerCount || 0}
                   </div>
                   <div className="text-xs text-slate-600 dark:text-slate-400">Followers</div>
                 </div>
                 
-                <div className="text-center bg-slate-50 dark:bg-slate-700 rounded-lg p-3">
-                  <TrendingUp className="w-4 h-4 text-emerald-500 mx-auto mb-1" />
-                  <div className="font-semibold text-slate-900 dark:text-slate-100">
-                    {profile.streak}
+                <div className="text-center bg-slate-50 dark:bg-slate-700 rounded-lg p-2">
+                  <TrendingUp className="w-3 h-3 text-emerald-500 mx-auto mb-1" />
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {profile.streak || 0}
                   </div>
                   <div className="text-xs text-slate-600 dark:text-slate-400">Streak</div>
                 </div>
@@ -352,15 +354,15 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
 
               {/* XP Progress Bar with Animation */}
               <div className="relative">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Level {profile.level}
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    Level {profile.level || 1}
                   </span>
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    {profile.xp} / {profile.level * 1000} XP
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
+                    {profile.xp || 0} / {(profile.level || 1) * 1000} XP
                   </span>
                 </div>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full"
                     initial={{ width: 0 }}
@@ -373,15 +375,16 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
 
               {/* Action Buttons */}
               {currentUser && currentUser.id !== profile.id && (
-                <div className="grid grid-cols-3 gap-2 pt-4">
+                <div className="grid grid-cols-3 gap-1.5 pt-3">
                   <Button
                     onClick={handleFollow}
                     disabled={followMutation.isPending}
                     variant={profile.isFollowing ? "outline" : "default"}
                     size="sm"
+                    className="text-xs h-8"
                   >
                     {followMutation.isPending ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
                     ) : (
                       profile.isFollowing ? 'Unfollow' : 'Follow'
                     )}
@@ -389,19 +392,19 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                   
                   <Button
                     onClick={() => setShowChallengeModal(true)}
-                    className="bg-red-600 hover:bg-red-700 text-white"
+                    className="bg-red-600 hover:bg-red-700 text-white text-xs h-8"
                     size="sm"
                   >
-                    <Swords className="w-4 h-4 mr-1" />
+                    <Swords className="w-3 h-3 mr-1" />
                     Challenge
                   </Button>
                   
                   <Button
                     onClick={() => setShowTipModal(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8"
                     size="sm"
                   >
-                    <Send className="w-4 h-4 mr-1" />
+                    <Send className="w-3 h-3 mr-1" />
                     Tip
                   </Button>
                 </div>
