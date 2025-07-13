@@ -87,6 +87,12 @@ export interface IStorage {
   updateChallenge(id: number, updates: Partial<Challenge>): Promise<Challenge>;
   getChallengeMessages(challengeId: number): Promise<(ChallengeMessage & { user: User })[]>;
   createChallengeMessage(challengeId: number, userId: string, message: string): Promise<ChallengeMessage>;
+  
+  // Admin challenge operations
+  getAllChallenges(limit?: number): Promise<(Challenge & { challengerUser: User, challengedUser: User })[]>;
+  adminSetChallengeResult(challengeId: number, result: 'challenger_won' | 'challenged_won' | 'draw'): Promise<Challenge>;
+  processChallengePayouts(challengeId: number): Promise<{ winnerPayout: number; platformFee: number; winnerId?: string }>;
+  getChallengeEscrowStatus(challengeId: number): Promise<{ totalEscrow: number; status: string } | null>;
 
   // Friend operations
   getFriends(userId: string): Promise<(Friend & { requester: User, addressee: User })[]>;
@@ -528,6 +534,171 @@ export class DatabaseStorage implements IStorage {
       .values({ challengeId, userId, message })
       .returning();
     return newMessage;
+  }
+
+  // Admin challenge operations
+  async getAllChallenges(limit = 50): Promise<(Challenge & { challengerUser: User, challengedUser: User })[]> {
+    return await db
+      .select({
+        id: challenges.id,
+        challenger: challenges.challenger,
+        challenged: challenges.challenged,
+        title: challenges.title,
+        description: challenges.description,
+        category: challenges.category,
+        amount: challenges.amount,
+        status: challenges.status,
+        evidence: challenges.evidence,
+        result: challenges.result,
+        dueDate: challenges.dueDate,
+        createdAt: challenges.createdAt,
+        completedAt: challenges.completedAt,
+        challengerUser: {
+          id: sql`challenger_user.id`,
+          username: sql`challenger_user.username`,
+          firstName: sql`challenger_user.first_name`,
+          lastName: sql`challenger_user.last_name`,
+          profileImageUrl: sql`challenger_user.profile_image_url`,
+        },
+        challengedUser: {
+          id: sql`challenged_user.id`,
+          username: sql`challenged_user.username`,
+          firstName: sql`challenged_user.first_name`,
+          lastName: sql`challenged_user.last_name`,
+          profileImageUrl: sql`challenged_user.profile_image_url`,
+        },
+      })
+      .from(challenges)
+      .innerJoin(sql`users challenger_user`, eq(challenges.challenger, sql`challenger_user.id`))
+      .innerJoin(sql`users challenged_user`, eq(challenges.challenged, sql`challenged_user.id`))
+      .orderBy(desc(challenges.createdAt))
+      .limit(limit) as any;
+  }
+
+  async adminSetChallengeResult(challengeId: number, result: 'challenger_won' | 'challenged_won' | 'draw'): Promise<Challenge> {
+    const [challenge] = await db
+      .update(challenges)
+      .set({ 
+        result: result,
+        status: 'completed',
+        completedAt: new Date() 
+      })
+      .where(eq(challenges.id, challengeId))
+      .returning();
+    return challenge;
+  }
+
+  async processChallengePayouts(challengeId: number): Promise<{ winnerPayout: number; platformFee: number; winnerId?: string }> {
+    const challenge = await this.getChallengeById(challengeId);
+    if (!challenge || challenge.status !== 'completed' || !challenge.result) {
+      throw new Error('Challenge not ready for payout');
+    }
+
+    const totalAmount = parseFloat(challenge.amount) * 2; // Both participants contributed
+    const platformFeeRate = 0.05; // 5% platform fee
+    const platformFee = totalAmount * platformFeeRate;
+    const winnerPayout = totalAmount - platformFee;
+
+    let winnerId: string | undefined;
+    
+    if (challenge.result === 'challenger_won') {
+      winnerId = challenge.challenger;
+    } else if (challenge.result === 'challenged_won') {
+      winnerId = challenge.challenged;
+    } else if (challenge.result === 'draw') {
+      // In case of draw, return money to both participants
+      const halfAmount = parseFloat(challenge.amount);
+      await this.updateUserBalance(challenge.challenger, halfAmount);
+      await this.updateUserBalance(challenge.challenged, halfAmount);
+      
+      // Create transactions for both
+      await this.createTransaction({
+        userId: challenge.challenger,
+        type: 'challenge_draw',
+        amount: halfAmount.toString(),
+        description: `Draw in challenge: ${challenge.title}`,
+        status: 'completed',
+        reference: `challenge_${challengeId}_draw_challenger`,
+      });
+      
+      await this.createTransaction({
+        userId: challenge.challenged,
+        type: 'challenge_draw',
+        amount: halfAmount.toString(),
+        description: `Draw in challenge: ${challenge.title}`,
+        status: 'completed',
+        reference: `challenge_${challengeId}_draw_challenged`,
+      });
+
+      // Send notifications
+      await this.createNotification({
+        userId: challenge.challenger,
+        type: 'challenge_draw',
+        title: 'Challenge Draw',
+        message: `Challenge "${challenge.title}" ended in a draw. Your stake has been returned.`,
+        data: { challengeId: challengeId, result: 'draw' },
+      });
+      
+      await this.createNotification({
+        userId: challenge.challenged,
+        type: 'challenge_draw',
+        title: 'Challenge Draw',
+        message: `Challenge "${challenge.title}" ended in a draw. Your stake has been returned.`,
+        data: { challengeId: challengeId, result: 'draw' },
+      });
+      
+      return { winnerPayout: halfAmount * 2, platformFee: 0, winnerId: undefined };
+    }
+
+    if (winnerId) {
+      // Update winner's balance
+      await this.updateUserBalance(winnerId, winnerPayout);
+      
+      // Create transaction record
+      await this.createTransaction({
+        userId: winnerId,
+        type: 'challenge_win',
+        amount: winnerPayout.toString(),
+        description: `Won challenge: ${challenge.title}`,
+        status: 'completed',
+        reference: `challenge_${challengeId}_win`,
+      });
+
+      // Send notifications to both participants
+      const winner = await this.getUser(winnerId);
+      const loser = winnerId === challenge.challenger ? challenge.challenged : challenge.challenger;
+      
+      await this.createNotification({
+        userId: winnerId,
+        type: 'challenge_win',
+        title: 'Challenge Won!',
+        message: `Congratulations! You won ₦${winnerPayout.toLocaleString()} from challenge "${challenge.title}".`,
+        data: { challengeId: challengeId, result: challenge.result, winnings: winnerPayout },
+      });
+      
+      await this.createNotification({
+        userId: loser,
+        type: 'challenge_loss',
+        title: 'Challenge Result',
+        message: `Challenge "${challenge.title}" has been resolved. Better luck next time!`,
+        data: { challengeId: challengeId, result: challenge.result },
+      });
+    }
+
+    return { winnerPayout, platformFee, winnerId };
+  }
+
+  async getChallengeEscrowStatus(challengeId: number): Promise<{ totalEscrow: number; status: string } | null> {
+    const [escrowData] = await db
+      .select({
+        totalEscrow: sql<number>`COALESCE(SUM(CAST(${escrow.amount} AS DECIMAL)), 0)`,
+        status: escrow.status,
+      })
+      .from(escrow)
+      .where(eq(escrow.challengeId, challengeId))
+      .groupBy(escrow.status);
+
+    return escrowData || null;
   }
 
   // Friend operations

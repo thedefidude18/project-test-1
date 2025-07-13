@@ -1136,6 +1136,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin challenge routes
+  app.get('/api/admin/challenges', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const challenges = await storage.getAllChallenges(limit);
+      res.json(challenges);
+    } catch (error) {
+      console.error("Error fetching admin challenges:", error);
+      res.status(500).json({ message: "Failed to fetch challenges" });
+    }
+  });
+
+  app.post('/api/admin/challenges/:id/result', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const challengeId = parseInt(req.params.id);
+      const { result } = req.body; // 'challenger_won', 'challenged_won', 'draw'
+      
+      if (!['challenger_won', 'challenged_won', 'draw'].includes(result)) {
+        return res.status(400).json({ message: "Invalid result. Must be 'challenger_won', 'challenged_won', or 'draw'" });
+      }
+
+      const challenge = await storage.adminSetChallengeResult(challengeId, result);
+      const payoutResult = await storage.processChallengePayouts(challengeId);
+
+      res.json({ 
+        challenge, 
+        payout: payoutResult,
+        message: `Challenge result set to ${result}. Payout processed: ₦${payoutResult.winnerPayout} distributed, ₦${payoutResult.platformFee} platform fee.`
+      });
+    } catch (error) {
+      console.error("Error setting challenge result:", error);
+      res.status(500).json({ message: "Failed to set challenge result" });
+    }
+  });
+
+  app.get('/api/admin/challenges/:id/escrow', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const challengeId = parseInt(req.params.id);
+      const escrowStatus = await storage.getChallengeEscrowStatus(challengeId);
+      res.json(escrowStatus);
+    } catch (error) {
+      console.error("Error fetching challenge escrow status:", error);
+      res.status(500).json({ message: "Failed to fetch escrow status" });
+    }
+  });
+
   // Leaderboard route
   app.get('/api/leaderboard', async (req, res) => {
     try {

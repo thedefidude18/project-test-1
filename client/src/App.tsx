@@ -22,6 +22,9 @@ import EventChatPage from "@/pages/EventChatPage";
 import History from "@/pages/History";
 import Settings from "@/pages/Settings";
 import AdminDashboard from "@/pages/AdminDashboard";
+import AdminDashboardOverview from "@/pages/AdminDashboardOverview";
+import AdminEventPayouts from "@/pages/AdminEventPayouts";
+import AdminChallengePayouts from "@/pages/AdminChallengePayouts";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -49,7 +52,10 @@ function Router() {
           <Route path="/referrals" component={ReferralPage} />
           <Route path="/history" component={History} />
           <Route path="/settings" component={Settings} />
-          <Route path="/admin" component={AdminDashboard} />
+          <Route path="/admin" component={AdminDashboardOverview} />
+          <Route path="/admin/dashboard" component={AdminDashboard} />
+          <Route path="/admin/events" component={AdminEventPayouts} />
+          <Route path="/admin/challenges" component={AdminChallengePayouts} />
         </>
       )}
       <Route component={NotFound} />

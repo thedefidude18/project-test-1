@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatBalance } from "@/utils/currencyUtils";
-import { getAvatarUrl } from "@/utils/avatar";
+import { getAvatarUrl } from "@/utils/avatarUtils";
 
 export function Navigation() {
   const { user } = useAuth();
