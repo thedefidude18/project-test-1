@@ -294,7 +294,7 @@ export default function WalletPage() {
           <CardContent className="p-8">
             <div className="text-center">
               <p className="text-primary-100 mb-2">Current Balance</p>
-              <h2 className="text-4xl font-bold mb-6">₦{currentBalance.toLocaleString()}</h2>
+              <h2 className="text-4xl font-bold mb-6">{formatBalance(currentBalance)}</h2>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Dialog open={isDepositDialogOpen} onOpenChange={setIsDepositDialogOpen}>
                   <DialogTrigger asChild>
@@ -373,7 +373,7 @@ export default function WalletPage() {
                           max={currentBalance}
                         />
                         <p className="text-xs text-slate-500 mt-1">
-                          Available: ₦{currentBalance.toLocaleString()}
+                          Available: {formatBalance(currentBalance)}
                         </p>
                       </div>
                       <div className="flex space-x-2">
@@ -408,10 +408,9 @@ export default function WalletPage() {
                 <div>
                   <p className="text-sm text-slate-600 dark:text-slate-400">Total Deposited</p>
                   <p className="text-2xl font-bold text-emerald-600">
-                    ₦{transactions
+                    {formatBalance(transactions
                       .filter((t: any) => t.type === 'deposit')
-                      .reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0)
-                      .toLocaleString()}
+                      .reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0))}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center">
@@ -427,10 +426,9 @@ export default function WalletPage() {
                 <div>
                   <p className="text-sm text-slate-600 dark:text-slate-400">Total Won</p>
                   <p className="text-2xl font-bold text-amber-600">
-                    ₦{transactions
+                    {formatBalance(transactions
                       .filter((t: any) => t.type === 'win')
-                      .reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0)
-                      .toLocaleString()}
+                      .reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0))}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900 rounded-lg flex items-center justify-center">
@@ -446,10 +444,9 @@ export default function WalletPage() {
                 <div>
                   <p className="text-sm text-slate-600 dark:text-slate-400">Total Spent</p>
                   <p className="text-2xl font-bold text-red-600">
-                    ₦{transactions
+                    {formatBalance(transactions
                       .filter((t: any) => ['bet', 'challenge', 'withdrawal'].includes(t.type))
-                      .reduce((sum: number, t: any) => sum + Math.abs(parseFloat(t.amount)), 0)
-                      .toLocaleString()}
+                      .reduce((sum: number, t: any) => sum + Math.abs(parseFloat(t.amount)), 0))}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
@@ -517,7 +514,7 @@ export default function WalletPage() {
                     </div>
                     <div className="text-right">
                       <p className={`text-lg font-semibold ${getTransactionColor(transaction.type)}`}>
-                        {getTransactionPrefix(transaction.type)}₦{Math.abs(parseFloat(transaction.amount)).toLocaleString()}
+                        {getTransactionPrefix(transaction.type)}{formatBalance(Math.abs(parseFloat(transaction.amount)))}
                       </p>
                       <Badge
                         className={

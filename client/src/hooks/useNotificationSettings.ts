@@ -1,6 +1,8 @@
-
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from './useAuth';
+import { useToast } from './use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface NotificationSettings {
   emailNotifications: boolean;
@@ -10,43 +12,56 @@ interface NotificationSettings {
   friendNotifications: boolean;
 }
 
-export const useNotificationSettings = () => {
+export function useNotificationSettings() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-
-  const { data: settings, isLoading } = useQuery<NotificationSettings>({
-    queryKey: ['/api/notification-preferences'],
-    retry: false,
+  const { toast } = useToast();
+  
+  const [settings, setSettings] = useState<NotificationSettings>({
+    emailNotifications: true,
+    pushNotifications: true,
+    challengeNotifications: true,
+    eventNotifications: true,
+    friendNotifications: true,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async (newSettings: Partial<NotificationSettings>) => {
-      const response = await fetch('/api/notification-preferences', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSettings),
+  // Load settings from user preferences
+  useEffect(() => {
+    if (user?.notificationPreferences) {
+      try {
+        const prefs = JSON.parse(user.notificationPreferences);
+        setSettings(prev => ({ ...prev, ...prefs }));
+      } catch (error) {
+        console.error('Error parsing notification preferences:', error);
+      }
+    }
+  }, [user]);
+
+  const updateSetting = async (key: keyof NotificationSettings, value: boolean) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    
+    try {
+      await apiRequest('PATCH', '/api/user/notifications', newSettings);
+      toast({
+        title: 'Setting Updated',
+        description: 'Your notification preference has been saved.',
       });
-      if (!response.ok) throw new Error('Failed to update settings');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notification-preferences'] });
-    },
-  });
-
-  const updateSetting = (key: keyof NotificationSettings, value: boolean) => {
-    updateMutation.mutate({ [key]: value });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+    } catch (error) {
+      // Revert on error
+      setSettings(settings);
+      toast({
+        title: 'Error',
+        description: 'Failed to update notification setting.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return {
-    settings: settings || {
-      emailNotifications: true,
-      pushNotifications: true,
-      challengeNotifications: true,
-      eventNotifications: true,
-      friendNotifications: true,
-    },
-    isLoading,
+    settings,
     updateSetting,
-    isUpdating: updateMutation.isPending,
+    isUpdating: false,
   };
-};
+}

@@ -10,11 +10,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useNotificationSettings } from "@/hooks/useNotificationSettings";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Settings() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
+  const { settings: notificationSettings, updateSetting, isUpdating } = useNotificationSettings();
+  const queryClient = useQueryClient();
   
   const [settings, setSettings] = useState({
     soundEffects: true,
@@ -24,6 +29,27 @@ export default function Settings() {
     language: 'english',
     currency: 'NGN',
     dataUsage: 'standard',
+  });
+
+  const updateNotificationPreferences = useMutation({
+    mutationFn: async (preferences: any) => {
+      const response = await apiRequest("PATCH", "/api/user/notifications", preferences);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Notification Settings Updated",
+        description: "Your notification preferences have been saved.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/notifications"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update notification settings.",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleSettingChange = (key: keyof typeof settings, value: boolean | string) => {
@@ -84,6 +110,86 @@ export default function Settings() {
         </div>
 
         <div className="space-y-8">
+          {/* Notification Preferences */}
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <CardHeader>
+              <CardTitle>Notification Preferences</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Email Notifications</Label>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Receive notifications via email
+                  </p>
+                </div>
+                <Switch
+                  checked={notificationSettings.emailNotifications}
+                  onCheckedChange={(checked) => updateSetting('emailNotifications', checked)}
+                  disabled={isUpdating}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Push Notifications</Label>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Receive push notifications in your browser
+                  </p>
+                </div>
+                <Switch
+                  checked={notificationSettings.pushNotifications}
+                  onCheckedChange={(checked) => updateSetting('pushNotifications', checked)}
+                  disabled={isUpdating}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Challenge Notifications</Label>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Get notified about new challenges and results
+                  </p>
+                </div>
+                <Switch
+                  checked={notificationSettings.challengeNotifications}
+                  onCheckedChange={(checked) => updateSetting('challengeNotifications', checked)}
+                  disabled={isUpdating}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Event Notifications</Label>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Get notified about event updates and endings
+                  </p>
+                </div>
+                <Switch
+                  checked={notificationSettings.eventNotifications}
+                  onCheckedChange={(checked) => updateSetting('eventNotifications', checked)}
+                  disabled={isUpdating}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Friend Notifications</Label>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Get notified about friend requests and activities
+                  </p>
+                </div>
+                <Switch
+                  checked={notificationSettings.friendNotifications}
+                  onCheckedChange={(checked) => updateSetting('friendNotifications', checked)}
+                  disabled={isUpdating}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Appearance */}
           <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
             <CardHeader>

@@ -636,16 +636,18 @@ export default function EventChatPage() {
                   {message.reactions && message.reactions.length > 0 && (
                     <div className={`flex flex-wrap gap-1 mt-1 ${isCurrentUser ? 'justify-end' : ''}`}>
                       {message.reactions.map((reaction, idx) => (
-                        <Badge
+                        <button
                           key={idx}
-                          variant={reaction.userReacted ? "default" : "secondary"}
-                          className={`text-xs px-2 py-0 h-5 cursor-pointer hover:scale-105 transition-transform ${
-                            reaction.userReacted ? 'bg-primary text-white' : 'bg-slate-200 dark:bg-slate-600'
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-all duration-200 hover:scale-110 hover:shadow-md active:scale-95 ${
+                            reaction.userReacted 
+                              ? 'bg-primary/20 text-primary border border-primary/30 shadow-sm' 
+                              : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600'
                           }`}
                           onClick={() => handleReaction(message.id, reaction.emoji)}
                         >
-                          {reaction.emoji} {reaction.count}
-                        </Badge>
+                          <span className="text-xs leading-none">{reaction.emoji}</span>
+                          <span className="text-xs leading-none font-semibold">{reaction.count}</span>
+                        </button>
                       ))}
                     </div>
                   )}

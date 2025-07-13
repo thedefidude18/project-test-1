@@ -5,6 +5,7 @@ import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useQuery } from "@tanstack/react-query";
+import { formatBalance } from "@/utils/currencyUtils";
 
 export function MobileNavigation() {
   const { user } = useAuth();
@@ -107,7 +108,7 @@ export function MobileNavigation() {
               "text-xs font-medium transition-all duration-200",
               location.startsWith('/wallet') && "font-semibold"
             )}>
-              ₦{(typeof balance === 'object' ? (balance.balance || 0) : (balance || 0)).toLocaleString()}
+              {formatBalance(typeof balance === 'object' ? (balance.balance || 0) : (balance || 0))}
             </span>
             {location.startsWith('/wallet') && (
               <div className="absolute -top-0.5 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full" />
