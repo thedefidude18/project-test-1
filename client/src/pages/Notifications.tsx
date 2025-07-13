@@ -221,7 +221,7 @@ export default function Notifications() {
         <Tabs defaultValue="all" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="all">
-              All ({notifications.length})
+              All ({Array.isArray(notifications) ? notifications.length : 0})
             </TabsTrigger>
             <TabsTrigger value="unread">
               Unread ({unreadNotifications.length})
@@ -237,7 +237,7 @@ export default function Notifications() {
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-slate-600 dark:text-slate-400">Loading notifications...</p>
               </div>
-            ) : notifications.length === 0 ? (
+            ) : !Array.isArray(notifications) || notifications.length === 0 ? (
               <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 <CardContent className="text-center py-12">
                   <i className="fas fa-bell-slash text-4xl text-slate-400 mb-4"></i>
@@ -250,7 +250,7 @@ export default function Notifications() {
                 </CardContent>
               </Card>
             ) : (
-              notifications.map((notification: any) => (
+              (Array.isArray(notifications) ? notifications : []).map((notification: any) => (
                 <Card
                   key={notification.id}
                   className={`bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 ${

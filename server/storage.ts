@@ -111,6 +111,7 @@ export interface IStorage {
   getFriends(userId: string): Promise<(Friend & { requester: User, addressee: User })[]>;
   sendFriendRequest(requesterId: string, addresseeId: string): Promise<Friend>;
   acceptFriendRequest(id: number): Promise<Friend>;
+  toggleFollow(followerId: string, followingId: string): Promise<{ action: 'followed' | 'unfollowed' }>;
 
   // Notification operations
   getNotifications(userId: string, limit?: number): Promise<Notification[]>;
@@ -830,6 +831,39 @@ export class DatabaseStorage implements IStorage {
       .where(eq(friends.id, id))
       .returning();
     return friend;
+  }
+
+  async toggleFollow(followerId: string, followingId: string): Promise<{ action: 'followed' | 'unfollowed' }> {
+    // Check if follow relationship exists
+    const [existingFollow] = await db
+      .select()
+      .from(friends)
+      .where(
+        and(
+          eq(friends.requesterId, followerId),
+          eq(friends.addresseeId, followingId),
+          eq(friends.status, 'accepted')
+        )
+      );
+
+    if (existingFollow) {
+      // Unfollow: Delete the relationship
+      await db
+        .delete(friends)
+        .where(eq(friends.id, existingFollow.id));
+      return { action: 'unfollowed' };
+    } else {
+      // Follow: Create new relationship (auto-accepted for follow system)
+      await db
+        .insert(friends)
+        .values({
+          requesterId: followerId,
+          addresseeId: followingId,
+          status: 'accepted',
+          acceptedAt: new Date()
+        });
+      return { action: 'followed' };
+    }
   }
 
   // Notification operations

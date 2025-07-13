@@ -90,7 +90,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
   // Follow mutation
   const followMutation = useMutation({
     mutationFn: async (action: 'follow' | 'unfollow') => {
-      return await apiRequest("POST", `/api/users/${userId}/${action}`);
+      return await apiRequest("POST", `/api/users/${userId}/follow`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/profile`] });
