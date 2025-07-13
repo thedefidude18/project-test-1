@@ -65,7 +65,6 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
   const [message, setMessage] = useState("");
   const [showDispute, setShowDispute] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: messages = [], isLoading } = useQuery({
@@ -140,7 +139,7 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
         const now = new Date();
         const dueDate = new Date(challenge.dueDate);
         const diff = dueDate.getTime() - now.getTime();
-        
+
         if (diff <= 0) {
           setTimeLeft("Expired");
         } else {
@@ -226,7 +225,7 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
             ×
           </Button>
         </div>
-        
+
         <div className="flex items-center justify-between mt-3">
           <div className="flex items-center space-x-4">
             <div className="text-sm text-slate-600 dark:text-slate-400">
@@ -239,7 +238,7 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
               </div>
             )}
           </div>
-          
+
           {isActive && (
             <Button
               variant="outline"
@@ -277,18 +276,6 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
         </div>
       )}
 
-      {/* Search Messages */}
-      {messages.length > 0 && (
-        <div className="p-4 border-b bg-slate-50 dark:bg-slate-800">
-          <Input
-            placeholder="Search messages..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="text-sm"
-          />
-        </div>
-      )}
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {isLoading ? (
@@ -304,14 +291,7 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
             </p>
           </div>
         ) : (
-          messages
-            .filter((msg: Message) => {
-              if (!searchQuery) return true;
-              const searchLower = searchQuery.toLowerCase();
-              return msg.message.toLowerCase().includes(searchLower) ||
-                     (msg.user.firstName || msg.user.username || '').toLowerCase().includes(searchLower);
-            })
-            .map((msg: Message) => (
+          messages.map((msg: Message) => (
             <div
               key={msg.id}
               className={`flex ${isMyMessage(msg) ? 'justify-end' : 'justify-start'}`}

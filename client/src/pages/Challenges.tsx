@@ -127,9 +127,21 @@ export default function Challenges() {
     { value: "other", label: "Other", icon: "fas fa-star" },
   ];
 
-  const pendingChallenges = challenges.filter((c: any) => c.status === "pending");
-  const activeChallenges = challenges.filter((c: any) => c.status === "active");
-  const completedChallenges = challenges.filter((c: any) => c.status === "completed");
+  const filteredChallenges = challenges.filter((challenge: any) => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      (challenge.title || '').toLowerCase().includes(searchLower) ||
+      (challenge.description || '').toLowerCase().includes(searchLower) ||
+      (challenge.category || '').toLowerCase().includes(searchLower) ||
+      (challenge.challengerUser?.username || '').toLowerCase().includes(searchLower) ||
+      (challenge.challengedUser?.username || '').toLowerCase().includes(searchLower)
+    );
+  });
+
+  const pendingChallenges = filteredChallenges.filter((c: any) => c.status === "pending");
+  const activeChallenges = filteredChallenges.filter((c: any) => c.status === "active");
+  const completedChallenges = filteredChallenges.filter((c: any) => c.status === "completed");
 
   const onSubmit = (data: z.infer<typeof createChallengeSchema>) => {
     const amount = parseFloat(data.amount);

@@ -594,12 +594,7 @@ export default function EventChatPage() {
 
       {/* Chat Messages Area */}
       <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2 flex flex-col-reverse">
-        <Input
-                placeholder="Search messages..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-700"
-              />
+        
         {messages.length === 0 ? (
           <div className="text-center text-slate-500 dark:text-slate-400 py-8">
             <i className="fas fa-comments text-2xl mb-2"></i>
@@ -607,12 +602,6 @@ export default function EventChatPage() {
           </div>
         ) : (
           [...messages]
-            .filter((message: any) => {
-              if (!searchQuery) return true;
-              const searchLower = searchQuery.toLowerCase();
-              return message.message.toLowerCase().includes(searchLower) ||
-                     (message.user.firstName || message.user.username || '').toLowerCase().includes(searchLower);
-            })
             .reverse().map((message: ExtendedMessage, index: number) => {
             const showAvatar = index === 0 || messages[messages.length - 2 - index]?.userId !== message.userId;
             const isCurrentUser = message.userId === user?.id;
@@ -825,8 +814,7 @@ export default function EventChatPage() {
             <Button
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || !isConnected || sendMessageMutation.isPending}
-              className="bg-primary text-white hover:bg-primary/90 rounded-full p-2"
-            >
+              className="bg-primary text-white hover:bg-primary/90 rounded-full p-2">
               <i className="fas fafa-paper-plane"></i>
             </Button>
           </div>

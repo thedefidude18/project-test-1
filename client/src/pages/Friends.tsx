@@ -104,9 +104,21 @@ export default function Friends() {
     },
   });
 
-  const acceptedFriends = friends.filter((f: any) => f.status === "accepted");
-  const pendingRequests = friends.filter((f: any) => f.status === "pending" && f.addresseeId === user?.id);
-  const sentRequests = friends.filter((f: any) => f.status === "pending" && f.requesterId === user?.id);
+  const filteredFriends = friends.filter((friend: any) => {
+    if (!searchTerm) return true;
+    const friendUser = getFriendUser(friend);
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      (friendUser.firstName || '').toLowerCase().includes(searchLower) ||
+      (friendUser.lastName || '').toLowerCase().includes(searchLower) ||
+      (friendUser.username || '').toLowerCase().includes(searchLower) ||
+      (friendUser.email || '').toLowerCase().includes(searchLower)
+    );
+  });
+
+  const acceptedFriends = filteredFriends.filter((f: any) => f.status === "accepted");
+  const pendingRequests = filteredFriends.filter((f: any) => f.status === "pending" && f.addresseeId === user?.id);
+  const sentRequests = filteredFriends.filter((f: any) => f.status === "pending" && f.requesterId === user?.id);
 
   const getFriendUser = (friend: any) => {
     return friend.requesterId === user?.id ? friend.addressee : friend.requester;
