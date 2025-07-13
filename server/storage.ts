@@ -1253,179 +1253,7 @@ export class DatabaseStorage implements IStorage {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
   }
 
-  async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users);
-  }
-
-  // Event lifecycle notification methods
-  async notifyEventStarting(eventId: number): Promise<void> {
-    const event = await this.getEventById(eventId);
-    if (!event) return;
-
-    const participants = await this.getEventParticipants(eventId);
-
-    for (const participant of participants) {
-      await this.createNotification({
-        userId: participant.userId,
-        type: 'event_starting',
-        title: '🚀 Event Started',
-        message: `The event "${event.title}" has officially started! Your funds are secure in escrow until results are announced.`,
-        data: { 
-          eventId: eventId,
-          eventTitle: event.title,
-          prediction: participant.prediction ? 'YES' : 'NO',
-          amount: parseFloat(participant.amount),
-          endDate: event.endDate
-        },
-      });
-    }
-  }
-
-  async notifyEventEnding(eventId: number): Promise<void> {
-    const event = await this.getEventById(eventId);
-    if (!event) return;
-
-    const participants = await this.getEventParticipants(eventId);
-
-    for (const participant of participants) {
-      await this.createNotification({
-        userId: participant.userId,
-        type: 'event_ending',
-        title: '⏰ Event Ending Soon',
-        message: `The event "${event.title}" is ending soon! Results will be announced shortly and your escrowed funds will be released.`,
-        data: { 
-          eventId: eventId,
-          eventTitle: event.title,
-          prediction: participant.prediction ? 'YES' : 'NO',
-          amount: parseFloat(participant.amount),
-          endDate: event.endDate
-        },
-      });
-    }
-  }
-
-  async notifyFundsReleased(userId: string, eventId: number, amount: number, won: boolean): Promise<void> {
-    const event = await this.getEventById(eventId);
-    if (!event) return;
-
-    const title = won ? '💰 You Won!' : '📤 Funds Released';
-    const message = won 
-      ? `Congratulations! You won ₦${amount.toLocaleString()} from "${event.title}"!`
-      : `Your escrowed funds of ₦${amount.toLocaleString()} have been released from "${event.title}".`;
-
-    await this.createNotification({
-      userId,
-      type: won ? 'event_won' : 'funds_released',
-      title,
-      message,
-      data: { 
-        eventId: eventId,
-        eventTitle: event.title,
-        amount: amount,
-        won: won,
-        type: 'escrow_release'
-      },
-    });
-  }
-
-  // Get user statistics
-  async getUserStats(userId: string): Promise<any> {
-    const [userStats] = await db
-      .select({
-        totalEvents: count(events.id),
-        totalChallenges: count(challenges.id),
-        totalEarnings: sum(transactions.amount),
-        winRate: sql<number>`COALESCE(COUNT(CASE WHEN ${eventParticipants.status} = 'won' THEN 1 END)::float / NULLIF(COUNT(${eventParticipants.id}), 0) * 100, 0)`,
-      })
-      .from(users)
-      .leftJoin(events, eq(events.creatorId, users.id))
-      .leftJoin(challenges, or(eq(challenges.challenger, users.id), eq(challenges.challenged, users.id)))
-      .leftJoin(transactions, eq(transactions.userId, users.id))
-      .leftJoin(eventParticipants, eq(eventParticipants.userId, users.id))
-      .where(eq(users.id, userId))
-      .groupBy(users.id);
-
-    return userStats || {
-      totalEvents: 0,
-      totalChallenges: 0,
-      totalEarnings: 0,
-      winRate: 0,
-    };
-  }
-
-  // Get events created by user
-  async getUserCreatedEvents(userId: string): Promise<any[]> {
-    const userEvents = await db
-      .select({
-        id: events.id,
-        title: events.title,
-        description: events.description,
-        category: events.category,
-        status: events.status,
-        eventPool: events.eventPool,
-        entryFee: events.entryFee,
-        createdAt: events.createdAt,
-        endDate: events.endDate,
-        result: events.result,
-        yesPool: events.yesPool,
-        noPool: events.noPool,
-      })
-      .from(events)
-      .where(eq(events.creatorId, userId))
-      .orderBy(desc(events.createdAt));
-
-    return userEvents;
-  }
-
-  // Get events joined by user
-  async getUserJoinedEvents(userId: string): Promise<any[]> {
-    const joinedEvents = await db
-      .select({
-        id: events.id,
-        title: events.title,
-        description: events.description,
-        category: events.category,
-        status: events.status,
-        eventPool: events.eventPool,
-        entryFee: events.entryFee,
-        createdAt: events.createdAt,
-        endDate: events.endDate,
-        result: events.result,
-        prediction: eventParticipants.prediction,
-        amount: eventParticipants.amount,
-        joinedAt: eventParticipants.joinedAt,
-        participantStatus: eventParticipants.status,
-      })
-      .from(eventParticipants)
-      .innerJoin(events, eq(events.id, eventParticipants.eventId))
-      .where(eq(eventParticipants.userId, userId))
-      .orderBy(desc(eventParticipants.joinedAt));
-
-    return joinedEvents.map(event => ({
-      ...event,
-      status: event.participantStatus,
-    }));
-  }
-
-  // Get user achievements
-  async getUserAchievements(userId: string): Promise<any[]> {
-    const userAchievementsList = await db
-      .select({
-        id: achievements.id,
-        name: achievements.name,
-        description: achievements.description,
-        iconUrl: achievements.iconUrl,
-        earnedAt: userAchievements.earnedAt,
-        progress: userAchievements.progress,
-      })
-      .from(userAchievements)
-      .innerJoin(achievements, eq(achievements.id, userAchievements.achievementId))
-      .where(eq(userAchievements.userId, userId))
-      .orderBy(desc(userAchievements.earnedAt));
-
-    return userAchievementsList;
-  }
-
+  
   // Get user profile with stats
   async getAllUsers() {
     const usersResult = await db
@@ -1434,18 +1262,26 @@ export class DatabaseStorage implements IStorage {
         username: users.username,
         firstName: users.firstName,
         lastName: users.lastName,
+        email: users.email,
         profileImageUrl: users.profileImageUrl,
-        balance: walletBalances.balance,
+        balance: users.balance,
         level: users.level,
+        points: users.points,
         wins: users.wins,
         losses: users.losses,
+        streak: users.streak,
         createdAt: users.createdAt,
+        lastLogin: users.lastLogin,
+        status: users.status,
+        isAdmin: users.isAdmin,
       })
       .from(users)
-      .leftJoin(walletBalances, eq(users.id, walletBalances.userId))
       .orderBy(desc(users.createdAt));
 
-    return usersResult;
+    return usersResult.map(user => ({
+      ...user,
+      status: user.lastLogin && new Date(user.lastLogin).getTime() > Date.now() - 24 * 60 * 60 * 1000 ? 'Online' : 'Offline',
+    }));
   }
 
   async getUserProfile(userId: string, currentUserId: string): Promise<any> {

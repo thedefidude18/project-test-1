@@ -1,41 +1,27 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import AdminLayout from "@/components/AdminLayout";
-import { Link } from "wouter";
-import { formatDistanceToNow } from "date-fns";
 import { 
-  Trophy, 
-  Target, 
-  DollarSign, 
+  Activity, 
+  AlertCircle, 
+  TrendingUp, 
   Users, 
-  AlertCircle,
-  TrendingUp,
-  CheckCircle,
-  Clock,
-  ArrowRight,
-  Activity
+  Target,
+  Trophy,
+  DollarSign,
+  Clock
 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 interface Event {
   id: number;
   title: string;
-  description?: string;
-  category: string;
   status: string;
-  creatorId: string;
   eventPool: string;
-  yesPool: string;
-  noPool: string;
-  entryFee: string;
   endDate: string;
-  result?: boolean;
-  adminResult?: boolean;
+  adminResult: boolean | null;
   creatorFee: string;
-  isPrivate: boolean;
-  maxParticipants: number;
   createdAt: string;
 }
 
@@ -46,8 +32,9 @@ interface Challenge {
   amount: string;
   result: string | null;
   dueDate: string;
-  challengerUser: { username: string };
-  challengedUser: { username: string };
+  createdAt: string;
+  challengerUser: { username: string; firstName?: string };
+  challengedUser: { username: string; firstName?: string };
 }
 
 export default function AdminDashboardOverview() {
@@ -61,19 +48,16 @@ export default function AdminDashboardOverview() {
     retry: false,
   });
 
-  // Get admin statistics
   const { data: adminStats = {}, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/admin/stats"],
     retry: false,
   });
 
-  // Get recent users
   const { data: recentUsers = [], isLoading: usersLoading } = useQuery({
     queryKey: ["/api/admin/users"],
     retry: false,
   });
 
-  // Get platform activity
   const { data: platformActivity = [], isLoading: activityLoading } = useQuery({
     queryKey: ["/api/admin/activity"],
     retry: false,
@@ -92,20 +76,20 @@ export default function AdminDashboardOverview() {
 
   const getEventStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'completed': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      case 'active': return 'bg-green-500';
+      case 'completed': return 'bg-blue-500';
+      case 'cancelled': return 'bg-red-500';
+      default: return 'bg-gray-500';
     }
   };
 
   const getChallengeStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'disputed': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      case 'pending': return 'bg-yellow-500';
+      case 'active': return 'bg-green-500';
+      case 'completed': return 'bg-blue-500';
+      case 'disputed': return 'bg-red-500';
+      default: return 'bg-gray-500';
     }
   };
 
@@ -169,53 +153,24 @@ export default function AdminDashboardOverview() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
+                  <p className="text-slate-400 text-sm">Total Users</p>
+                  <p className="text-2xl font-bold text-blue-400">{adminStats.totalUsers || 0}</p>
+                </div>
+                <Users className="w-8 h-8 text-blue-400" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900 border-slate-700">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
                   <p className="text-slate-400 text-sm">Total Value Locked</p>
                   <p className="text-2xl font-bold text-green-400">
                     ₦{(totalEventPool + totalChallengeStaked).toLocaleString()}
                   </p>
                 </div>
-                <DollarSign className="w-8 h-8 text-green-400" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-900 border-slate-700">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-400 text-sm">Active Events</p>
-                  <p className="text-2xl font-bold text-blue-400">{activeEvents.length}</p>
-                </div>
-                <Trophy className="w-8 h-8 text-blue-400" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-900 border-slate-700">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-400 text-sm">Active Challenges</p>
-                  <p className="text-2xl font-bold text-purple-400">{activeChallenges.length}</p>
-                </div>
-                <Target className="w-8 h-8 text-purple-400" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Revenue Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-slate-900 border-slate-700">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-400 text-sm">Creator Fees Collected</p>
-                  <p className="text-2xl font-bold text-emerald-400">
-                    ₦{totalCreatorFees.toLocaleString()}
-                  </p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-emerald-400" />
+                <TrendingUp className="w-8 h-8 text-green-400" />
               </div>
             </CardContent>
           </Card>
@@ -225,150 +180,78 @@ export default function AdminDashboardOverview() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-400 text-sm">Platform Fees</p>
-                  <p className="text-2xl font-bold text-indigo-400">
-                    ₦{totalPlatformFees.toLocaleString()}
+                  <p className="text-2xl font-bold text-purple-400">
+                    ₦{(totalCreatorFees + totalPlatformFees).toLocaleString()}
                   </p>
                 </div>
-                <DollarSign className="w-8 h-8 text-indigo-400" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-900 border-slate-700">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-400 text-sm">Total Completed</p>
-                  <p className="text-2xl font-bold text-green-400">
-                    {completedEvents.length + completedChallenges.length}
-                  </p>
-                </div>
-                <CheckCircle className="w-8 h-8 text-green-400" />
+                <DollarSign className="w-8 h-8 text-purple-400" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Events Section */}
+        {/* Activity Overview */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Events Overview */}
           <Card className="bg-slate-900 border-slate-700">
             <CardHeader>
-              <CardTitle className="text-white flex items-center justify-between">
-                <div className="flex items-center">
-                  <Trophy className="w-5 h-5 mr-2 text-blue-400" />
-                  Event Management
-                </div>
-                <Link href="/admin/events">
-                  <Button size="sm" variant="outline" className="border-slate-600">
-                    View All <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
+              <CardTitle className="text-white flex items-center space-x-2">
+                <Trophy className="w-5 h-5" />
+                <span>Events Overview</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {eventsNeedingAction.length > 0 && (
-                  <div className="bg-red-900/20 border border-red-800 rounded-lg p-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-red-400 font-medium">Events Needing Action</p>
-                        <p className="text-sm text-slate-400">
-                          {eventsNeedingAction.length} events require admin resolution
-                        </p>
-                      </div>
-                      <Badge variant="destructive">{eventsNeedingAction.length}</Badge>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-800 p-3 rounded-lg">
-                    <p className="text-slate-400 text-sm">Active Events</p>
-                    <p className="text-xl font-bold text-white">{activeEvents.length}</p>
-                  </div>
-                  <div className="bg-slate-800 p-3 rounded-lg">
-                    <p className="text-slate-400 text-sm">Total Pool</p>
-                    <p className="text-xl font-bold text-white">₦{totalEventPool.toLocaleString()}</p>
-                  </div>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-slate-800 rounded-lg">
+                  <p className="text-2xl font-bold text-green-400">{activeEvents.length}</p>
+                  <p className="text-sm text-slate-400">Active</p>
                 </div>
-
-                {eventsNeedingAction.slice(0, 3).map((event: Event) => (
-                  <div key={event.id} className="bg-slate-800 p-3 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-white font-medium text-sm">{event.title}</p>
-                        <p className="text-slate-400 text-xs">
-                          Ended {formatDistanceToNow(new Date(event.endDate), { addSuffix: true })}
-                        </p>
-                      </div>
-                      <Badge className={getEventStatusColor(event.status)}>
-                        {event.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                <div className="text-center p-3 bg-slate-800 rounded-lg">
+                  <p className="text-2xl font-bold text-blue-400">{completedEvents.length}</p>
+                  <p className="text-sm text-slate-400">Completed</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Events Needing Action</span>
+                  <span className="text-red-400 font-semibold">{eventsNeedingAction.length}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Total Pool Value</span>
+                  <span className="text-white font-semibold">₦{totalEventPool.toLocaleString()}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Challenges Section */}
+          {/* Challenges Overview */}
           <Card className="bg-slate-900 border-slate-700">
             <CardHeader>
-              <CardTitle className="text-white flex items-center justify-between">
-                <div className="flex items-center">
-                  <Target className="w-5 h-5 mr-2 text-purple-400" />
-                  Challenge Management
-                </div>
-                <Link href="/admin/challenges">
-                  <Button size="sm" variant="outline" className="border-slate-600">
-                    View All <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
+              <CardTitle className="text-white flex items-center space-x-2">
+                <Target className="w-5 h-5" />
+                <span>Challenges Overview</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {challengesNeedingAction.length > 0 && (
-                  <div className="bg-orange-900/20 border border-orange-800 rounded-lg p-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-orange-400 font-medium">Challenges Needing Action</p>
-                        <p className="text-sm text-slate-400">
-                          {challengesNeedingAction.length} challenges require admin resolution
-                        </p>
-                      </div>
-                      <Badge variant="destructive">{challengesNeedingAction.length}</Badge>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-800 p-3 rounded-lg">
-                    <p className="text-slate-400 text-sm">Active Challenges</p>
-                    <p className="text-xl font-bold text-white">{activeChallenges.length}</p>
-                  </div>
-                  <div className="bg-slate-800 p-3 rounded-lg">
-                    <p className="text-slate-400 text-sm">Total Staked</p>
-                    <p className="text-xl font-bold text-white">₦{totalChallengeStaked.toLocaleString()}</p>
-                  </div>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-slate-800 rounded-lg">
+                  <p className="text-2xl font-bold text-green-400">{activeChallenges.length}</p>
+                  <p className="text-sm text-slate-400">Active</p>
                 </div>
-
-                {challengesNeedingAction.slice(0, 3).map((challenge: Challenge) => (
-                  <div key={challenge.id} className="bg-slate-800 p-3 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-white font-medium text-sm">{challenge.title}</p>
-                        <p className="text-slate-400 text-xs">
-                          {challenge.challengerUser.username} vs {challenge.challengedUser.username}
-                        </p>
-                      </div>
-                      <Badge className={getChallengeStatusColor(challenge.status)}>
-                        {challenge.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                <div className="text-center p-3 bg-slate-800 rounded-lg">
+                  <p className="text-2xl font-bold text-blue-400">{completedChallenges.length}</p>
+                  <p className="text-sm text-slate-400">Completed</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Challenges Needing Action</span>
+                  <span className="text-red-400 font-semibold">{challengesNeedingAction.length}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Total Stakes</span>
+                  <span className="text-white font-semibold">₦{totalChallengeStaked.toLocaleString()}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -381,27 +264,23 @@ export default function AdminDashboardOverview() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {[...completedEvents.slice(0, 3), ...completedChallenges.slice(0, 3)]
-                .sort((a, b) => new Date(b.createdAt || b.completedAt || '').getTime() - new Date(a.createdAt || a.completedAt || '').getTime())
-                .slice(0, 5)
-                .map((item: any) => (
-                  <div key={`${item.id}-${item.challenger ? 'challenge' : 'event'}`} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+              {[...events.slice(0, 3), ...challenges.slice(0, 3)]
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(0, 10)
+                .map((item: any, index) => (
+                  <div key={`${item.id}-${index}`} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
                     <div className="flex items-center space-x-3">
-                      {item.challenger ? (
-                        <Target className="w-5 h-5 text-purple-400" />
-                      ) : (
-                        <Trophy className="w-5 h-5 text-blue-400" />
-                      )}
+                      <div className={`w-3 h-3 rounded-full ${item.challengerUser ? getChallengeStatusColor(item.status) : getEventStatusColor(item.status)}`}></div>
                       <div>
                         <p className="text-white font-medium">{item.title}</p>
                         <p className="text-slate-400 text-sm">
-                          {item.challenger ? 'Challenge' : 'Event'} completed
+                          {item.challengerUser ? 'Challenge' : 'Event'} • {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <Badge className={item.challenger ? getChallengeStatusColor(item.status) : getEventStatusColor(item.status)}>
-                        Completed
+                      <Badge className={item.challengerUser ? getChallengeStatusColor(item.status) : getEventStatusColor(item.status)}>
+                        {item.status}
                       </Badge>
                     </div>
                   </div>
