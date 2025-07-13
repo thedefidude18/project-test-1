@@ -74,15 +74,21 @@ export default function Home() {
   if (!user) return null;
 
   // Filter featured content based on search
-  const filteredEvents = events.filter(event => 
-    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredEvents = events.filter(event => {
+    if (!searchQuery) return true;
+    const searchLower = searchQuery.toLowerCase();
+    return event.title.toLowerCase().includes(searchLower) ||
+           (event.description || '').toLowerCase().includes(searchLower) ||
+           event.category.toLowerCase().includes(searchLower);
+  });
 
-  const filteredChallenges = challenges.filter(challenge => 
-    challenge.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    challenge.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredChallenges = challenges.filter(challenge => {
+    if (!searchQuery) return true;
+    const searchLower = searchQuery.toLowerCase();
+    return (challenge.title || '').toLowerCase().includes(searchLower) ||
+           (challenge.description || '').toLowerCase().includes(searchLower) ||
+           (challenge.category || '').toLowerCase().includes(searchLower);
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">

@@ -15,6 +15,7 @@ export default function Leaderboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: leaderboard = [], isLoading } = useQuery({
     queryKey: ["/api/leaderboard"],
@@ -70,6 +71,21 @@ export default function Leaderboard() {
         const name = username || 'user';
         return `https://api.dicebear.com/7.x/lorelei/svg?seed=${userId}`;
     };
+
+  // Apply search filter
+  const filteredUsers = leaderboard.filter((user: any) => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    const firstName = (user.firstName || '').toLowerCase();
+    const lastName = (user.lastName || '').toLowerCase();
+    const username = (user.username || '').toLowerCase();
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    return firstName.includes(searchLower) ||
+           lastName.includes(searchLower) ||
+           username.includes(searchLower) ||
+           fullName.includes(searchLower);
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
@@ -144,7 +160,14 @@ export default function Leaderboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {leaderboard.slice(0, 50).map((player: any, index: number) => {
+                    <input
+                      type="text"
+                      placeholder="Search players..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-4 py-2 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-primary focus:border-primary"
+                    />
+                    {filteredUsers.slice(0, 50).map((player: any, index: number) => {
                       const rank = index + 1;
                       const isCurrentUser = player.id === user.id;
 

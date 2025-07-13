@@ -123,10 +123,31 @@ export default function Friends() {
 
   if (!user) return null;
 
+    const { data: allUsers = [] } = useQuery({
+    queryKey: ["/api/users"],
+    retry: false,
+  });
+
+  const filteredUsers = allUsers.filter((u: any) => {
+    if (u.id === user?.id) return false;
+    if (!searchTerm) return true;
+
+    const searchLower = searchTerm.toLowerCase();
+    const firstName = (u.firstName || '').toLowerCase();
+    const lastName = (u.lastName || '').toLowerCase();
+    const username = (u.username || '').toLowerCase();
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    return firstName.includes(searchLower) ||
+           lastName.includes(searchLower) ||
+           username.includes(searchLower) ||
+           fullName.includes(searchLower);
+  });
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
@@ -138,7 +159,7 @@ export default function Friends() {
               Connect with friends and challenge them
             </p>
           </div>
-          
+
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary text-white hover:bg-primary/90 mt-4 sm:mt-0">

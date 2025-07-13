@@ -136,7 +136,11 @@ export default function Events() {
   ];
 
   const filteredEvents = events.filter((event: any) => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm || 
+      event.title.toLowerCase().includes(searchLower) ||
+      (event.description || '').toLowerCase().includes(searchLower) ||
+      event.category.toLowerCase().includes(searchLower);
     const matchesCategory = categoryFilter === "all" || event.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });

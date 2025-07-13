@@ -77,7 +77,7 @@ export interface IStorage {
   toggleMessageReaction(messageId: string, userId: string, emoji: string): Promise<any>;
   getMessageReactions(messageId: string): Promise<any[]>;
   getEventParticipantsWithUsers(eventId: number): Promise<any[]>;
-  
+
   // Event Pool operations
   adminSetEventResult(eventId: number, result: boolean): Promise<Event>;
   processEventPayout(eventId: number): Promise<{ winnersCount: number; totalPayout: number; creatorFee: number }>;
@@ -86,7 +86,7 @@ export interface IStorage {
   getEventMessageById(messageId: number): Promise<EventMessage | undefined>;
   createEventMessage(eventId: number, userId: string, message: string, replyToId?: number, mentions?: string[]): Promise<EventMessage>;
   toggleMessageReaction(messageId: string, userId: string, emoji: string): Promise<any>;
-  
+
   // Private event operations
   requestEventJoin(eventId: number, userId: string, prediction: boolean, amount: number): Promise<EventJoinRequest>;
   getEventJoinRequests(eventId: number): Promise<(EventJoinRequest & { user: User })[]>;
@@ -100,7 +100,7 @@ export interface IStorage {
   updateChallenge(id: number, updates: Partial<Challenge>): Promise<Challenge>;
   getChallengeMessages(challengeId: number): Promise<(ChallengeMessage & { user: User })[]>;
   createChallengeMessage(challengeId: number, userId: string, message: string): Promise<ChallengeMessage>;
-  
+
   // Admin challenge operations
   getAllChallenges(limit?: number): Promise<(Challenge & { challengerUser: User, challengedUser: User })[]>;
   adminSetChallengeResult(challengeId: number, result: 'challenger_won' | 'challenged_won' | 'draw'): Promise<Challenge>;
@@ -495,7 +495,8 @@ export class DatabaseStorage implements IStorage {
           id: sql`challenged_user.id`,
           username: sql`challenged_user.username`,
           firstName: sql`challenged_user.first_name`,
-          lastName: sql`challenged_user.profile_image_url`,
+          lastName: sql`challenged_user.last_name`,
+          profileImageUrl: sql`challenged_user.profile_image_url`,
         },
       })
       .from(challenges)
@@ -515,14 +516,14 @@ export class DatabaseStorage implements IStorage {
     // Check challenger balance
     const balance = await this.getUserBalance(challenge.challenger);
     const challengeAmount = parseFloat(challenge.amount);
-    
+
     if (balance.balance < challengeAmount) {
       throw new Error("Insufficient balance to create challenge");
     }
 
     // Create the challenge
     const [newChallenge] = await db.insert(challenges).values(challenge).returning();
-    
+
     // Deduct challenger's stake and create escrow
     await this.createTransaction({
       userId: challenge.challenger,
@@ -569,7 +570,7 @@ export class DatabaseStorage implements IStorage {
     // Check challenged user balance
     const balance = await this.getUserBalance(userId);
     const challengeAmount = parseFloat(challenge.amount);
-    
+
     if (balance.balance < challengeAmount) {
       throw new Error("Insufficient balance to accept challenge");
     }
@@ -689,7 +690,7 @@ export class DatabaseStorage implements IStorage {
     const winnerPayout = totalAmount - platformFee;
 
     let winnerId: string | undefined;
-    
+
     if (challenge.result === 'challenger_won') {
       winnerId = challenge.challenger;
     } else if (challenge.result === 'challenged_won') {
@@ -699,7 +700,7 @@ export class DatabaseStorage implements IStorage {
       const halfAmount = parseFloat(challenge.amount);
       await this.updateUserBalance(challenge.challenger, halfAmount);
       await this.updateUserBalance(challenge.challenged, halfAmount);
-      
+
       // Create transactions for both
       await this.createTransaction({
         userId: challenge.challenger,
@@ -709,7 +710,7 @@ export class DatabaseStorage implements IStorage {
         status: 'completed',
         reference: `challenge_${challengeId}_draw_challenger`,
       });
-      
+
       await this.createTransaction({
         userId: challenge.challenged,
         type: 'challenge_draw',
@@ -727,7 +728,7 @@ export class DatabaseStorage implements IStorage {
         message: `Challenge "${challenge.title}" ended in a draw. Your stake has been returned.`,
         data: { challengeId: challengeId, result: 'draw' },
       });
-      
+
       await this.createNotification({
         userId: challenge.challenged,
         type: 'challenge_draw',
@@ -735,14 +736,14 @@ export class DatabaseStorage implements IStorage {
         message: `Challenge "${challenge.title}" ended in a draw. Your stake has been returned.`,
         data: { challengeId: challengeId, result: 'draw' },
       });
-      
+
       return { winnerPayout: halfAmount * 2, platformFee: 0, winnerId: undefined };
     }
 
     if (winnerId) {
       // Update winner's balance
       await this.updateUserBalance(winnerId, winnerPayout);
-      
+
       // Create transaction record
       await this.createTransaction({
         userId: winnerId,
@@ -756,7 +757,7 @@ export class DatabaseStorage implements IStorage {
       // Send notifications to both participants
       const winner = await this.getUser(winnerId);
       const loser = winnerId === challenge.challenger ? challenge.challenged : challenge.challenger;
-      
+
       await this.createNotification({
         userId: winnerId,
         type: 'challenge_win',
@@ -764,7 +765,7 @@ export class DatabaseStorage implements IStorage {
         message: `Congratulations! You won ₦${winnerPayout.toLocaleString()} from challenge "${challenge.title}".`,
         data: { challengeId: challengeId, result: challenge.result, winnings: winnerPayout },
       });
-      
+
       await this.createNotification({
         userId: loser,
         type: 'challenge_loss',
@@ -1063,7 +1064,7 @@ export class DatabaseStorage implements IStorage {
 
     const participants = await this.getEventParticipants(eventId);
     const winners = participants.filter(p => p.prediction === event.adminResult);
-    
+
     const totalPool = parseFloat(event.eventPool);
     const creatorFeeAmount = totalPool * 0.03; // 3% creator fee
     const availablePayout = totalPool - creatorFeeAmount;
@@ -1079,18 +1080,18 @@ export class DatabaseStorage implements IStorage {
         status: 'completed',
         reference: `event_${eventId}_no_winners`,
       });
-      
+
       return { winnersCount: 0, totalPayout: totalPool, creatorFee: 0 };
     }
 
     // Calculate individual payouts
     const totalWinnerBets = winners.reduce((sum, w) => sum + parseFloat(w.amount), 0);
-    
+
     for (const winner of winners) {
       const winnerBet = parseFloat(winner.amount);
       const winnerShare = winnerBet / totalWinnerBets;
       const payout = winnerBet + (availablePayout - totalWinnerBets) * winnerShare;
-      
+
       // Update participant with payout info
       await db
         .update(eventParticipants)
@@ -1100,10 +1101,10 @@ export class DatabaseStorage implements IStorage {
           payoutAt: new Date()
         })
         .where(eq(eventParticipants.id, winner.id));
-      
+
       // Update user balance
       await this.updateUserBalance(winner.userId, payout);
-      
+
       // Create transaction record
       await this.createTransaction({
         userId: winner.userId,
@@ -1211,7 +1212,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(eventJoinRequests)
       .where(eq(eventJoinRequests.id, requestId));
-    
+
     if (!request) {
       throw new Error('Join request not found');
     }
@@ -1262,7 +1263,7 @@ export class DatabaseStorage implements IStorage {
     if (!event) return;
 
     const participants = await this.getEventParticipants(eventId);
-    
+
     for (const participant of participants) {
       await this.createNotification({
         userId: participant.userId,
@@ -1285,7 +1286,7 @@ export class DatabaseStorage implements IStorage {
     if (!event) return;
 
     const participants = await this.getEventParticipants(eventId);
-    
+
     for (const participant of participants) {
       await this.createNotification({
         userId: participant.userId,
@@ -1426,6 +1427,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Get user profile with stats
+  async getAllUsers() {
+    const usersResult = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImageUrl: users.profileImageUrl,
+        balance: walletBalances.balance,
+        level: users.level,
+        wins: users.wins,
+        losses: users.losses,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .leftJoin(walletBalances, eq(users.id, walletBalances.userId))
+      .orderBy(desc(users.createdAt));
+
+    return usersResult;
+  }
+
   async getUserProfile(userId: string, currentUserId: string): Promise<any> {
     const [user] = await db
       .select()
@@ -1581,7 +1603,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, userId))
       .returning();
-    
+
     // Create admin log entry
     await db.insert(transactions).values({
       userId,
@@ -1591,7 +1613,7 @@ export class DatabaseStorage implements IStorage {
       status: 'completed',
       createdAt: new Date()
     });
-    
+
     return updatedUser;
   }
 
@@ -1605,7 +1627,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, userId))
       .returning();
-    
+
     // Create admin log entry
     await db.insert(transactions).values({
       userId,
@@ -1615,7 +1637,7 @@ export class DatabaseStorage implements IStorage {
       status: 'completed',
       createdAt: new Date()
     });
-    
+
     return updatedUser;
   }
 
@@ -1629,7 +1651,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, userId))
       .returning();
-    
+
     // Create transaction record
     await db.insert(transactions).values({
       userId,
@@ -1639,7 +1661,7 @@ export class DatabaseStorage implements IStorage {
       status: 'completed',
       createdAt: new Date()
     });
-    
+
     return updatedUser;
   }
 
@@ -1653,7 +1675,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, userId))
       .returning();
-    
+
     // Create admin log entry
     await db.insert(transactions).values({
       userId,
@@ -1663,7 +1685,7 @@ export class DatabaseStorage implements IStorage {
       status: 'completed',
       createdAt: new Date()
     });
-    
+
     return updatedUser;
   }
 
@@ -1677,7 +1699,7 @@ export class DatabaseStorage implements IStorage {
       message,
       createdAt: new Date()
     });
-    
+
     // Create admin log entry
     await db.insert(transactions).values({
       userId,
@@ -1687,7 +1709,7 @@ export class DatabaseStorage implements IStorage {
       status: 'completed',
       createdAt: new Date()
     });
-    
+
     return { success: true, message: 'Admin message sent successfully' };
   }
 }

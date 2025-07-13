@@ -82,6 +82,7 @@ export default function EventChatPage() {
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
   const [isBannerHidden, setIsBannerHidden] = useState(false);
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: event } = useQuery({
     queryKey: ["/api/events", eventId],
@@ -593,13 +594,26 @@ export default function EventChatPage() {
 
       {/* Chat Messages Area */}
       <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2 flex flex-col-reverse">
+        <Input
+                placeholder="Search messages..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-slate-50 dark:bg-slate-700"
+              />
         {messages.length === 0 ? (
           <div className="text-center text-slate-500 dark:text-slate-400 py-8">
             <i className="fas fa-comments text-2xl mb-2"></i>
             <p>No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          [...messages].reverse().map((message: ExtendedMessage, index: number) => {
+          [...messages]
+            .filter((message: any) => {
+              if (!searchQuery) return true;
+              const searchLower = searchQuery.toLowerCase();
+              return message.message.toLowerCase().includes(searchLower) ||
+                     (message.user.firstName || message.user.username || '').toLowerCase().includes(searchLower);
+            })
+            .reverse().map((message: ExtendedMessage, index: number) => {
             const showAvatar = index === 0 || messages[messages.length - 2 - index]?.userId !== message.userId;
             const isCurrentUser = message.userId === user?.id;
             const isConsecutive = index > 0 && messages[messages.length - 2 - index]?.userId === message.userId;
@@ -798,7 +812,7 @@ export default function EventChatPage() {
                 value={newMessage}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyPress}
-                className="bg-slate-100 dark:bg-slate-700 border-none rounded-full pl-4 pr-12 py-2"
+                className="bg-slate-100 dark:bg-slate-700 border-none rounded-full pl-4 pr-4 py-2"
                 disabled={!isConnected}
               />
               {!isConnected && (

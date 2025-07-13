@@ -463,11 +463,19 @@ export default function Challenges() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {allUsers
                   .filter((u: any) => u.id !== user?.id)
-                  .filter((u: any) => 
-                    !searchTerm || 
-                    (u.firstName || u.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    (u.username || '').toLowerCase().includes(searchTerm.toLowerCase())
-                  )
+                  .filter((u: any) => {
+                    if (!searchTerm) return true;
+                    const searchLower = searchTerm.toLowerCase();
+                    const firstName = (u.firstName || '').toLowerCase();
+                    const lastName = (u.lastName || '').toLowerCase();
+                    const username = (u.username || '').toLowerCase();
+                    const fullName = `${firstName} ${lastName}`.trim();
+                    
+                    return firstName.includes(searchLower) ||
+                           lastName.includes(searchLower) ||
+                           username.includes(searchLower) ||
+                           fullName.includes(searchLower);
+                  })
                   .map((userItem: any) => {
                     // Check if this user is a friend
                     const isFriend = friends.some((friend: any) => {
