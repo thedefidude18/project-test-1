@@ -114,10 +114,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
       if (!userId || !profile) {
         throw new Error("User information not available");
       }
-      return await apiRequest("POST", `/api/wallet/transfer`, {
-        recipientId: userId,
-        amount,
-        type: 'tip'
+      return await apiRequest("POST", `/api/users/${userId}/tip`, {
+        amount
       });
     },
     onSuccess: () => {
@@ -206,7 +204,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
       title: challengeTitle,
       description: challengeDescription,
       amount,
-      type: challengeType,
+      category: challengeType,
     });
   };
 

@@ -167,8 +167,8 @@ export default function Notifications() {
     }
   };
 
-  const unreadNotifications = notifications.filter((n: any) => !n.read);
-  const readNotifications = notifications.filter((n: any) => n.read);
+  const unreadNotifications = Array.isArray(notifications) ? notifications.filter((n: any) => !n.read) : [];
+  const readNotifications = Array.isArray(notifications) ? notifications.filter((n: any) => n.read) : [];
 
   const handleMarkAsRead = (notificationId: number) => {
     markAsReadMutation.mutate(notificationId);
