@@ -11,6 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { formatDistanceToNow } from "date-fns";
+import { LevelBadge } from "@/components/LevelBadge";
+import { LevelProgress } from "@/components/LevelProgress";
+import { formatBalance } from "@/utils/currencyUtils";
+import { getAvatarUrl } from "@/utils/avatarUtils";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -100,7 +104,7 @@ export default function Profile() {
             <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
               <Avatar className="w-32 h-32">
                 <AvatarImage 
-                  src={user.profileImageUrl || undefined} 
+                  src={getAvatarUrl(user.id, user.profileImageUrl, user.firstName || user.username)} 
                   alt={user.firstName || user.username || 'User'} 
                 />
                 <AvatarFallback className="text-2xl">
@@ -147,7 +151,7 @@ export default function Profile() {
                 {/* Stats Row */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">{user.points}</p>
+                    <p className="text-2xl font-bold text-primary">{formatBalance(user.points || 0)}</p>
                     <p className="text-sm text-slate-600 dark:text-slate-400">Points</p>
                   </div>
                   <div className="text-center">
@@ -169,12 +173,22 @@ export default function Profile() {
         </Card>
 
         {/* Profile Tabs */}
-        <Tabs defaultValue="achievements" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="level" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="level">Level</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="stats">Statistics</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="level" className="space-y-6">
+            <LevelProgress 
+              level={user.level}
+              currentXP={user.xp}
+              totalXP={user.xp}
+              recentGains={[]}
+            />
+          </TabsContent>
 
           <TabsContent value="achievements" className="space-y-6">
             <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">

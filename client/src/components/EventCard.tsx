@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Lock, Users, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +5,9 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/use-toast';
 import { formatCurrency } from '../lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { supabase } from '../lib/supabase';
+import { getAvatarUrl } from '../utils/avatarUtils';
+import { formatBalance } from '../utils/currencyUtils';
 
 const DEFAULT_BANNER = 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&auto=format&fit=crop';
 
@@ -60,17 +62,17 @@ export function EventCard({ event, featured = false }: EventCardProps) {
   const isPrivate = event.is_private || event.isPrivate || false;
   const endDate = event.end_time || event.endDate;
   const creator = event.creator;
-  
+
   // Calculate pool total from different possible sources
   const poolTotal = event.pool?.total_amount || 
                    parseFloat(event.eventPool || '0') || 
                    (parseFloat(event.yesPool || '0') + parseFloat(event.noPool || '0'));
-  
+
   // Calculate participants count
   const participantCount = event.current_participants || 
                           event.participants?.length || 
                           Math.floor(Math.random() * 50) + 10;
-  
+
   const maxParticipants = event.max_participants || event.maxParticipants;
 
   // Calculate time remaining
@@ -119,10 +121,10 @@ export function EventCard({ event, featured = false }: EventCardProps) {
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           onError={() => setImageError(true)}
         />
-        
+
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-        
+
         {/* Top Row - Status and Private Badge */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -132,7 +134,7 @@ export function EventCard({ event, featured = false }: EventCardProps) {
                event.status === 'cancelled' ? 'Cancelled' : 'Live'}
             </span>
           </div>
-          
+
           {isPrivate && (
             <div className="bg-black/40 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1">
               <Lock size={12} className="text-white" />
@@ -170,7 +172,7 @@ export function EventCard({ event, featured = false }: EventCardProps) {
                 <span className="text-lg font-bold">₦{poolTotal.toLocaleString()}</span>
                 <span className="text-white/70 text-sm ml-1">pool</span>
               </div>
-              
+
               {/* Participants */}
               <div className="flex items-center space-x-1 text-white/70">
                 <Users size={14} />

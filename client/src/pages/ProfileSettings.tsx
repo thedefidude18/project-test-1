@@ -17,6 +17,8 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { formatDistanceToNow } from "date-fns";
+import { useNotificationSettings } from "@/hooks/useNotificationSettings";
 
 const updateProfileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -29,13 +31,7 @@ export default function ProfileSettings() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
-    pushNotifications: true,
-    challengeNotifications: true,
-    eventNotifications: true,
-    friendNotifications: true,
-  });
+  const { settings: notificationSettings, updateSetting, isUpdating } = useNotificationSettings();
 
   const form = useForm<z.infer<typeof updateProfileSchema>>({
     resolver: zodResolver(updateProfileSchema),
@@ -122,10 +118,12 @@ export default function ProfileSettings() {
     updateProfileMutation.mutate(data);
   };
 
-  const handleNotificationChange = (key: keyof typeof notificationSettings, value: boolean) => {
-    const newSettings = { ...notificationSettings, [key]: value };
-    setNotificationSettings(newSettings);
-    updateNotificationsMutation.mutate(newSettings);
+  const handleNotificationChange = (key: string, value: boolean) => {
+    updateSetting(key as keyof typeof notificationSettings, value);
+    toast({
+      title: "Notification Setting Updated",
+      description: "Your notification preferences have been saved.",
+    });
   };
 
   if (!user) return null;
@@ -270,7 +268,7 @@ export default function ProfileSettings() {
                   </p>
                 </div>
                 <Switch
-                  checked={notificationSettings.emailNotifications}
+                  checked={notificationSettings?.emailNotifications}
                   onCheckedChange={(checked) => handleNotificationChange('emailNotifications', checked)}
                 />
               </div>
@@ -283,7 +281,7 @@ export default function ProfileSettings() {
                   </p>
                 </div>
                 <Switch
-                  checked={notificationSettings.pushNotifications}
+                  checked={notificationSettings?.pushNotifications}
                   onCheckedChange={(checked) => handleNotificationChange('pushNotifications', checked)}
                 />
               </div>
@@ -298,7 +296,7 @@ export default function ProfileSettings() {
                   </p>
                 </div>
                 <Switch
-                  checked={notificationSettings.challengeNotifications}
+                  checked={notificationSettings?.challengeNotifications}
                   onCheckedChange={(checked) => handleNotificationChange('challengeNotifications', checked)}
                 />
               </div>
@@ -311,7 +309,7 @@ export default function ProfileSettings() {
                   </p>
                 </div>
                 <Switch
-                  checked={notificationSettings.eventNotifications}
+                  checked={notificationSettings?.eventNotifications}
                   onCheckedChange={(checked) => handleNotificationChange('eventNotifications', checked)}
                 />
               </div>
@@ -324,7 +322,7 @@ export default function ProfileSettings() {
                   </p>
                 </div>
                 <Switch
-                  checked={notificationSettings.friendNotifications}
+                  checked={notificationSettings?.friendNotifications}
                   onCheckedChange={(checked) => handleNotificationChange('friendNotifications', checked)}
                 />
               </div>

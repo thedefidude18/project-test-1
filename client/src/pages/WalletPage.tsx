@@ -13,6 +13,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { formatDistanceToNow } from "date-fns";
+import { formatBalance } from "@/utils/currencyUtils";
 import { PaymentTestPanel } from "@/components/PaymentTestPanel";
 
 export default function WalletPage() {
