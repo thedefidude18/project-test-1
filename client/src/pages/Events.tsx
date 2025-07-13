@@ -70,7 +70,7 @@ export default function Events() {
     },
   });
 
-  const { data: events = [], isLoading } = useQuery({
+  const { data: events = [], isLoading, error: eventsError } = useQuery({
     queryKey: ["/api/events"],
     retry: false,
     onError: (error: Error) => {
@@ -83,6 +83,13 @@ export default function Events() {
         setTimeout(() => {
           window.location.href = "/api/login";
         }, 500);
+      } else {
+        console.error("Error loading events:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load events. Please try again.",
+          variant: "destructive",
+        });
       }
     },
   });

@@ -61,20 +61,35 @@ export function EventCard({ event, featured = false }: EventCardProps) {
   const endDate = event.end_time || event.endDate;
   const creator = event.creator;
 
-  // Calculate pool total from different possible sources
-  const poolTotal = event.pool?.total_amount || 
-                   parseFloat(event.eventPool || '0') || 
-                   (parseFloat(event.yesPool || '0') + parseFloat(event.noPool || '0'));
+  // Calculate pool information
+  const eventPoolValue = parseFloat(event.eventPool || '0');
+  const yesPoolValue = parseFloat(event.yesPool || '0');
+  const noPoolValue = parseFloat(event.noPool || '0');
 
-  // Calculate participants count
+  const poolTotal = event.pool?.total_amount || 
+    (eventPoolValue > 0 ? eventPoolValue : yesPoolValue + noPoolValue) ||
+    0;
+
   const participantCount = event.current_participants || 
-                          event.participants?.length || 
-                          Math.floor(Math.random() * 50) + 10;
+    event.participants?.length || 
+    0;
 
   const maxParticipants = event.max_participants || event.maxParticipants;
 
-  // Calculate time remaining
-  const timeLeft = endDate ? formatDistanceToNow(new Date(endDate), { addSuffix: true }) : 'Soon';
+  // Time calculation with better error handling
+  const endTime = event.end_time || event.endDate;
+  let timeLeft = 'No deadline';
+
+  if (endTime) {
+    try {
+      const endDate = new Date(endTime);
+      if (!isNaN(endDate.getTime())) {
+        timeLeft = formatDistanceToNow(endDate, { addSuffix: true });
+      }
+    } catch (error) {
+      console.warn('Invalid date in event:', endTime);
+    }
+  }
 
   const handleJoinEvent = () => {
     if (!user) {

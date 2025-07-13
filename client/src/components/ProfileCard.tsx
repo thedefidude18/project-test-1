@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Trophy, Users, TrendingUp, Star, Send, Zap, Swords } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -165,7 +164,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
   const handleTip = (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseInt(tipAmount);
-    
+
     if (isNaN(amount) || amount <= 0) {
       toast({
         title: "Invalid Amount",
@@ -181,7 +180,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
   const handleChallenge = (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseInt(challengeAmount);
-    
+
     if (isNaN(amount) || amount <= 0) {
       toast({
         title: "Invalid Amount",
@@ -205,7 +204,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
       const nextLevelXP = profile.level * 1000;
       const currentLevelXP = (profile.level - 1) * 1000;
       const progressXP = profile.xp - currentLevelXP;
-      
+
       // Check if user is close to next level (within 50 XP)
       if (nextLevelXP - profile.xp <= 50) {
         setShowMilestoneAnimation(true);
@@ -301,7 +300,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                     <img src={getAvatarUrl(profile.id, profile.profileImageUrl, profile.username)} alt="Avatar" />
                   </AvatarFallback>
                 </Avatar>
-                
+
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                     {profile.firstName || profile.username || 'Unknown'}
@@ -335,7 +334,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                   </div>
                   <div className="text-xs text-slate-600 dark:text-slate-400">Wins</div>
                 </div>
-                
+
                 <div className="text-center bg-slate-50 dark:bg-slate-700 rounded-lg p-2">
                   <Users className="w-3 h-3 text-blue-500 mx-auto mb-1" />
                   <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -343,7 +342,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                   </div>
                   <div className="text-xs text-slate-600 dark:text-slate-400">Followers</div>
                 </div>
-                
+
                 <div className="text-center bg-slate-50 dark:bg-slate-700 rounded-lg p-2">
                   <TrendingUp className="w-3 h-3 text-emerald-500 mx-auto mb-1" />
                   <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -390,7 +389,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                       profile.isFollowing ? 'Unfollow' : 'Follow'
                     )}
                   </Button>
-                  
+
                   <Button
                     onClick={() => setShowChallengeModal(true)}
                     className="bg-red-600 hover:bg-red-700 text-white text-xs h-8"
@@ -399,7 +398,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                     <Swords className="w-3 h-3 mr-1" />
                     Challenge
                   </Button>
-                  
+
                   <Button
                     onClick={() => setShowTipModal(true)}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8"
@@ -421,7 +420,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
           <DialogHeader>
             <DialogTitle>Challenge {profile.firstName || profile.username}</DialogTitle>
           </DialogHeader>
-          
+
           <form onSubmit={handleChallenge} className="space-y-4">
             <div>
               <Label htmlFor="challengeTitle">Challenge Title</Label>
@@ -433,7 +432,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                 required
               />
             </div>
-            
+
             <div>
               <Label htmlFor="challengeDescription">Description</Label>
               <Textarea
@@ -444,7 +443,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                 rows={3}
               />
             </div>
-            
+
             <div>
               <Label htmlFor="challengeType">Challenge Type</Label>
               <Select value={challengeType} onValueChange={setChallengeType}>
@@ -459,7 +458,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <Label htmlFor="challengeAmount">Stake Amount</Label>
               <Input
@@ -472,7 +471,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                 required
               />
             </div>
-            
+
             <div className="flex space-x-3">
               <Button 
                 type="button" 
@@ -507,7 +506,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
           <DialogHeader>
             <DialogTitle>Tip {profile.firstName || profile.username}</DialogTitle>
           </DialogHeader>
-          
+
           <form onSubmit={handleTip} className="space-y-4">
             <div>
               <Label htmlFor="tipAmount">Amount</Label>
@@ -521,7 +520,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                 required
               />
             </div>
-            
+
             <div className="flex space-x-3">
               <Button 
                 type="button" 

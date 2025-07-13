@@ -869,8 +869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId,
               type: 'deposit',
               amount: depositAmount.toString(),
-              description: `Deposit via Paystack - ${reference}`,
-              status: 'completed',
+              description: `Deposit via Paystack - ${reference}`,              status: 'completed',
             });
 
             // Create notification for successful deposit
@@ -1009,8 +1008,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Cannot tip yourself" });
       }
 
-      const balance = await storage.getUserBalance(senderId);
-      if (balance.balance < amount) {
+      const balanceResult = await storage.getUserBalance(senderId);
+      if (balanceResult.balance < amount) {
         return res.status(400).json({ message: "Insufficient balance" });
       }
 

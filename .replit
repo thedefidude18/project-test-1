@@ -18,7 +18,7 @@ externalPort = 80
 PORT = "5000"
 
 [workflows]
-runButton = "Dev Server"
+runButton = "Dev Server Fixed"
 
 [[workflows.workflow]]
 name = "Project"
@@ -41,6 +41,19 @@ waitForPort = 5000
 [[workflows.workflow]]
 name = "Dev Server"
 author = 44973986
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Dev Server Fixed"
+author = 44978831
 mode = "sequential"
 
 [[workflows.workflow.tasks]]

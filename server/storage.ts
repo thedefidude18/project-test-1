@@ -196,7 +196,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEvent(event: InsertEvent): Promise<Event> {
-    const [newEvent] = await db.insert(events).values(event).returning();
+    const eventData = {
+      ...event,
+      eventPool: '0',
+      yesPool: '0',
+      noPool: '0',
+      creatorFee: '0',
+    };
+    const [newEvent] = await db.insert(events).values(eventData).returning();
     return newEvent;
   }
 
@@ -601,7 +608,7 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async getUserBalance(userId: string): Promise<number> {
+  async getUserBalance(userId: string): Promise<{ balance: number }> {
     // Calculate balance from all transactions
     const [result] = await db
       .select({
@@ -615,7 +622,7 @@ export class DatabaseStorage implements IStorage {
         )
       );
 
-    return result?.totalBalance || 0;
+    return { balance: result?.totalBalance || 0 };
   }
 
   async updateUserBalance(userId: string, amount: number): Promise<User> {
