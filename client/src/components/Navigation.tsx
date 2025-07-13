@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatBalance } from "@/utils/currencyUtils";
+import { getAvatarUrl } from "@/utils/avatar";
 
 export function Navigation() {
   const { user } = useAuth();
@@ -129,13 +130,13 @@ export function Navigation() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center space-x-2 p-2">
-                  <Avatar className="w-8 h-8">
+                  <Avatar className="h-8 w-8">
                     <AvatarImage 
-                      src={user.profileImageUrl || undefined} 
-                      alt={user.firstName || user.username || 'User'} 
+                      src={getAvatarUrl(user.id, user.profileImageUrl, user.username)} 
+                      alt={user.firstName || user.username} 
                     />
                     <AvatarFallback>
-                      {(user.firstName?.[0] || user.username?.[0] || 'U').toUpperCase()}
+                      <img src={getAvatarUrl(user.id, user.profileImageUrl, user.username)} alt="Avatar" />
                     </AvatarFallback>
                   </Avatar>
                   <span className="hidden sm:block text-sm font-medium">

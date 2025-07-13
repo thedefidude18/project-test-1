@@ -63,6 +63,14 @@ export default function Leaderboard() {
 
   if (!user) return null;
 
+    const getAvatarUrl = (userId: string, profileImageUrl?: string, username?: string) => {
+        if (profileImageUrl) {
+            return profileImageUrl;
+        }
+        const name = username || 'user';
+        return `https://api.dicebear.com/7.x/lorelei/svg?seed=${userId}`;
+    };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
@@ -163,11 +171,11 @@ export default function Leaderboard() {
                               onClick={() => setSelectedProfileUserId(player.id)}
                             >
                               <AvatarImage 
-                                src={player.profileImageUrl || undefined} 
-                                alt={player.firstName || player.username || 'Player'} 
+                                src={getAvatarUrl(player.id, player.profileImageUrl, player.username)} 
+                                alt={player.firstName || player.username} 
                               />
                               <AvatarFallback>
-                                {(player.firstName?.[0] || player.username?.[0] || 'P').toUpperCase()}
+                                <img src={getAvatarUrl(player.id, player.profileImageUrl, player.username)} alt="Avatar" />
                               </AvatarFallback>
                             </Avatar>
                             <div>
@@ -247,7 +255,7 @@ export default function Leaderboard() {
       </div>
 
       <MobileNavigation />
-      
+
       {/* Profile Card Modal */}
       {selectedProfileUserId && (
         <ProfileCard 

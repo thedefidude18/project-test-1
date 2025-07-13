@@ -24,6 +24,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { formatBalance } from "@/utils/currencyUtils";
+import { getAvatarUrl } from "@/utils/avatarUtils";
 
 interface MessageReaction {
   emoji: string;
@@ -201,19 +203,19 @@ export default function EventChatPage() {
     onMutate: async ({ messageId, emoji }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["/api/events", eventId, "messages"] });
-      
+
       // Snapshot the previous value
       const previousMessages = queryClient.getQueryData(["/api/events", eventId, "messages"]);
-      
+
       // Optimistically update to the new value
       queryClient.setQueryData(["/api/events", eventId, "messages"], (old: any) => {
         if (!old) return old;
-        
+
         return old.map((message: any) => {
           if (message.id === messageId) {
             const reactions = message.reactions || [];
             const existingReaction = reactions.find((r: any) => r.emoji === emoji);
-            
+
             if (existingReaction) {
               // Toggle existing reaction
               if (existingReaction.userReacted) {
@@ -246,7 +248,7 @@ export default function EventChatPage() {
           return message;
         });
       });
-      
+
       return { previousMessages };
     },
     onError: (err, variables, context) => {
@@ -256,7 +258,7 @@ export default function EventChatPage() {
     onSettled: () => {
       // Refetch to ensure data consistency
       queryClient.invalidateQueries({ queryKey: ["/api/events", eventId, "messages"] });
-      
+
       // Send WebSocket message for real-time updates
       sendMessage({
         type: 'message_reaction',
@@ -604,20 +606,18 @@ export default function EventChatPage() {
 
             return (
               <div key={message.id} className={`flex space-x-2 ${isCurrentUser ? 'flex-row-reverse space-x-reverse' : ''} ${isConsecutive ? 'mt-1' : 'mt-3'}`}>
-                {showAvatar && !isCurrentUser && (
-                  <Avatar 
-                    className="w-6 h-6 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
-                    onClick={() => setSelectedProfileUserId(message.user.id)}
-                  >
-                    <AvatarImage 
-                      src={message.user.profileImageUrl || undefined} 
-                      alt={message.user.firstName || message.user.username || 'User'} 
-                    />
-                    <AvatarFallback className="text-xs">
-                      {(message.user.firstName?.[0] || message.user.username?.[0] || 'U').toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                )}
+                {!isCurrentUser && showAvatar && (
+                    <Avatar className="w-6 h-6 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                    onClick={() => setSelectedProfileUserId(message.user.id)}>
+                      <AvatarImage 
+                        src={getAvatarUrl(message.user.id, message.user.profileImageUrl, message.user.username)} 
+                        alt={message.user.firstName || message.user.username} 
+                      />
+                      <AvatarFallback className="text-xs">
+                        <img src={getAvatarUrl(message.user.id, message.user.profileImageUrl, message.user.username)} alt="Avatar" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
 
                 <div className={`flex-1 max-w-[75%] ${isCurrentUser ? 'text-right' : ''} ${!showAvatar && !isCurrentUser ? 'ml-8' : ''}`}>
                   {showAvatar && (
@@ -813,7 +813,7 @@ export default function EventChatPage() {
               disabled={!newMessage.trim() || !isConnected || sendMessageMutation.isPending}
               className="bg-primary text-white hover:bg-primary/90 rounded-full p-2"
             >
-              <i className="fas fa-paper-plane"></i>
+              <i className="fas fafa-paper-plane"></i>
             </Button>
           </div>
         </div>

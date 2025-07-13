@@ -19,9 +19,6 @@ export const generateAvatar = (seed: string, style: 'avataaars' | 'initials' | '
 };
 
 export const getAvatarUrl = (userId: string, userAvatar?: string, userName?: string) => {
-  if (userAvatar && userAvatar.startsWith('http')) {
-    return userAvatar;
-  }
-  
+  // Always return generated avatar for consistency
   return generateAvatar(userId || userName || 'default', 'avataaars');
 };

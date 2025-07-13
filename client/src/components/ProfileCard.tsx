@@ -18,6 +18,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatBalance } from "@/utils/currencyUtils";
+import { getAvatarUrl } from "@/utils/avatarUtils";
 
 interface ProfileCardProps {
   userId: string;
@@ -293,11 +294,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
               <div className="flex flex-col items-center space-y-2">
                 <Avatar className="w-16 h-16">
                   <AvatarImage 
-                    src={profile.profileImageUrl || undefined} 
+                    src={getAvatarUrl(profile.id, profile.profileImageUrl, profile.username)} 
                     alt={profile.firstName || profile.username} 
                   />
                   <AvatarFallback className="text-lg">
-                    {(profile.firstName?.[0] || profile.username?.[0] || '?').toUpperCase()}
+                    <img src={getAvatarUrl(profile.id, profile.profileImageUrl, profile.username)} alt="Avatar" />
                   </AvatarFallback>
                 </Avatar>
                 
