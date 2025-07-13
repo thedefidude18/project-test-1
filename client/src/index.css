@@ -7,7 +7,7 @@
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
@@ -20,24 +20,24 @@
     opacity: 0;
     transform: translateY(10px);
   }
-  
+
   .page-enter-active {
     opacity: 1;
     transform: translateY(0);
     transition: opacity 300ms ease-in-out, transform 300ms ease-in-out;
   }
-  
+
   .page-exit {
     opacity: 1;
     transform: translateY(0);
   }
-  
+
   .page-exit-active {
     opacity: 0;
     transform: translateY(-10px);
     transition: opacity 200ms ease-in-out, transform 200ms ease-in-out;
   }
-  
+
   /* Mobile-first navigation */
   .mobile-nav-safe-area {
     padding-bottom: env(safe-area-inset-bottom, 0);
@@ -55,7 +55,7 @@
   --card-foreground: hsl(20, 14.3%, 4.1%);
   --border: hsl(20, 5.9%, 90%);
   --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(207, 90%, 54%);
+  --primary: #7440FF;
   --primary-foreground: hsl(211, 100%, 99%);
   --secondary: hsl(60, 4.8%, 95.9%);
   --secondary-foreground: hsl(24, 9.8%, 10%);
@@ -78,7 +78,7 @@
   --card-foreground: hsl(0, 0%, 98%);
   --border: hsl(240, 3.7%, 15.9%);
   --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(207, 90%, 54%);
+  --primary: #7440FF;
   --primary-foreground: hsl(211, 100%, 99%);
   --secondary: hsl(240, 3.7%, 15.9%);
   --secondary-foreground: hsl(0, 0%, 98%);
