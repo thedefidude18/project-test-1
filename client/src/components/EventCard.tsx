@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, Users, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'wouter';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/use-toast';
 import { formatCurrency } from '../lib/utils';
@@ -50,7 +50,7 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, featured = false }: EventCardProps) {
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [imageError, setImageError] = useState(false);
@@ -96,7 +96,7 @@ export function EventCard({ event, featured = false }: EventCardProps) {
     }
 
     // Navigate to event chat page
-    navigate(`/events/${eventId}/chat`);
+    setLocation(`/events/${eventId}/chat`);
   };
 
   const getStatusDot = () => {
