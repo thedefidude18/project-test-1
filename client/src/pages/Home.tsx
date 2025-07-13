@@ -91,7 +91,7 @@ export default function Home() {
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background with gradient and decorative elements */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#7440FF] via-[#7440FF]/90 to-[#9D6BFF]"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[#7440FF] via-[#7440FF]/90 to-[#9D6BFF]">
           {/* Floating islands/decorative elements */}
           <div className="absolute top-10 right-20 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
           <div className="absolute top-32 right-40 w-20 h-20 bg-secondary/20 rounded-full blur-lg"></div>
