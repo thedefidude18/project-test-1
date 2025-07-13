@@ -45,74 +45,7 @@ interface EventCardProps {
   featured?: boolean;
 }
 
-export function EventCard({ event, featured = false }: EventCardProps) {
-  const [, setLocation] = useLocation();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [imageError, setImageError] = useState(false);
 
-  // ... other code omitted for brevity
-
-  const handleJoinEvent = () => {
-    if (!user) {
-      toast({
-        title: "Login Required",
-        description: "Please log in to join events",
-        variant: "destructive",
-      });
-      return;
-    }
-    // Navigate to event chat page
-    setLocation(`/events/${event.id}/chat`);
-  };
-
-  // ... rest of the component code
-}import React, { useState } from 'react';
-import { Lock, Users, Clock } from 'lucide-react';
-import { useLocation } from 'wouter';
-import { useAuth } from '../hooks/useAuth';
-import { useToast } from '../hooks/use-toast';
-import { formatDistanceToNow } from 'date-fns';
-
-const DEFAULT_BANNER = 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&auto=format&fit=crop';
-
-interface Creator {
-  id: string;
-  name: string;
-  avatar_url?: string;
-  username?: string;
-}
-
-interface Event {
-  id: string | number;
-  title: string;
-  banner_url?: string;
-  status?: string;
-  start_time?: string;
-  end_time?: string;
-  endDate?: string;
-  is_private?: boolean;
-  isPrivate?: boolean;
-  creator?: Creator;
-  pool?: {
-    total_amount?: number;
-    entry_amount?: number;
-  };
-  eventPool?: string;
-  yesPool?: string;
-  noPool?: string;
-  entryFee?: string;
-  participants?: Array<{ avatar?: string }>;
-  current_participants?: number;
-  max_participants?: number;
-  maxParticipants?: number;
-  category?: string;
-}
-
-interface EventCardProps {
-  event: Event;
-  featured?: boolean;
-}
 
 export function EventCard({ event, featured = false }: EventCardProps) {
   const [, setLocation] = useLocation();
