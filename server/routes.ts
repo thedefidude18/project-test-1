@@ -828,6 +828,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Wallet transfer route
+  app.post('/api/wallet/transfer', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { recipientId, amount, type } = req.body;
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+      }
+
+      if (!recipientId) {
+        return res.status(400).json({ message: "Recipient ID is required" });
+      }
+
+      // Check if user has sufficient balance
+      const balance = await storage.getUserBalance(userId);
+      if (balance < amount) {
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+
+      // Get recipient user
+      const recipient = await storage.getUser(recipientId);
+      if (!recipient) {
+        return res.status(404).json({ message: "Recipient not found" });
+      }
+
+      // Create transaction records
+      await storage.createTransaction({
+        userId,
+        type: 'transfer_out',
+        amount: `-${amount}`,
+        description: `${type || 'Transfer'} to ${recipient.firstName || recipient.username}`,
+        status: 'completed',
+      });
+
+      await storage.createTransaction({
+        userId: recipientId,
+        type: 'transfer_in',
+        amount: amount.toString(),
+        description: `${type || 'Transfer'} from ${req.user.claims.first_name || 'Someone'}`,
+        status: 'completed',
+      });
+
+      // Update balances
+      await storage.updateUserBalance(userId, -amount);
+      await storage.updateUserBalance(recipientId, amount);
+
+      // Create notification for recipient
+      await storage.createNotification({
+        userId: recipientId,
+        type: 'transfer',
+        title: `${type || 'Transfer'} Received`,
+        message: `You received ₦${amount} from ${req.user.claims.first_name || 'Someone'}`,
+        data: { senderId: userId, amount, type },
+      });
+
+      res.json({ message: "Transfer successful" });
+    } catch (error) {
+      console.error("Error processing transfer:", error);
+      res.status(500).json({ message: "Failed to process transfer" });
+    }
+  });
+
   // Wallet withdrawal route
   app.post('/api/wallet/withdraw', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
@@ -890,6 +953,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
       res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  // Get user profile by ID
+  app.get('/api/users/:id/profile', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.params.id;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get user stats
+      const stats = await storage.getUserStats(userId);
+      
+      // Get follower/following counts (placeholder for now)
+      const followerCount = 0;
+      const followingCount = 0;
+      const isFollowing = false;
+
+      const profileData = {
+        ...user,
+        stats,
+        followerCount,
+        followingCount,
+        isFollowing,
+      };
+
+      res.json(profileData);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "Failed to fetch user profile" });
     }
   });
 
