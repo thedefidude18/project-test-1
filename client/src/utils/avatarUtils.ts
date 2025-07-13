@@ -15,7 +15,7 @@ export const generateAvatar = (seed: string, style: 'avataaars' | 'initials' | '
     backgroundColor: ['7440FF', 'FFE066', 'FF6B6B', '4ECDC4', '95E1D3'],
   });
 
-  return avatar.toDataUriSync();
+  return avatar.toString();
 };
 
 export const getAvatarUrl = (userId: string, userAvatar?: string, userName?: string) => {
