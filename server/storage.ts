@@ -50,6 +50,19 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserProfile(id: string, updates: Partial<User>): Promise<User>;
   updateNotificationPreferences(userId: string, preferences: any): Promise<void>;
+  getUserStats(userId: string): Promise<any>;
+  getUserCreatedEvents(userId: string): Promise<any[]>;
+  getUserJoinedEvents(userId: string): Promise<any[]>;
+  getUserAchievements(userId: string): Promise<any[]>;
+  getUserProfile(userId: string, currentUserId: string): Promise<any>;
+  getAdminStats(): Promise<any>;
+  getRecentUsers(limit: number): Promise<any[]>;
+  getPlatformActivity(limit: number): Promise<any[]>;
+  banUser(userId: string, reason: string): Promise<User>;
+  unbanUser(userId: string, reason: string): Promise<User>;
+  adjustUserBalance(userId: string, amount: number, reason: string): Promise<User>;
+  setUserAdminStatus(userId: string, isAdmin: boolean, reason: string): Promise<User>;
+  sendAdminMessage(userId: string, message: string, reason: string): Promise<any>;
 
   // Event operations
   getEvents(limit?: number): Promise<Event[]>;
@@ -1236,6 +1249,370 @@ export class DatabaseStorage implements IStorage {
         type: 'escrow_release'
       },
     });
+  }
+
+  // Get user statistics
+  async getUserStats(userId: string): Promise<any> {
+    const [userStats] = await db
+      .select({
+        totalEvents: count(events.id),
+        totalChallenges: count(challenges.id),
+        totalEarnings: sum(transactions.amount),
+        winRate: sql<number>`COALESCE(COUNT(CASE WHEN ${eventParticipants.status} = 'won' THEN 1 END)::float / NULLIF(COUNT(${eventParticipants.id}), 0) * 100, 0)`,
+      })
+      .from(users)
+      .leftJoin(events, eq(events.creatorId, users.id))
+      .leftJoin(challenges, or(eq(challenges.challenger, users.id), eq(challenges.challenged, users.id)))
+      .leftJoin(transactions, eq(transactions.userId, users.id))
+      .leftJoin(eventParticipants, eq(eventParticipants.userId, users.id))
+      .where(eq(users.id, userId))
+      .groupBy(users.id);
+
+    return userStats || {
+      totalEvents: 0,
+      totalChallenges: 0,
+      totalEarnings: 0,
+      winRate: 0,
+    };
+  }
+
+  // Get events created by user
+  async getUserCreatedEvents(userId: string): Promise<any[]> {
+    const userEvents = await db
+      .select({
+        id: events.id,
+        title: events.title,
+        description: events.description,
+        category: events.category,
+        status: events.status,
+        eventPool: events.eventPool,
+        entryFee: events.entryFee,
+        createdAt: events.createdAt,
+        endDate: events.endDate,
+        result: events.result,
+        yesPool: events.yesPool,
+        noPool: events.noPool,
+      })
+      .from(events)
+      .where(eq(events.creatorId, userId))
+      .orderBy(desc(events.createdAt));
+
+    return userEvents;
+  }
+
+  // Get events joined by user
+  async getUserJoinedEvents(userId: string): Promise<any[]> {
+    const joinedEvents = await db
+      .select({
+        id: events.id,
+        title: events.title,
+        description: events.description,
+        category: events.category,
+        status: events.status,
+        eventPool: events.eventPool,
+        entryFee: events.entryFee,
+        createdAt: events.createdAt,
+        endDate: events.endDate,
+        result: events.result,
+        prediction: eventParticipants.prediction,
+        amount: eventParticipants.amount,
+        joinedAt: eventParticipants.joinedAt,
+        participantStatus: eventParticipants.status,
+      })
+      .from(eventParticipants)
+      .innerJoin(events, eq(events.id, eventParticipants.eventId))
+      .where(eq(eventParticipants.userId, userId))
+      .orderBy(desc(eventParticipants.joinedAt));
+
+    return joinedEvents.map(event => ({
+      ...event,
+      status: event.participantStatus,
+    }));
+  }
+
+  // Get user achievements
+  async getUserAchievements(userId: string): Promise<any[]> {
+    const userAchievementsList = await db
+      .select({
+        id: achievements.id,
+        name: achievements.name,
+        description: achievements.description,
+        iconUrl: achievements.iconUrl,
+        earnedAt: userAchievements.earnedAt,
+        progress: userAchievements.progress,
+      })
+      .from(userAchievements)
+      .innerJoin(achievements, eq(achievements.id, userAchievements.achievementId))
+      .where(eq(userAchievements.userId, userId))
+      .orderBy(desc(userAchievements.earnedAt));
+
+    return userAchievementsList;
+  }
+
+  // Get user profile with stats
+  async getUserProfile(userId: string, currentUserId: string): Promise<any> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get user stats
+    const [stats] = await db
+      .select({
+        wins: count(sql`CASE WHEN ${eventParticipants.status} = 'won' THEN 1 END`),
+        activeChallenges: count(sql`CASE WHEN ${challenges.status} = 'active' THEN 1 END`),
+        totalEarnings: sum(sql`CASE WHEN ${transactions.amount} > 0 THEN ${transactions.amount} ELSE 0 END`),
+      })
+      .from(users)
+      .leftJoin(eventParticipants, eq(eventParticipants.userId, users.id))
+      .leftJoin(challenges, or(eq(challenges.challenger, users.id), eq(challenges.challenged, users.id)))
+      .leftJoin(transactions, eq(transactions.userId, users.id))
+      .where(eq(users.id, userId))
+      .groupBy(users.id);
+
+    // Check if current user is following this user
+    const [followRecord] = await db
+      .select()
+      .from(friends)
+      .where(and(
+        eq(friends.requesterId, currentUserId),
+        eq(friends.addresseeId, userId),
+        eq(friends.status, 'accepted')
+      ))
+      .limit(1);
+
+    // Get follower and following counts
+    const [followerCount] = await db
+      .select({ count: count() })
+      .from(friends)
+      .where(and(
+        eq(friends.addresseeId, userId),
+        eq(friends.status, 'accepted')
+      ));
+
+    const [followingCount] = await db
+      .select({ count: count() })
+      .from(friends)
+      .where(and(
+        eq(friends.requesterId, userId),
+        eq(friends.status, 'accepted')
+      ));
+
+    return {
+      ...user,
+      stats: {
+        wins: stats?.wins || 0,
+        activeChallenges: stats?.activeChallenges || 0,
+        totalEarnings: parseFloat(stats?.totalEarnings || '0'),
+      },
+      isFollowing: !!followRecord,
+      followerCount: followerCount?.count || 0,
+      followingCount: followingCount?.count || 0,
+    };
+  }
+
+  // Get admin statistics
+  async getAdminStats(): Promise<any> {
+    const [platformStats] = await db
+      .select({
+        totalUsers: count(sql`DISTINCT ${users.id}`),
+        totalEvents: count(sql`DISTINCT ${events.id}`),
+        totalChallenges: count(sql`DISTINCT ${challenges.id}`),
+        totalTransactions: count(sql`DISTINCT ${transactions.id}`),
+        totalEventPool: sum(events.eventPool),
+        totalChallengeStaked: sum(sql`${challenges.amount} * 2`),
+        totalPlatformFees: sum(sql`${transactions.amount} * 0.05`),
+        activeUsers: count(sql`DISTINCT CASE WHEN ${users.lastLogin} > NOW() - INTERVAL '7 days' THEN ${users.id} END`),
+      })
+      .from(users)
+      .leftJoin(events, eq(events.creatorId, users.id))
+      .leftJoin(challenges, or(eq(challenges.challenger, users.id), eq(challenges.challenged, users.id)))
+      .leftJoin(transactions, eq(transactions.userId, users.id));
+
+    return platformStats || {
+      totalUsers: 0,
+      totalEvents: 0,
+      totalChallenges: 0,
+      totalTransactions: 0,
+      totalEventPool: 0,
+      totalChallengeStaked: 0,
+      totalPlatformFees: 0,
+      activeUsers: 0,
+    };
+  }
+
+  // Get recent users
+  async getRecentUsers(limit: number): Promise<any[]> {
+    const recentUsers = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        firstName: users.firstName,
+        email: users.email,
+        level: users.level,
+        points: users.points,
+        balance: users.balance,
+        streak: users.streak,
+        createdAt: users.createdAt,
+        lastLogin: users.lastLogin,
+      })
+      .from(users)
+      .orderBy(desc(users.createdAt))
+      .limit(limit);
+
+    return recentUsers.map(user => ({
+      ...user,
+      status: user.lastLogin && new Date(user.lastLogin).getTime() > Date.now() - 24 * 60 * 60 * 1000 ? 'Online' : 'Offline',
+    }));
+  }
+
+  // Get platform activity
+  async getPlatformActivity(limit: number): Promise<any[]> {
+    const recentActivity = await db
+      .select({
+        id: transactions.id,
+        type: transactions.type,
+        amount: transactions.amount,
+        description: transactions.description,
+        userId: transactions.userId,
+        createdAt: transactions.createdAt,
+        userFirstName: users.firstName,
+        userUsername: users.username,
+      })
+      .from(transactions)
+      .leftJoin(users, eq(users.id, transactions.userId))
+      .orderBy(desc(transactions.createdAt))
+      .limit(limit);
+
+    return recentActivity.map(activity => ({
+      ...activity,
+      userName: activity.userFirstName || activity.userUsername || 'Unknown',
+    }));
+  }
+
+  // Ban user
+  async banUser(userId: string, reason: string): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        status: 'banned',
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    // Create admin log entry
+    await db.insert(transactions).values({
+      userId,
+      type: 'admin_action',
+      amount: '0',
+      description: `User banned - Reason: ${reason}`,
+      status: 'completed',
+      createdAt: new Date()
+    });
+    
+    return updatedUser;
+  }
+
+  // Unban user
+  async unbanUser(userId: string, reason: string): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        status: 'active',
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    // Create admin log entry
+    await db.insert(transactions).values({
+      userId,
+      type: 'admin_action',
+      amount: '0',
+      description: `User unbanned - Reason: ${reason}`,
+      status: 'completed',
+      createdAt: new Date()
+    });
+    
+    return updatedUser;
+  }
+
+  // Adjust user balance
+  async adjustUserBalance(userId: string, amount: number, reason: string): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        balance: sql`${users.balance} + ${amount}`,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    // Create transaction record
+    await db.insert(transactions).values({
+      userId,
+      type: amount > 0 ? 'admin_credit' : 'admin_debit',
+      amount: Math.abs(amount).toString(),
+      description: `Admin balance adjustment - Reason: ${reason}`,
+      status: 'completed',
+      createdAt: new Date()
+    });
+    
+    return updatedUser;
+  }
+
+  // Set user admin status
+  async setUserAdminStatus(userId: string, isAdmin: boolean, reason: string): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        isAdmin,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    // Create admin log entry
+    await db.insert(transactions).values({
+      userId,
+      type: 'admin_action',
+      amount: '0',
+      description: `Admin status ${isAdmin ? 'granted' : 'revoked'} - Reason: ${reason}`,
+      status: 'completed',
+      createdAt: new Date()
+    });
+    
+    return updatedUser;
+  }
+
+  // Send admin message
+  async sendAdminMessage(userId: string, message: string, reason: string): Promise<any> {
+    // Create notification
+    await db.insert(notifications).values({
+      userId,
+      type: 'admin_message',
+      title: 'Message from Admin',
+      message,
+      createdAt: new Date()
+    });
+    
+    // Create admin log entry
+    await db.insert(transactions).values({
+      userId,
+      type: 'admin_action',
+      amount: '0',
+      description: `Admin message sent - Reason: ${reason}`,
+      status: 'completed',
+      createdAt: new Date()
+    });
+    
+    return { success: true, message: 'Admin message sent successfully' };
   }
 }
 

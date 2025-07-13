@@ -25,6 +25,7 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import AdminDashboardOverview from "@/pages/AdminDashboardOverview";
 import AdminEventPayouts from "@/pages/AdminEventPayouts";
 import AdminChallengePayouts from "@/pages/AdminChallengePayouts";
+import AdminUsersManagement from "@/pages/AdminUsersManagement";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -56,6 +57,7 @@ function Router() {
           <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/events" component={AdminEventPayouts} />
           <Route path="/admin/challenges" component={AdminChallengePayouts} />
+          <Route path="/admin/users" component={AdminUsersManagement} />
         </>
       )}
       <Route component={NotFound} />

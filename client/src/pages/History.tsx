@@ -45,6 +45,24 @@ export default function History() {
     retry: false,
   });
 
+  // Get user's created events
+  const { data: createdEvents = [], isLoading: createdEventsLoading } = useQuery({
+    queryKey: ["/api/user/created-events"],
+    retry: false,
+  });
+
+  // Get user's joined events (participated in)
+  const { data: joinedEvents = [], isLoading: joinedEventsLoading } = useQuery({
+    queryKey: ["/api/user/joined-events"],
+    retry: false,
+  });
+
+  // Get user's created challenges
+  const createdChallenges = challenges.filter((c: any) => c.challenger === user?.id);
+  
+  // Get user's received challenges
+  const receivedChallenges = challenges.filter((c: any) => c.challenged === user?.id);
+
   const getTransactionIcon = (type: string) => {
     switch (type) {
       case 'deposit': return 'fas fa-plus-circle';
@@ -145,15 +163,21 @@ export default function History() {
 
         {/* History Tabs */}
         <Tabs defaultValue="transactions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="transactions">
               Transactions ({transactions.length})
             </TabsTrigger>
-            <TabsTrigger value="challenges">
-              Challenges ({completedChallenges.length})
+            <TabsTrigger value="events-created">
+              Events Created ({createdEvents.length})
             </TabsTrigger>
-            <TabsTrigger value="events">
-              Events ({events.length})
+            <TabsTrigger value="events-joined">
+              Events Joined ({joinedEvents.length})
+            </TabsTrigger>
+            <TabsTrigger value="challenges-created">
+              Challenges Created ({createdChallenges.length})
+            </TabsTrigger>
+            <TabsTrigger value="challenges-received">
+              Challenges Received ({receivedChallenges.length})
             </TabsTrigger>
           </TabsList>
 
@@ -232,91 +256,30 @@ export default function History() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="challenges" className="space-y-4">
+          <TabsContent value="events-created" className="space-y-4">
             <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
               <CardHeader>
-                <CardTitle>Completed Challenges</CardTitle>
+                <CardTitle>Events You Created</CardTitle>
               </CardHeader>
               <CardContent>
-                {challengesLoading ? (
-                  <div className="text-center py-12">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-600 dark:text-slate-400">Loading challenges...</p>
-                  </div>
-                ) : completedChallenges.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="fas fa-swords text-4xl text-slate-400 mb-4"></i>
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                      No completed challenges
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Your completed challenges will appear here.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {completedChallenges.map((challenge: any) => (
-                      <div
-                        key={challenge.id}
-                        className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <h4 className="font-medium text-slate-900 dark:text-slate-100">
-                            {challenge.title}
-                          </h4>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            vs {challenge.challengerUser?.firstName || challenge.challengedUser?.firstName || 'Unknown'}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500">
-                            Completed {formatDistanceToNow(new Date(challenge.completedAt), { addSuffix: true })}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">₦{parseFloat(challenge.amount).toLocaleString()}</p>
-                          <Badge
-                            className={
-                              challenge.result === 'challenger_won' || challenge.result === 'challenged_won'
-                                ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
-                                : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
-                            }
-                          >
-                            {challenge.result === 'challenger_won' ? 'Won' : 
-                             challenge.result === 'challenged_won' ? 'Won' : 
-                             challenge.result === 'draw' ? 'Draw' : challenge.result}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="events" className="space-y-4">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle>Event Participation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {eventsLoading ? (
+                {createdEventsLoading ? (
                   <div className="text-center py-12">
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-slate-600 dark:text-slate-400">Loading events...</p>
                   </div>
-                ) : events.length === 0 ? (
+                ) : createdEvents.length === 0 ? (
                   <div className="text-center py-12">
-                    <i className="fas fa-calendar text-4xl text-slate-400 mb-4"></i>
+                    <i className="fas fa-calendar-plus text-4xl text-slate-400 mb-4"></i>
                     <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                      No events participated
+                      No events created yet
                     </h3>
                     <p className="text-slate-600 dark:text-slate-400">
-                      Events you've participated in will appear here.
+                      Events you create will appear here.
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {events.slice(0, 10).map((event: any) => (
+                    {createdEvents.map((event: any) => (
                       <div
                         key={event.id}
                         className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
@@ -326,7 +289,7 @@ export default function History() {
                             {event.title}
                           </h4>
                           <p className="text-sm text-slate-600 dark:text-slate-400 capitalize">
-                            {event.category}
+                            {event.category} • Pool: ₦{parseFloat(event.eventPool || "0").toLocaleString()}
                           </p>
                           <p className="text-xs text-slate-500 dark:text-slate-500">
                             Created {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}
@@ -336,9 +299,9 @@ export default function History() {
                           <p className="font-semibold">₦{parseFloat(event.entryFee).toLocaleString()}</p>
                           <Badge
                             className={
-                              event.status === 'active'
+                              event.status === 'completed'
                                 ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
-                                : event.status === 'completed'
+                                : event.status === 'active'
                                 ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
                                 : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
                             }
@@ -353,6 +316,199 @@ export default function History() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="events-joined" className="space-y-4">
+            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <CardHeader>
+                <CardTitle>Events You Joined</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {joinedEventsLoading ? (
+                  <div className="text-center py-12">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-600 dark:text-slate-400">Loading events...</p>
+                  </div>
+                ) : joinedEvents.length === 0 ? (
+                  <div className="text-center py-12">
+                    <i className="fas fa-calendar-check text-4xl text-slate-400 mb-4"></i>
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                      No events joined yet
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-400">
+                      Events you participate in will appear here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {joinedEvents.map((event: any) => (
+                      <div
+                        key={event.id}
+                        className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                            {event.title}
+                          </h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400 capitalize">
+                            {event.category} • Predicted: {event.prediction ? 'Yes' : 'No'}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-500">
+                            Joined {formatDistanceToNow(new Date(event.joinedAt), { addSuffix: true })}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">₦{parseFloat(event.amount).toLocaleString()}</p>
+                          <Badge
+                            className={
+                              event.status === 'won'
+                                ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
+                                : event.status === 'lost'
+                                ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                                : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+                            }
+                          >
+                            {event.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="challenges-created" className="space-y-4">
+            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <CardHeader>
+                <CardTitle>Challenges You Created</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {challengesLoading ? (
+                  <div className="text-center py-12">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-600 dark:text-slate-400">Loading challenges...</p>
+                  </div>
+                ) : createdChallenges.length === 0 ? (
+                  <div className="text-center py-12">
+                    <i className="fas fa-sword text-4xl text-slate-400 mb-4"></i>
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                      No challenges created
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-400">
+                      Challenges you create will appear here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {createdChallenges.map((challenge: any) => (
+                      <div
+                        key={challenge.id}
+                        className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                            {challenge.title}
+                          </h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            vs {challenge.challengedUser?.firstName || challenge.challengedUser?.username || 'Unknown'}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-500">
+                            Created {formatDistanceToNow(new Date(challenge.createdAt), { addSuffix: true })}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">₦{parseFloat(challenge.amount).toLocaleString()}</p>
+                          <Badge
+                            className={
+                              challenge.result === 'challenger_won'
+                                ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
+                                : challenge.result === 'challenged_won'
+                                ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                                : challenge.result === 'draw'
+                                ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
+                                : challenge.status === 'completed'
+                                ? 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+                                : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                            }
+                          >
+                            {challenge.result || challenge.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="challenges-received" className="space-y-4">
+            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <CardHeader>
+                <CardTitle>Challenges You Received</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {challengesLoading ? (
+                  <div className="text-center py-12">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-600 dark:text-slate-400">Loading challenges...</p>
+                  </div>
+                ) : receivedChallenges.length === 0 ? (
+                  <div className="text-center py-12">
+                    <i className="fas fa-swords text-4xl text-slate-400 mb-4"></i>
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                      No challenges received
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-400">
+                      Challenges sent to you will appear here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {receivedChallenges.map((challenge: any) => (
+                      <div
+                        key={challenge.id}
+                        className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                            {challenge.title}
+                          </h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            from {challenge.challengerUser?.firstName || challenge.challengerUser?.username || 'Unknown'}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-500">
+                            Received {formatDistanceToNow(new Date(challenge.createdAt), { addSuffix: true })}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">₦{parseFloat(challenge.amount).toLocaleString()}</p>
+                          <Badge
+                            className={
+                              challenge.result === 'challenged_won'
+                                ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
+                                : challenge.result === 'challenger_won'
+                                ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                                : challenge.result === 'draw'
+                                ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
+                                : challenge.status === 'completed'
+                                ? 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+                                : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                            }
+                          >
+                            {challenge.result || challenge.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+
         </Tabs>
       </div>
 

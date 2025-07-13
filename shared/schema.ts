@@ -43,6 +43,8 @@ export const users = pgTable("users", {
   referralCode: varchar("referral_code").unique(),
   referredBy: varchar("referred_by"),
   streak: integer("streak").default(0),
+  status: varchar("status").default("active"), // active, banned, suspended, inactive
+  isAdmin: boolean("is_admin").default(false),
   lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

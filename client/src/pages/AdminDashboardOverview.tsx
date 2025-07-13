@@ -61,6 +61,24 @@ export default function AdminDashboardOverview() {
     retry: false,
   });
 
+  // Get admin statistics
+  const { data: adminStats = {}, isLoading: statsLoading } = useQuery({
+    queryKey: ["/api/admin/stats"],
+    retry: false,
+  });
+
+  // Get recent users
+  const { data: recentUsers = [], isLoading: usersLoading } = useQuery({
+    queryKey: ["/api/admin/users"],
+    retry: false,
+  });
+
+  // Get platform activity
+  const { data: platformActivity = [], isLoading: activityLoading } = useQuery({
+    queryKey: ["/api/admin/activity"],
+    retry: false,
+  });
+
   const needsEventAction = (event: Event) => {
     const endDate = new Date(event.endDate);
     const now = new Date();

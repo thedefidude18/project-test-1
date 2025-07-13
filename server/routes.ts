@@ -1113,6 +1113,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User stats and history routes
+  app.get('/api/user/stats', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const stats = await storage.getUserStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      res.status(500).json({ message: "Failed to fetch user stats" });
+    }
+  });
+
+  app.get('/api/user/created-events', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const events = await storage.getUserCreatedEvents(userId);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching user created events:", error);
+      res.status(500).json({ message: "Failed to fetch user created events" });
+    }
+  });
+
+  app.get('/api/user/joined-events', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const events = await storage.getUserJoinedEvents(userId);
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching user joined events:", error);
+      res.status(500).json({ message: "Failed to fetch user joined events" });
+    }
+  });
+
+  app.get('/api/user/achievements', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const achievements = await storage.getUserAchievements(userId);
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching user achievements:", error);
+      res.status(500).json({ message: "Failed to fetch user achievements" });
+    }
+  });
+
+  app.get('/api/users/:userId/profile', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.params.userId;
+      const currentUserId = req.user.claims.sub;
+      const profile = await storage.getUserProfile(userId, currentUserId);
+      res.json(profile);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
   // Event lifecycle management routes
   app.post('/api/admin/events/:id/notify-starting', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
@@ -1133,6 +1190,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending event ending notifications:", error);
       res.status(500).json({ message: "Failed to send notifications" });
+    }
+  });
+
+  // Admin statistics routes
+  app.get('/api/admin/stats', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const stats = await storage.getAdminStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch admin stats" });
+    }
+  });
+
+  app.get('/api/admin/users', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const users = await storage.getRecentUsers(limit);
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post('/api/admin/users/:userId/action', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { userId } = req.params;
+      const { action, value, reason } = req.body;
+      
+      let result;
+      switch (action) {
+        case 'ban':
+          result = await storage.banUser(userId, reason);
+          break;
+        case 'unban':
+          result = await storage.unbanUser(userId, reason);
+          break;
+        case 'balance':
+          result = await storage.adjustUserBalance(userId, parseFloat(value), reason);
+          break;
+        case 'admin':
+          result = await storage.setUserAdminStatus(userId, value === 'true', reason);
+          break;
+        case 'message':
+          result = await storage.sendAdminMessage(userId, value, reason);
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid action type" });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error executing user action:", error);
+      res.status(500).json({ message: "Failed to execute user action" });
+    }
+  });
+
+  app.get('/api/admin/activity', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const activity = await storage.getPlatformActivity(limit);
+      res.json(activity);
+    } catch (error) {
+      console.error("Error fetching platform activity:", error);
+      res.status(500).json({ message: "Failed to fetch activity" });
     }
   });
 
