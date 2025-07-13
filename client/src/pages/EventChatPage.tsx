@@ -78,6 +78,7 @@ export default function EventChatPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
   const [isBannerHidden, setIsBannerHidden] = useState(false);
+  const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null);
 
   const { data: event } = useQuery({
     queryKey: ["/api/events", eventId],
@@ -125,7 +126,7 @@ export default function EventChatPage() {
     if (!eventId) return;
 
     const channel = getEventChannel(eventId);
-    
+
     channel.bind('new-message', (data: any) => {
       refetchMessages();
     });
@@ -329,7 +330,7 @@ export default function EventChatPage() {
       });
       return;
     }
-    
+
     if (prediction !== null && betAmount && parseFloat(betAmount) > 0) {
       joinEventMutation.mutate();
     }
@@ -545,12 +546,15 @@ export default function EventChatPage() {
             return (
               <div key={message.id} className={`flex space-x-2 ${isCurrentUser ? 'flex-row-reverse space-x-reverse' : ''} ${isConsecutive ? 'mt-1' : 'mt-3'}`}>
                 {showAvatar && !isCurrentUser && (
-                  <Avatar className="w-6 h-6 flex-shrink-0 mt-1">
+                  <Avatar 
+                    className="w-6 h-6 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                    onClick={() => setSelectedProfileUserId(message.user.id)}
+                  >
                     <AvatarImage 
                       src={message.user.profileImageUrl || undefined} 
                       alt={message.user.firstName || message.user.username || 'User'} 
                     />
-                    <AvatarFallback className="text-xs bg-primary text-white">
+                    <AvatarFallback className="text-xs">
                       {(message.user.firstName?.[0] || message.user.username?.[0] || 'U').toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -815,6 +819,14 @@ export default function EventChatPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Profile Card Modal */}
+      {selectedProfileUserId && (
+        <ProfileCard 
+          userId={selectedProfileUserId} 
+          onClose={() => setSelectedProfileUserId(null)} 
+        />
+      )}
     </div>
   );
 }

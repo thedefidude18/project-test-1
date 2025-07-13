@@ -13,6 +13,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 export default function Leaderboard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null);
 
   const { data: leaderboard = [], isLoading } = useQuery({
     queryKey: ["/api/leaderboard"],
@@ -64,7 +65,7 @@ export default function Leaderboard() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -137,7 +138,7 @@ export default function Leaderboard() {
                     {leaderboard.slice(0, 50).map((player: any, index: number) => {
                       const rank = index + 1;
                       const isCurrentUser = player.id === user.id;
-                      
+
                       return (
                         <div
                           key={player.id}
@@ -156,10 +157,13 @@ export default function Leaderboard() {
                             }`}>
                               {getRankIcon(rank)}
                             </div>
-                            <Avatar className="w-12 h-12">
+                            <Avatar 
+                              className="w-12 h-12 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                              onClick={() => setSelectedProfileUserId(player.id)}
+                            >
                               <AvatarImage 
                                 src={player.profileImageUrl || undefined} 
-                                alt={player.firstName || player.username} 
+                                alt={player.firstName || player.username || 'Player'} 
                               />
                               <AvatarFallback>
                                 {(player.firstName?.[0] || player.username?.[0] || 'P').toUpperCase()}
@@ -245,3 +249,4 @@ export default function Leaderboard() {
     </div>
   );
 }
+`
