@@ -1378,50 +1378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/users/:userId/profile', isAuthenticated, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { userId } = req.params;
-      const currentUserId = req.user.claims.sub;
-      
-      // Get user basic info
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
 
-      // Get additional stats
-      const stats = await storage.getUserStats(userId);
-      const isFollowing = currentUserId !== userId ? await storage.isUserFollowing(currentUserId, userId) : false;
-      const followerCount = await storage.getUserFollowerCount(userId);
-      const followingCount = await storage.getUserFollowingCount(userId);
-
-      const profile = {
-        id: user.id,
-        username: user.username,
-        firstName: user.firstName,
-        email: user.email,
-        profileImageUrl: user.profileImageUrl,
-        points: user.points || 0,
-        level: user.level || 1,
-        xp: user.xp || 0,
-        streak: user.streak || 0,
-        createdAt: user.createdAt,
-        isFollowing,
-        followerCount,
-        followingCount,
-        stats: {
-          wins: stats?.wins || 0,
-          activeChallenges: stats?.activeChallenges || 0,
-          totalEarnings: stats?.totalEarnings || 0,
-        }
-      };
-
-      res.json(profile);
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-      res.status(500).json({ message: "Failed to fetch user profile" });
-    }
-  });
 
   app.get('/api/user/achievements', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
