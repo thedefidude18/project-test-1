@@ -31,7 +31,7 @@ function Router() {
   const { isAuthenticated, isLoading } = useAuth();
   
   // Initialize notifications for authenticated users
-  useNotifications();
+  const notifications = useNotifications();
 
   return (
     <div className="min-h-screen transition-all duration-300 ease-in-out">

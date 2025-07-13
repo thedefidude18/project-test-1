@@ -573,16 +573,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send instant real-time notifications via Pusher
       try {
-        await pusher.trigger(`user-${challenge.challenged}`, 'challenge-notification', {
+        await pusher.trigger(`user-${challenge.challenged}`, 'challenge-received', {
           id: challengedNotification.id,
-          type: 'challenge',
-          title: '🎯 New Challenge Request',
+          type: 'challenge_received',
+          title: '🎯 Challenge Received!',
           message: `${challenger?.firstName || challenger?.username || 'Someone'} challenged you to "${challenge.title}"`,
+          challengerName: challenger?.firstName || challenger?.username || 'Someone',
+          challengeTitle: challenge.title,
+          amount: parseFloat(challenge.amount),
+          challengeId: challenge.id,
           data: challengedNotification.data,
           timestamp: new Date().toISOString(),
         });
 
-        await pusher.trigger(`user-${userId}`, 'challenge-notification', {
+        await pusher.trigger(`user-${userId}`, 'challenge-sent', {
           id: challengerNotification.id,
           type: 'challenge_sent',
           title: '🚀 Challenge Sent',

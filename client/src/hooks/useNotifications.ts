@@ -1,151 +1,222 @@
-import { useEffect, useRef } from 'react';
-import { useAuth } from './useAuth';
-import { getUserChannel } from '@/lib/pusher';
-import { useToast } from '@/hooks/use-toast';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
+import { notificationService } from "@/lib/notifications";
+import { useToast } from "@/hooks/use-toast";
 
-export interface NotificationData {
-  id: number;
-  type: string;
-  title: string;
-  message: string;
-  data?: any;
-  timestamp: string;
-}
+// Pusher client for real-time notifications
+let pusher: any = null;
+
+// Initialize Pusher client
+const initializePusher = async () => {
+  if (!pusher) {
+    const PusherClient = (await import('pusher-js')).default;
+    pusher = new PusherClient(import.meta.env.VITE_PUSHER_KEY || 'default-key', {
+      cluster: import.meta.env.VITE_PUSHER_CLUSTER || 'us2',
+      encrypted: true,
+    });
+  }
+  return pusher;
+};
 
 export function useNotifications() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
-  const channelRef = useRef<any>(null);
-  const notificationSound = useRef<HTMLAudioElement | null>(null);
-
-  // Fetch notifications
-  const { data: notifications = [] } = useQuery({
-    queryKey: ["/api/notifications"],
-    queryFn: () => apiRequest("GET", "/api/notifications"),
-    enabled: !!user?.id,
-  });
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Initialize notification sound
-    notificationSound.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmclBTyaT4+6VhcETX3SLN0pKZVfpJBLlZWBTFlZbpMYgV1zjZV1TlBBTZKGjVpVJrJhz5xZfJSJjV5QM5PnWEZEa2vqJSktMVdCRZ3xRGX');
+    if (!user) return;
 
-    if (user?.id) {
-      // Subscribe to user-specific notifications
-      const channel = getUserChannel(user.id);
-      channelRef.current = channel;
+    // Initialize notification service
+    notificationService.requestPermission();
+    notificationService.initializeServiceWorker();
 
-      // Handle challenge notifications
-      channel.bind('challenge-notification', (data: NotificationData) => {
-        // Play notification sound
-        if (notificationSound.current) {
-          notificationSound.current.play().catch(e => console.log('Audio play failed:', e));
-        }
-
-        // Show toast notification
-        toast({
-          title: data.title,
-          description: data.message,
-          duration: 5000,
-        });
-
-        // Invalidate notification queries to refresh the notification list
-        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    const setupPusherNotifications = async () => {
+      try {
+        const pusherClient = await initializePusher();
         
-        // If it's a challenge notification, also invalidate challenges
-        if (data.type === 'challenge' || data.type === 'challenge_sent') {
+        // Subscribe to user-specific notifications
+        const userChannel = pusherClient.subscribe(`user-${user.id}`);
+        
+        // Handle challenge notifications
+        userChannel.bind('challenge-received', (data: any) => {
+          // Show instant push notification
+          notificationService.showChallengeNotification({
+            challengerName: data.challengerName,
+            challengeTitle: data.challengeTitle,
+            amount: data.amount,
+            challengeId: data.challengeId
+          });
+
+          // Update challenges cache
           queryClient.invalidateQueries({ queryKey: ["/api/challenges"] });
-        }
-      });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
 
-      // Handle event notifications
-      channel.bind('event-notification', (data: NotificationData) => {
-        if (notificationSound.current) {
-          notificationSound.current.play().catch(e => console.log('Audio play failed:', e));
-        }
-
-        toast({
-          title: data.title,
-          description: data.message,
-          duration: 4000,
+          // Show in-app toast notification
+          toast({
+            title: "🎯 Challenge Received!",
+            description: `${data.challengerName} challenged you to "${data.challengeTitle}" for ₦${data.amount.toLocaleString()}`,
+            duration: 8000,
+          });
         });
 
-        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-      });
+        // Handle challenge accepted notifications
+        userChannel.bind('challenge-accepted', (data: any) => {
+          notificationService.showNotification("🎯 Challenge Accepted!", {
+            body: data.message,
+            tag: `challenge-accepted-${data.challengeId}`,
+            data: { type: 'challenge_accepted', challengeId: data.challengeId }
+          });
 
-      // Handle friend notifications
-      channel.bind('friend-notification', (data: NotificationData) => {
-        if (notificationSound.current) {
-          notificationSound.current.play().catch(e => console.log('Audio play failed:', e));
-        }
+          queryClient.invalidateQueries({ queryKey: ["/api/challenges"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
 
-        toast({
-          title: data.title,
-          description: data.message,
-          duration: 4000,
+          toast({
+            title: "🎯 Challenge Accepted!",
+            description: data.message,
+            duration: 6000,
+          });
         });
 
-        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
-      });
+        // Handle challenge active notifications
+        userChannel.bind('challenge-active', (data: any) => {
+          notificationService.showNotification("🔒 Challenge Active", {
+            body: data.message,
+            tag: `challenge-active-${data.challengeId}`,
+            data: { type: 'challenge_active', challengeId: data.challengeId }
+          });
 
-      // Handle wallet notifications
-      channel.bind('wallet-notification', (data: NotificationData) => {
-        if (notificationSound.current) {
-          notificationSound.current.play().catch(e => console.log('Audio play failed:', e));
-        }
+          queryClient.invalidateQueries({ queryKey: ["/api/challenges"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
 
-        toast({
-          title: data.title,
-          description: data.message,
-          duration: 4000,
+          toast({
+            title: "🔒 Challenge Active",
+            description: data.message,
+            duration: 6000,
+          });
         });
 
-        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-      });
+        // Handle friend request notifications
+        userChannel.bind('friend-request', (data: any) => {
+          notificationService.showFriendNotification({
+            friendName: data.friendName,
+            type: 'friend_request',
+            friendId: data.friendId
+          });
 
-      // Handle achievement notifications
-      channel.bind('achievement-notification', (data: NotificationData) => {
-        if (notificationSound.current) {
-          notificationSound.current.play().catch(e => console.log('Audio play failed:', e));
-        }
+          queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
 
-        toast({
-          title: data.title,
-          description: data.message,
-          duration: 6000,
+          toast({
+            title: "👋 Friend Request",
+            description: `${data.friendName} sent you a friend request`,
+            duration: 6000,
+          });
         });
 
-        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/user/achievements"] });
-      });
-    }
+        // Handle message notifications
+        userChannel.bind('new-message', (data: any) => {
+          notificationService.showMessageNotification({
+            senderName: data.senderName,
+            message: data.message,
+            chatType: data.chatType,
+            chatId: data.chatId
+          });
 
-    return () => {
-      if (channelRef.current) {
-        channelRef.current.unbind_all();
-        channelRef.current = null;
+          // Don't show toast for messages as they're handled in chat components
+        });
+
+        // Handle event notifications
+        userChannel.bind('event-starting', (data: any) => {
+          notificationService.showEventNotification({
+            title: "🚀 Event Starting",
+            message: data.message,
+            eventId: data.eventId,
+            type: 'event_starting'
+          });
+
+          queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+
+          toast({
+            title: "🚀 Event Starting",
+            description: data.message,
+            duration: 6000,
+          });
+        });
+
+        userChannel.bind('event-ending', (data: any) => {
+          notificationService.showEventNotification({
+            title: "⏰ Event Ending",
+            message: data.message,
+            eventId: data.eventId,
+            type: 'event_ending'
+          });
+
+          queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+
+          toast({
+            title: "⏰ Event Ending",
+            description: data.message,
+            duration: 6000,
+          });
+        });
+
+        userChannel.bind('funds-released', (data: any) => {
+          notificationService.showNotification("💰 Funds Released", {
+            body: data.message,
+            tag: `funds-released-${data.eventId}`,
+            data: { type: 'funds_released', eventId: data.eventId }
+          });
+
+          queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+
+          toast({
+            title: "💰 Funds Released",
+            description: data.message,
+            duration: 8000,
+          });
+        });
+
+        console.log('Pusher notifications initialized for user:', user.id);
+        
+      } catch (error) {
+        console.error('Failed to initialize Pusher notifications:', error);
       }
     };
-  }, [user?.id, toast, queryClient]);
+
+    setupPusherNotifications();
+
+    // Cleanup on unmount or user change
+    return () => {
+      if (pusher) {
+        pusher.unsubscribe(`user-${user.id}`);
+      }
+    };
+  }, [user, queryClient, toast]);
+
+  // Handle window message events from service worker
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'ACCEPT_CHALLENGE') {
+        // Handle challenge acceptance from notification
+        window.location.href = `/challenges?accept=${event.data.challengeId}`;
+      } else if (event.data.type === 'DECLINE_CHALLENGE') {
+        // Handle challenge decline from notification
+        window.location.href = `/challenges?decline=${event.data.challengeId}`;
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   return {
-    notifications,
-    // Utility function to manually trigger notifications for testing
-    triggerTestNotification: (type: string, title: string, message: string) => {
-      if (notificationSound.current) {
-        notificationSound.current.play().catch(e => console.log('Audio play failed:', e));
-      }
-      
-      toast({
-        title,
-        description: message,
-        duration: 4000,
-      });
-    }
+    requestPermission: () => notificationService.requestPermission(),
+    showNotification: (title: string, options: NotificationOptions) => 
+      notificationService.showNotification(title, options),
   };
 }
