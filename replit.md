@@ -8,6 +8,14 @@ BetChat is a comprehensive real-time social betting and challenge platform that 
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Updates (January 2025)
+
+✓ **Notification System Enhancement** - Added comprehensive notification preferences with toggles for email, push, challenge, event, and friend notifications in Settings page
+✓ **Currency Formatting** - Updated all currency displays to use formatBalance utility (₦300k format instead of ₦300000.00)
+✓ **Chat Reactions** - Enhanced message reaction badges with compact design, smooth animations, and improved hover effects
+✓ **Level System** - Verified and maintained user level progression with XP tracking and visual badges
+✓ **Referral System** - Confirmed functional referral code generation and tracking system
+
 ## System Architecture
 
 ### Frontend Architecture

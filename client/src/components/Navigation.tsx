@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatBalance } from "@/utils/currencyUtils";
 
 export function Navigation() {
   const { user } = useAuth();
@@ -105,7 +106,7 @@ export function Navigation() {
               className="hidden sm:flex items-center space-x-2 bg-slate-100 dark:bg-slate-700 px-3 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
             >
               <i className="fas fa-wallet text-emerald-500"></i>
-              <span className="text-sm font-medium">₦{(typeof balance === 'object' ? (balance.balance || 0) : (balance || 0)).toLocaleString()}</span>
+              <span className="text-sm font-medium">{formatBalance(typeof balance === 'object' ? (balance.balance || 0) : (balance || 0))}</span>
             </button>
 
             {/* Notifications */}
