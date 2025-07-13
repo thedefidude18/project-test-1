@@ -875,3 +875,189 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             // Create notification for successful deposit
             await storage.createNotification({
+              userId,
+              type: 'deposit',
+              title: '💰 Deposit Successful',
+              message: `Your deposit of ₦${depositAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has been credited to your account!`,
+              data: { 
+                amount: depositAmount,
+                reference: reference,
+                type: 'deposit',
+                timestamp: new Date().toISOString()
+              },
+            });
+
+            console.log(`✅ Manual verification completed for user ${userId}: ₦${depositAmount}`);
+            res.json({ message: "Payment verified successfully", amount: depositAmount });
+          } else {
+            console.log('Transaction already exists, skipping creation');
+            res.json({ message: "Payment already processed", amount: depositAmount });
+          }
+        } else {
+          console.log('Metadata userId mismatch or missing');
+          res.status(400).json({ message: "Invalid payment verification" });
+        }
+      } else {
+        console.log('Payment verification failed:', verifyData);
+        res.status(400).json({ message: "Payment verification failed" });
+      }
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      res.status(500).json({ message: "Failed to verify payment" });
+    }
+  });
+
+  // Wallet withdrawal route
+  app.post('/api/wallet/withdraw', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { amount, method } = req.body;
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+      }
+
+      const balance = await storage.getUserBalance(userId);
+      if (balance.balance < amount) {
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+
+      // Create withdrawal transaction
+      await storage.createTransaction({
+        userId,
+        type: 'withdrawal',
+        amount: `-${amount}`,
+        description: `Withdrawal via ${method}`,
+        status: 'pending',
+      });
+
+      // Create notification
+      await storage.createNotification({
+        userId,
+        type: 'withdrawal',
+        title: '📤 Withdrawal Requested',
+        message: `Your withdrawal of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is being processed.`,
+        data: { amount, method },
+      });
+
+      res.json({ message: "Withdrawal request submitted successfully" });
+    } catch (error) {
+      console.error("Error processing withdrawal:", error);
+      res.status(500).json({ message: "Failed to process withdrawal" });
+    }
+  });
+
+  // Follow/Unfollow user route
+  app.post('/api/users/:userId/follow', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const followerId = req.user.claims.sub;
+      const followingId = req.params.userId;
+
+      if (followerId === followingId) {
+        return res.status(400).json({ message: "Cannot follow yourself" });
+      }
+
+      const result = await storage.toggleFollow(followerId, followingId);
+
+      if (result.action === 'followed') {
+        // Create notification for followed user
+        await storage.createNotification({
+          userId: followingId,
+          type: 'follow',
+          title: '👤 New Follower',
+          message: `${req.user.claims.first_name || req.user.claims.username || 'Someone'} is now following you!`,
+          data: { followerId },
+        });
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+      res.status(500).json({ message: "Failed to toggle follow" });
+    }
+  });
+
+  // Get user profile route
+  app.get('/api/users/:userId', async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Tip user route
+  app.post('/api/users/:userId/tip', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const senderId = req.user.claims.sub;
+      const receiverId = req.params.userId;
+      const { amount } = req.body;
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+      }
+
+      if (senderId === receiverId) {
+        return res.status(400).json({ message: "Cannot tip yourself" });
+      }
+
+      const balance = await storage.getUserBalance(senderId);
+      if (balance.balance < amount) {
+        return res.status(400).json({ message: "Insufficient balance" });
+      }
+
+      // Create transactions
+      await storage.createTransaction({
+        userId: senderId,
+        type: 'tip_sent',
+        amount: `-${amount}`,
+        description: `Tip sent to user`,
+        relatedId: receiverId,
+      });
+
+      await storage.createTransaction({
+        userId: receiverId,
+        type: 'tip_received',
+        amount: amount.toString(),
+        description: `Tip received from user`,
+        relatedId: senderId,
+      });
+
+      // Create notification for receiver
+      await storage.createNotification({
+        userId: receiverId,
+        type: 'tip',
+        title: '💰 Tip Received',
+        message: `You received a tip of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}!`,
+        data: { amount, senderId },
+      });
+
+      res.json({ message: "Tip sent successfully" });
+    } catch (error) {
+      console.error("Error sending tip:", error);
+      res.status(500).json({ message: "Failed to send tip" });
+    }
+  });
+
+  // Leaderboard route
+  app.get('/api/leaderboard', async (req, res) => {
+    try {
+      const leaderboard = await storage.getLeaderboard();
+      res.json(leaderboard);
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
