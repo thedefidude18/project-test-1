@@ -305,7 +305,9 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                   </h2>
                   <p className="text-sm text-slate-600 dark:text-slate-400">@{profile.username || 'unknown'}</p>
                   <p className="text-xs text-slate-500 mt-1">
-                    Joined {formatDistanceToNow(new Date(profile.createdAt), { addSuffix: true })}
+                    Joined {profile.createdAt && !isNaN(new Date(profile.createdAt).getTime()) 
+                      ? formatDistanceToNow(new Date(profile.createdAt), { addSuffix: true })
+                      : 'recently'}
                   </p>
                 </div>
 
