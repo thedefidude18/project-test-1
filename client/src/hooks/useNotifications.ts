@@ -66,6 +66,6 @@ export function useNotifications() {
     notifications: notifications || [],
     isLoading,
     markAsRead: markAsReadMutation.mutate,
-    unreadCount: notifications?.filter((n: any) => !n.read).length || 0,
+    unreadCount: Array.isArray(notifications) ? notifications.filter((n: any) => !n.read).length : 0,
   };
 }
