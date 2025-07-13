@@ -101,13 +101,32 @@ export default function Notifications() {
       case 'achievement':
         return 'fas fa-trophy';
       case 'challenge':
-        return 'fas fa-sword';
+      case 'challenge_received':
+      case 'challenge_sent':
+      case 'challenge_accepted':
+      case 'challenge_active':
+        return 'fas fa-swords';
       case 'event':
+      case 'event_starting':
+      case 'event_ending':
+      case 'funds_locked':
+      case 'participant_joined':
         return 'fas fa-calendar';
       case 'match':
         return 'fas fa-dice';
       case 'friend':
+      case 'friend_request':
+      case 'friend_accepted':
         return 'fas fa-user-friends';
+      case 'new_follower':
+        return 'fas fa-user-plus';
+      case 'tip_received':
+      case 'tip_sent':
+        return 'fas fa-coins';
+      case 'deposit':
+        return 'fas fa-credit-card';
+      case 'withdrawal':
+        return 'fas fa-money-bill-wave';
       default:
         return 'fas fa-bell';
     }
@@ -118,13 +137,31 @@ export default function Notifications() {
       case 'achievement':
         return 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900';
       case 'challenge':
+      case 'challenge_received':
+      case 'challenge_sent':
+      case 'challenge_accepted':
+      case 'challenge_active':
         return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900';
       case 'event':
+      case 'event_starting':
+      case 'event_ending':
+      case 'funds_locked':
+      case 'participant_joined':
         return 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900';
       case 'match':
         return 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900';
       case 'friend':
+      case 'friend_request':
+      case 'friend_accepted':
         return 'text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-900';
+      case 'new_follower':
+        return 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900';
+      case 'tip_received':
+      case 'tip_sent':
+      case 'deposit':
+        return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900';
+      case 'withdrawal':
+        return 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900';
       default:
         return 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700';
     }
@@ -258,54 +295,108 @@ export default function Notifications() {
                         </div>
                         
                         {/* Action buttons based on notification type */}
-                        {notification.type === 'challenge' && notification.data?.challengeId && (
+                        {(notification.type === 'challenge' || notification.type === 'challenge_received' || notification.type === 'challenge_sent' || notification.type === 'challenge_accepted' || notification.type === 'challenge_active') && (
                           <div className="mt-3 flex space-x-2">
                             <Button
                               size="sm"
                               className="bg-emerald-600 text-white hover:bg-emerald-700"
-                              onClick={() => window.location.href = '/challenges'}
-                            >
-                              <i className="fas fa-eye mr-1"></i>
-                              View Challenge
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="border-red-500 text-red-600 hover:bg-red-50"
                               onClick={() => {
-                                // Mark as read and navigate to challenges
                                 if (!notification.read) {
                                   handleMarkAsRead(notification.id);
                                 }
                                 window.location.href = '/challenges';
                               }}
                             >
-                              <i className="fas fa-swords mr-1"></i>
-                              Respond
+                              <i className="fas fa-eye mr-1"></i>
+                              View Challenges
                             </Button>
+                            {notification.type === 'challenge_received' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-500 text-red-600 hover:bg-red-50"
+                                onClick={() => {
+                                  if (!notification.read) {
+                                    handleMarkAsRead(notification.id);
+                                  }
+                                  window.location.href = '/challenges';
+                                }}
+                              >
+                                <i className="fas fa-swords mr-1"></i>
+                                Respond
+                              </Button>
+                            )}
                           </div>
                         )}
                         
-                        {notification.type === 'friend' && notification.data?.friendRequestId && (
+                        {(notification.type === 'friend' || notification.type === 'friend_request' || notification.type === 'friend_accepted') && (
                           <div className="mt-3 flex space-x-2">
                             <Button
                               size="sm"
                               className="bg-primary text-white hover:bg-primary/90"
-                              onClick={() => window.location.href = '/friends'}
+                              onClick={() => {
+                                if (!notification.read) {
+                                  handleMarkAsRead(notification.id);
+                                }
+                                window.location.href = '/friends';
+                              }}
                             >
-                              View Request
+                              <i className="fas fa-users mr-1"></i>
+                              View Friends
+                            </Button>
+                          </div>
+                        )}
+
+                        {notification.type === 'new_follower' && (
+                          <div className="mt-3 flex space-x-2">
+                            <Button
+                              size="sm"
+                              className="bg-purple-600 text-white hover:bg-purple-700"
+                              onClick={() => {
+                                if (!notification.read) {
+                                  handleMarkAsRead(notification.id);
+                                }
+                                window.location.href = '/profile';
+                              }}
+                            >
+                              <i className="fas fa-user mr-1"></i>
+                              View Profile
+                            </Button>
+                          </div>
+                        )}
+
+                        {(notification.type === 'tip_received' || notification.type === 'tip_sent' || notification.type === 'deposit' || notification.type === 'withdrawal') && (
+                          <div className="mt-3 flex space-x-2">
+                            <Button
+                              size="sm"
+                              className="bg-green-600 text-white hover:bg-green-700"
+                              onClick={() => {
+                                if (!notification.read) {
+                                  handleMarkAsRead(notification.id);
+                                }
+                                window.location.href = '/wallet';
+                              }}
+                            >
+                              <i className="fas fa-wallet mr-1"></i>
+                              View Wallet
                             </Button>
                           </div>
                         )}
                         
-                        {notification.type === 'event' && notification.data?.eventId && (
+                        {(notification.type === 'event' || notification.type === 'event_starting' || notification.type === 'event_ending' || notification.type === 'funds_locked' || notification.type === 'participant_joined') && (
                           <div className="mt-3 flex space-x-2">
                             <Button
                               size="sm"
                               className="bg-blue-600 text-white hover:bg-blue-700"
-                              onClick={() => window.location.href = '/events'}
+                              onClick={() => {
+                                if (!notification.read) {
+                                  handleMarkAsRead(notification.id);
+                                }
+                                window.location.href = '/events';
+                              }}
                             >
-                              View Event
+                              <i className="fas fa-calendar mr-1"></i>
+                              View Events
                             </Button>
                           </div>
                         )}

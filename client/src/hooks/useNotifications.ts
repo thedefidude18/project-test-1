@@ -126,6 +126,95 @@ export function useNotifications() {
           // Don't show toast for messages as they're handled in chat components
         });
 
+        // Handle friend notifications
+        userChannel.bind('friend-request', (data: any) => {
+          notificationService.showFriendNotification({
+            friendName: data.requesterName,
+            type: 'friend_request',
+            friendId: data.requesterId
+          });
+
+          queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+
+          toast({
+            title: "👋 Friend Request",
+            description: `${data.requesterName} sent you a friend request`,
+            duration: 6000,
+          });
+        });
+
+        userChannel.bind('friend-accepted', (data: any) => {
+          notificationService.showFriendNotification({
+            friendName: data.friendName,
+            type: 'friend_accepted',
+            friendId: data.friendId
+          });
+
+          queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+
+          toast({
+            title: "✅ Friend Request Accepted",
+            description: `${data.friendName} accepted your friend request`,
+            duration: 6000,
+          });
+        });
+
+        // Handle follower notifications
+        userChannel.bind('new-follower', (data: any) => {
+          notificationService.showNotification("👤 New Follower", {
+            body: `${data.followerName} is now following you!`,
+            tag: `follower-${data.followerId}`,
+            data: { type: 'new_follower', followerId: data.followerId }
+          });
+
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+
+          toast({
+            title: "👤 New Follower",
+            description: `${data.followerName} is now following you!`,
+            duration: 6000,
+          });
+        });
+
+        // Handle tip notifications
+        userChannel.bind('tip-received', (data: any) => {
+          notificationService.showNotification("💰 Tip Received", {
+            body: `You received ₦${data.amount.toLocaleString()} from ${data.senderName}!`,
+            tag: `tip-received-${data.senderId}`,
+            data: { type: 'tip_received', amount: data.amount, senderId: data.senderId }
+          });
+
+          queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+
+          toast({
+            title: "💰 Tip Received",
+            description: `You received ₦${data.amount.toLocaleString()} from ${data.senderName}!`,
+            duration: 8000,
+          });
+        });
+
+        userChannel.bind('tip-sent', (data: any) => {
+          notificationService.showNotification("💸 Tip Sent", {
+            body: `You sent ₦${data.amount.toLocaleString()} successfully!`,
+            tag: `tip-sent-${data.receiverId}`,
+            data: { type: 'tip_sent', amount: data.amount, receiverId: data.receiverId }
+          });
+
+          queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+
+          toast({
+            title: "💸 Tip Sent",
+            description: `You sent ₦${data.amount.toLocaleString()} successfully!`,
+            duration: 6000,
+          });
+        });
+
         // Handle event notifications
         userChannel.bind('event-starting', (data: any) => {
           notificationService.showEventNotification({
@@ -140,6 +229,40 @@ export function useNotifications() {
 
           toast({
             title: "🚀 Event Starting",
+            description: data.message,
+            duration: 6000,
+          });
+        });
+
+        userChannel.bind('funds-locked', (data: any) => {
+          notificationService.showNotification("🔒 Funds Locked in Escrow", {
+            body: data.message,
+            tag: `funds-locked-${data.eventId}`,
+            data: { type: 'funds_locked', eventId: data.eventId }
+          });
+
+          queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+
+          toast({
+            title: "🔒 Funds Locked in Escrow",
+            description: data.message,
+            duration: 8000,
+          });
+        });
+
+        userChannel.bind('participant-joined', (data: any) => {
+          notificationService.showNotification("🎯 New Event Participant", {
+            body: data.message,
+            tag: `participant-joined-${data.eventId}`,
+            data: { type: 'participant_joined', eventId: data.eventId }
+          });
+
+          queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+
+          toast({
+            title: "🎯 New Event Participant",
             description: data.message,
             duration: 6000,
           });

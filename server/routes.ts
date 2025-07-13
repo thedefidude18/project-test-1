@@ -227,14 +227,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Send real-time notifications via Pusher
-      await pusher.trigger(`user-${userId}`, 'event-notification', {
+      await pusher.trigger(`user-${userId}`, 'funds-locked', {
         title: '🔒 Funds Locked in Escrow',
         message: `₦${amount.toLocaleString()} locked for your ${prediction ? 'YES' : 'NO'} prediction on "${event.title}"`,
         eventId: eventId,
         type: 'funds_locked',
       });
 
-      await pusher.trigger(`user-${event.creatorId}`, 'event-notification', {
+      await pusher.trigger(`user-${event.creatorId}`, 'participant-joined', {
         title: '🎯 New Event Participant',
         message: `${req.user.claims.first_name || 'Someone'} joined your event "${event.title}"`,
         eventId: eventId,
@@ -780,13 +780,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const friendRequest = await storage.sendFriendRequest(requesterId, addresseeId);
 
+      // Get requester info
+      const requester = await storage.getUser(requesterId);
+
       // Create notification
       await storage.createNotification({
         userId: addresseeId,
-        type: 'friend',
-        title: 'Friend Request',
-        message: `${req.user.claims.first_name || 'Someone'} sent you a friend request!`,
-        data: { friendRequestId: friendRequest.id },
+        type: 'friend_request',
+        title: '👋 Friend Request',
+        message: `${requester?.firstName || requester?.username || 'Someone'} sent you a friend request!`,
+        data: { 
+          friendRequestId: friendRequest.id,
+          requesterId: requesterId,
+          requesterName: requester?.firstName || requester?.username
+        },
+      });
+
+      // Send real-time notification via Pusher
+      await pusher.trigger(`user-${addresseeId}`, 'friend-request', {
+        title: '👋 Friend Request',
+        message: `${requester?.firstName || requester?.username || 'Someone'} sent you a friend request!`,
+        friendRequestId: friendRequest.id,
+        requesterId: requesterId,
+        requesterName: requester?.firstName || requester?.username,
+        timestamp: new Date().toISOString(),
       });
 
       res.json(friendRequest);
@@ -799,7 +816,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/friends/:id/accept', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const friendRequestId = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
       const friend = await storage.acceptFriendRequest(friendRequestId);
+
+      // Get user info
+      const user = await storage.getUser(userId);
+      const requester = await storage.getUser(friend.requesterId);
+
+      // Create notification for requester
+      await storage.createNotification({
+        userId: friend.requesterId,
+        type: 'friend_accepted',
+        title: '✅ Friend Request Accepted',
+        message: `${user?.firstName || user?.username || 'Someone'} accepted your friend request!`,
+        data: { 
+          friendId: userId,
+          friendName: user?.firstName || user?.username
+        },
+      });
+
+      // Send real-time notification via Pusher
+      await pusher.trigger(`user-${friend.requesterId}`, 'friend-accepted', {
+        title: '✅ Friend Request Accepted',
+        message: `${user?.firstName || user?.username || 'Someone'} accepted your friend request!`,
+        friendId: userId,
+        friendName: user?.firstName || user?.username,
+        timestamp: new Date().toISOString(),
+      });
+
       res.json(friend);
     } catch (error) {
       console.error("Error accepting friend request:", error);
@@ -1148,13 +1192,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.toggleFollow(followerId, followingId);
 
       if (result.action === 'followed') {
+        // Get follower info
+        const follower = await storage.getUser(followerId);
+
         // Create notification for followed user
         await storage.createNotification({
           userId: followingId,
-          type: 'follow',
+          type: 'new_follower',
           title: '👤 New Follower',
-          message: `${req.user.claims.first_name || req.user.claims.username || 'Someone'} is now following you!`,
-          data: { followerId },
+          message: `${follower?.firstName || follower?.username || 'Someone'} is now following you!`,
+          data: { 
+            followerId: followerId,
+            followerName: follower?.firstName || follower?.username
+          },
+        });
+
+        // Send real-time notification via Pusher
+        await pusher.trigger(`user-${followingId}`, 'new-follower', {
+          title: '👤 New Follower',
+          message: `${follower?.firstName || follower?.username || 'Someone'} is now following you!`,
+          followerId: followerId,
+          followerName: follower?.firstName || follower?.username,
+          timestamp: new Date().toISOString(),
         });
       }
 
@@ -1219,13 +1278,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         relatedId: senderId,
       });
 
+      // Get sender info
+      const sender = await storage.getUser(senderId);
+
       // Create notification for receiver
       await storage.createNotification({
         userId: receiverId,
-        type: 'tip',
+        type: 'tip_received',
         title: '💰 Tip Received',
-        message: `You received a tip of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}!`,
-        data: { amount, senderId },
+        message: `You received a tip of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} from ${sender?.firstName || sender?.username || 'Someone'}!`,
+        data: { 
+          amount: amount,
+          senderId: senderId,
+          senderName: sender?.firstName || sender?.username
+        },
+      });
+
+      // Create notification for sender (confirmation)
+      await storage.createNotification({
+        userId: senderId,
+        type: 'tip_sent',
+        title: '💸 Tip Sent',
+        message: `You sent a tip of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} successfully!`,
+        data: { 
+          amount: amount,
+          receiverId: receiverId
+        },
+      });
+
+      // Send real-time notifications via Pusher
+      await pusher.trigger(`user-${receiverId}`, 'tip-received', {
+        title: '💰 Tip Received',
+        message: `You received a tip of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} from ${sender?.firstName || sender?.username || 'Someone'}!`,
+        amount: amount,
+        senderId: senderId,
+        senderName: sender?.firstName || sender?.username,
+        timestamp: new Date().toISOString(),
+      });
+
+      await pusher.trigger(`user-${senderId}`, 'tip-sent', {
+        title: '💸 Tip Sent',
+        message: `You sent a tip of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} successfully!`,
+        amount: amount,
+        receiverId: receiverId,
+        timestamp: new Date().toISOString(),
       });
 
       res.json({ message: "Tip sent successfully" });
