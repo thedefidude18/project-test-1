@@ -1202,7 +1202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: followingId,
           type: 'new_follower',
           title: '👤 New Follower',
-          message: `${follower?.firstName || follower?.username || 'Someone'} is now following you!`,
+          message: `@${follower?.firstName || follower?.username || 'Someone'} is now following you!`,
           data: { 
             followerId: followerId,
             followerName: follower?.firstName || follower?.username
@@ -1212,7 +1212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Send real-time notification via Pusher
         await pusher.trigger(`user-${followingId}`, 'new-follower', {
           title: '👤 New Follower',
-          message: `${follower?.firstName || follower?.username || 'Someone'} is now following you!`,
+          message: `@${follower?.firstName || follower?.username || 'Someone'} is now following you!`,
           followerId: followerId,
           followerName: follower?.firstName || follower?.username,
           timestamp: new Date().toISOString(),
@@ -1263,12 +1263,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Insufficient balance" });
       }
 
+      // Get sender and receiver info
+      const sender = await storage.getUser(senderId);
+      const receiver = await storage.getUser(receiverId);
+
       // Create transactions
       await storage.createTransaction({
         userId: senderId,
         type: 'tip_sent',
         amount: `-${amount}`,
-        description: `Tip sent to user`,
+        description: `Tip sent to @${receiver?.firstName || receiver?.username || 'user'}`,
         relatedId: receiverId,
       });
 
@@ -1276,19 +1280,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: receiverId,
         type: 'tip_received',
         amount: amount.toString(),
-        description: `Tip received from user`,
+        description: `Tip received from @${sender?.firstName || sender?.username || 'user'}`,
         relatedId: senderId,
       });
-
-      // Get sender info
-      const sender = await storage.getUser(senderId);
 
       // Create notification for receiver
       await storage.createNotification({
         userId: receiverId,
         type: 'tip_received',
         title: '💰 Tip Received',
-        message: `You received a tip of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} from ${sender?.firstName || sender?.username || 'Someone'}!`,
+        message: `You received a tip of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} from @${sender?.firstName || sender?.username || 'Someone'}!`,
         data: { 
           amount: amount,
           senderId: senderId,
@@ -1301,17 +1302,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: senderId,
         type: 'tip_sent',
         title: '💸 Tip Sent',
-        message: `You sent a tip of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} successfully!`,
+        message: `You tipped @${receiver?.firstName || receiver?.username || 'User'} ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}!`,
         data: { 
           amount: amount,
-          receiverId: receiverId
+          receiverId: receiverId,
+          receiverName: receiver?.firstName || receiver?.username
         },
       });
 
       // Send real-time notifications via Pusher
       await pusher.trigger(`user-${receiverId}`, 'tip-received', {
         title: '💰 Tip Received',
-        message: `You received a tip of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} from ${sender?.firstName || sender?.username || 'Someone'}!`,
+        message: `You received a tip of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} from @${sender?.firstName || sender?.username || 'Someone'}!`,
         amount: amount,
         senderId: senderId,
         senderName: sender?.firstName || sender?.username,
@@ -1320,9 +1322,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await pusher.trigger(`user-${senderId}`, 'tip-sent', {
         title: '💸 Tip Sent',
-        message: `You sent a tip of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} successfully!`,
+        message: `You tipped @${receiver?.firstName || receiver?.username || 'User'} ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}!`,
         amount: amount,
         receiverId: receiverId,
+        receiverName: receiver?.firstName || receiver?.username,
         timestamp: new Date().toISOString(),
       });
 
