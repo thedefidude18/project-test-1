@@ -12,7 +12,7 @@ interface UserAvatarProps {
 export function UserAvatar({ userId, username, size = 40, className = "" }: UserAvatarProps) {
   // Use userId or username as seed, fallback to 'anonymous'
   const seed = userId || username || 'anonymous';
-  
+
   // Generate avatar SVG
   const avatar = createAvatar(notionists, {
     seed,

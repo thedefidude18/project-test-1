@@ -76,9 +76,25 @@ export default function Challenges() {
     retry: false,
   });
 
-  const { data: allUsers = [] } = useQuery({
+  const { data: allUsers = [], isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ["/api/users"],
     retry: false,
+    onSuccess: (data) => {
+      console.log('Users fetched successfully:', data);
+    },
+    onError: (error: Error) => {
+      console.error('Error fetching users:', error);
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+      }
+    },
   });
 
   const { data: balance = 0 } = useQuery({
@@ -460,7 +476,24 @@ export default function Challenges() {
               />
             </div>
             
-            {allUsers.length === 0 ? (
+            {usersLoading ? (
+              <div className="text-center py-12">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-slate-600 dark:text-slate-400">Loading users...</p>
+              </div>
+            ) : usersError ? (
+              <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                <CardContent className="text-center py-12">
+                  <i className="fas fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                  <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                    Error loading users
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    Unable to fetch users. Please try refreshing the page.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : allUsers.length === 0 ? (
               <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 <CardContent className="text-center py-12">
                   <i className="fas fa-users text-4xl text-slate-400 mb-4"></i>
