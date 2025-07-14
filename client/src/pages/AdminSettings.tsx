@@ -22,7 +22,14 @@ import {
   Database,
   Activity,
   AlertTriangle,
-  Save
+  Save,
+  Zap,
+  Plus,
+  Send,
+  UserPlus,
+  Coins,
+  Target,
+  MessageSquare
 } from "lucide-react";
 
 interface PlatformSettings {
@@ -54,6 +61,22 @@ export default function AdminSettings() {
   const queryClient = useQueryClient();
   const [settings, setSettings] = useState<Partial<PlatformSettings>>({});
   const [hasChanges, setHasChanges] = useState(false);
+  
+  // Admin tool states
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [fundAmount, setFundAmount] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [pointsAmount, setPointsAmount] = useState('');
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [broadcastType, setBroadcastType] = useState('daily');
+  const [eventCapacityId, setEventCapacityId] = useState('');
+  const [additionalSlots, setAdditionalSlots] = useState('');
+  
+  // Loading states
+  const [isAddingFunds, setIsAddingFunds] = useState(false);
+  const [isGivingPoints, setIsGivingPoints] = useState(false);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [isUpdatingCapacity, setIsUpdatingCapacity] = useState(false);
 
   const { data: platformSettings, isLoading } = useQuery({
     queryKey: ["/api/admin/settings"],
@@ -102,6 +125,182 @@ export default function AdminSettings() {
 
   const handleSave = () => {
     updateSettingsMutation.mutate(settings);
+  };
+
+  // Admin tool handlers
+  const handleAddEventFunds = async () => {
+    if (!selectedEventId || !fundAmount) {
+      toast({
+        title: "Error",
+        description: "Please select an event and enter amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAddingFunds(true);
+    try {
+      const response = await fetch('/api/admin/events/add-funds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          eventId: parseInt(selectedEventId),
+          amount: parseFloat(fundAmount)
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success ✅",
+          description: `Added ₦${fundAmount} to event pool`,
+        });
+        setSelectedEventId('');
+        setFundAmount('');
+      } else {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add funds",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingFunds(false);
+    }
+  };
+
+  const handleGivePoints = async () => {
+    if (!selectedUserId || !pointsAmount) {
+      toast({
+        title: "Error",
+        description: "Please select a user and enter points amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGivingPoints(true);
+    try {
+      const response = await fetch('/api/admin/users/give-points', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          userId: selectedUserId,
+          points: parseInt(pointsAmount)
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success ✅",
+          description: `Gave ${pointsAmount} points to user`,
+        });
+        setSelectedUserId('');
+        setPointsAmount('');
+      } else {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to give points",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGivingPoints(false);
+    }
+  };
+
+  const handleBroadcastMessage = async () => {
+    if (!broadcastMessage.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a message to broadcast",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsBroadcasting(true);
+    try {
+      const response = await fetch('/api/admin/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          message: broadcastMessage,
+          type: broadcastType
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success ✅",
+          description: `${broadcastType} message broadcasted to all users`,
+        });
+        setBroadcastMessage('');
+      } else {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to broadcast message",
+        variant: "destructive",
+      });
+    } finally {
+      setIsBroadcasting(false);
+    }
+  };
+
+  const handleUpdateEventCapacity = async () => {
+    if (!eventCapacityId || !additionalSlots) {
+      toast({
+        title: "Error",
+        description: "Please select an event and enter additional slots",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdatingCapacity(true);
+    try {
+      const response = await fetch('/api/admin/events/update-capacity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          eventId: parseInt(eventCapacityId),
+          additionalSlots: parseInt(additionalSlots)
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success ✅",
+          description: `Added ${additionalSlots} slots to event capacity`,
+        });
+        setEventCapacityId('');
+        setAdditionalSlots('');
+      } else {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update event capacity",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdatingCapacity(false);
+    }
   };
 
   const resetToDefaults = () => {
@@ -416,6 +615,169 @@ export default function AdminSettings() {
                   className="bg-slate-800 border-slate-700 mt-1"
                   placeholder="/privacy"
                 />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Admin Tools */}
+        <Card className="bg-slate-900 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center">
+              <Zap className="w-5 h-5 mr-2 text-yellow-400" />
+              Admin Tools
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Event Fund Management */}
+            <div className="border border-slate-600 rounded-lg p-4">
+              <h3 className="text-slate-300 font-medium mb-3 flex items-center">
+                <DollarSign className="w-4 h-4 mr-2 text-green-400" />
+                Add Funds to Event Pool
+              </h3>
+              <div className="flex gap-3">
+                <Input
+                  placeholder="Event ID"
+                  value={selectedEventId}
+                  onChange={(e) => setSelectedEventId(e.target.value)}
+                  className="bg-slate-800 border-slate-700 max-w-[120px]"
+                />
+                <Input
+                  placeholder="Amount (₦)"
+                  value={fundAmount}
+                  onChange={(e) => setFundAmount(e.target.value)}
+                  className="bg-slate-800 border-slate-700 max-w-[150px]"
+                />
+                <Button
+                  onClick={handleAddEventFunds}
+                  disabled={isAddingFunds}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  {isAddingFunds ? "Adding..." : "Add Funds"}
+                </Button>
+              </div>
+            </div>
+
+            {/* User Points Management */}
+            <div className="border border-slate-600 rounded-lg p-4">
+              <h3 className="text-slate-300 font-medium mb-3 flex items-center">
+                <Coins className="w-4 h-4 mr-2 text-yellow-400" />
+                Give Points to User
+              </h3>
+              <div className="flex gap-3">
+                <Input
+                  placeholder="User ID"
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  className="bg-slate-800 border-slate-700 max-w-[150px]"
+                />
+                <Input
+                  placeholder="Points Amount"
+                  value={pointsAmount}
+                  onChange={(e) => setPointsAmount(e.target.value)}
+                  className="bg-slate-800 border-slate-700 max-w-[150px]"
+                />
+                <Button
+                  onClick={handleGivePoints}
+                  disabled={isGivingPoints}
+                  className="bg-yellow-600 hover:bg-yellow-700"
+                >
+                  <Coins className="w-4 h-4 mr-2" />
+                  {isGivingPoints ? "Giving..." : "Give Points"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Event Capacity Management */}
+            <div className="border border-slate-600 rounded-lg p-4">
+              <h3 className="text-slate-300 font-medium mb-3 flex items-center">
+                <UserPlus className="w-4 h-4 mr-2 text-blue-400" />
+                Increase Event Capacity
+              </h3>
+              <div className="flex gap-3">
+                <Input
+                  placeholder="Event ID"
+                  value={eventCapacityId}
+                  onChange={(e) => setEventCapacityId(e.target.value)}
+                  className="bg-slate-800 border-slate-700 max-w-[120px]"
+                />
+                <Input
+                  placeholder="Additional Slots"
+                  value={additionalSlots}
+                  onChange={(e) => setAdditionalSlots(e.target.value)}
+                  className="bg-slate-800 border-slate-700 max-w-[150px]"
+                />
+                <Button
+                  onClick={handleUpdateEventCapacity}
+                  disabled={isUpdatingCapacity}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  {isUpdatingCapacity ? "Updating..." : "Update Capacity"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Broadcast Messages */}
+            <div className="border border-slate-600 rounded-lg p-4">
+              <h3 className="text-slate-300 font-medium mb-3 flex items-center">
+                <MessageSquare className="w-4 h-4 mr-2 text-purple-400" />
+                Broadcast Message
+              </h3>
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <select
+                    value={broadcastType}
+                    onChange={(e) => setBroadcastType(e.target.value)}
+                    className="bg-slate-800 border-slate-700 rounded-md px-3 py-2 text-slate-300"
+                  >
+                    <option value="daily">Daily Message</option>
+                    <option value="weekly">Weekly Message</option>
+                    <option value="announcement">Announcement</option>
+                  </select>
+                </div>
+                <div className="flex gap-3">
+                  <Textarea
+                    placeholder="Enter broadcast message..."
+                    value={broadcastMessage}
+                    onChange={(e) => setBroadcastMessage(e.target.value)}
+                    className="bg-slate-800 border-slate-700 flex-1"
+                    rows={3}
+                  />
+                  <Button
+                    onClick={handleBroadcastMessage}
+                    disabled={isBroadcasting}
+                    className="bg-purple-600 hover:bg-purple-700 self-end"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {isBroadcasting ? "Sending..." : "Broadcast"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Event Creation */}
+            <div className="border border-slate-600 rounded-lg p-4">
+              <h3 className="text-slate-300 font-medium mb-3 flex items-center">
+                <Target className="w-4 h-4 mr-2 text-orange-400" />
+                Quick Actions
+              </h3>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => window.open('/events', '_blank')}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Event
+                </Button>
+                <Button
+                  onClick={() => window.open('/admin', '_blank')}
+                  className="bg-slate-600 hover:bg-slate-700"
+                >
+                  <Activity className="w-4 h-4 mr-2" />
+                  Admin Dashboard
+                </Button>
               </div>
             </div>
           </CardContent>

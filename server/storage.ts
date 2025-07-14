@@ -167,6 +167,12 @@ export interface IStorage {
   // Platform Settings
   getPlatformSettings(): Promise<PlatformSettings>;
   updatePlatformSettings(settings: Partial<PlatformSettings>): Promise<PlatformSettings>;
+
+  // Advanced Admin Tools
+  addEventFunds(eventId: number, amount: number): Promise<void>;
+  giveUserPoints(userId: string, points: number): Promise<void>;
+  updateEventCapacity(eventId: number, additionalSlots: number): Promise<void>;
+  broadcastMessage(message: string, type: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1920,6 +1926,77 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedSettings;
+  }
+
+  // Advanced Admin Tools
+  async addEventFunds(eventId: number, amount: number): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Add funds to event pool
+      await tx
+        .update(events)
+        .set({
+          eventPool: sql`${events.eventPool} + ${amount}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(events.id, eventId));
+
+      // Create transaction record
+      await tx.insert(transactions).values({
+        userId: 'admin',
+        type: 'admin_fund',
+        amount: amount.toString(),
+        description: `Admin added ₦${amount} to event ${eventId}`,
+        status: 'completed',
+      });
+    });
+  }
+
+  async giveUserPoints(userId: string, points: number): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Add points to user
+      await tx
+        .update(users)
+        .set({
+          points: sql`${users.points} + ${points}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+
+      // Create transaction record
+      await tx.insert(transactions).values({
+        userId: userId,
+        type: 'admin_points',
+        amount: points.toString(),
+        description: `Admin gave ${points} points`,
+        status: 'completed',
+      });
+    });
+  }
+
+  async updateEventCapacity(eventId: number, additionalSlots: number): Promise<void> {
+    await db
+      .update(events)
+      .set({
+        maxParticipants: sql`${events.maxParticipants} + ${additionalSlots}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(events.id, eventId));
+  }
+
+  async broadcastMessage(message: string, type: string): Promise<void> {
+    // Get all users to broadcast to
+    const allUsers = await db.select({ id: users.id }).from(users);
+    
+    // Create notifications for all users
+    const notificationData = allUsers.map(user => ({
+      userId: user.id,
+      type: 'broadcast' as const,
+      title: `${type.charAt(0).toUpperCase() + type.slice(1)} Message`,
+      message: message,
+      data: { broadcastType: type },
+    }));
+
+    await db.insert(notifications).values(notificationData);
   }
 }
 

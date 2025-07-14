@@ -1928,6 +1928,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Tools - Event Fund Management
+  app.post('/api/admin/events/add-funds', isAdmin, async (req, res) => {
+    try {
+      const { eventId, amount } = req.body;
+      
+      if (!eventId || !amount || amount <= 0) {
+        return res.status(400).json({ message: 'Invalid event ID or amount' });
+      }
+
+      await storage.addEventFunds(eventId, amount);
+      res.json({ message: 'Funds added successfully' });
+    } catch (error) {
+      console.error('Error adding event funds:', error);
+      res.status(500).json({ message: 'Failed to add event funds' });
+    }
+  });
+
+  // Admin Tools - User Points
+  app.post('/api/admin/users/give-points', isAdmin, async (req, res) => {
+    try {
+      const { userId, points } = req.body;
+      
+      if (!userId || !points || points <= 0) {
+        return res.status(400).json({ message: 'Invalid user ID or points amount' });
+      }
+
+      await storage.giveUserPoints(userId, points);
+      res.json({ message: 'Points given successfully' });
+    } catch (error) {
+      console.error('Error giving user points:', error);
+      res.status(500).json({ message: 'Failed to give user points' });
+    }
+  });
+
+  // Admin Tools - Event Capacity
+  app.post('/api/admin/events/update-capacity', isAdmin, async (req, res) => {
+    try {
+      const { eventId, additionalSlots } = req.body;
+      
+      if (!eventId || !additionalSlots || additionalSlots <= 0) {
+        return res.status(400).json({ message: 'Invalid event ID or additional slots' });
+      }
+
+      await storage.updateEventCapacity(eventId, additionalSlots);
+      res.json({ message: 'Event capacity updated successfully' });
+    } catch (error) {
+      console.error('Error updating event capacity:', error);
+      res.status(500).json({ message: 'Failed to update event capacity' });
+    }
+  });
+
+  // Admin Tools - Broadcast Message
+  app.post('/api/admin/broadcast', isAdmin, async (req, res) => {
+    try {
+      const { message, type } = req.body;
+      
+      if (!message || !type) {
+        return res.status(400).json({ message: 'Message and type are required' });
+      }
+
+      await storage.broadcastMessage(message, type);
+      res.json({ message: 'Message broadcasted successfully' });
+    } catch (error) {
+      console.error('Error broadcasting message:', error);
+      res.status(500).json({ message: 'Failed to broadcast message' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
