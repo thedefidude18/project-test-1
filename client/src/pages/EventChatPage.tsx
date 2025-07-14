@@ -526,24 +526,24 @@ export default function EventChatPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
       {/* Header with Event Info and Back Button */}
-      <div className="bg-gradient-to-r from-primary to-secondary text-white sticky top-0 z-50">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
+      <div className="bg-gradient-to-r from-primary to-secondary text-white sticky top-0 z-50 rounded-b-xl md:rounded-none">
+        <div className="px-3 md:px-4 py-2 md:py-3">
+          <div className="flex items-center justify-between mb-2 md:mb-3">
+            <div className="flex items-center space-x-2 md:space-x-3">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => window.location.href = '/events'}
-                  className="text-white hover:bg-white/20 p-2"
+                  className="text-white hover:bg-white/20 p-2 rounded-full"
                 >
-                  <i className="fas fa-arrow-left"></i>
+                  <i className="fas fa-arrow-left text-sm"></i>
                 </Button>
                 <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                    <i className="fas fa-users text-white text-sm"></i>
+                  <div className="w-7 h-7 md:w-8 md:h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <i className="fas fa-users text-white text-xs md:text-sm"></i>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-sm">@{event.title}</h3>
+                    <h3 className="font-semibold text-sm md:text-base">@{event.title}</h3>
                     <p className="text-xs text-white/80">{messages.length} Members</p>
                   </div>
                 </div>
@@ -593,19 +593,19 @@ export default function EventChatPage() {
 
           {/* Betting Banner */}
           {!isBannerHidden && (
-          <div className="bg-black/30 rounded-xl p-3 mb-2">
+          <div className="bg-black/30 rounded-xl p-2 md:p-3 mb-2">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h4 className="font-medium text-sm mb-1 truncate">{event.description || event.title}</h4>
-                <div className="flex items-center space-x-4 text-xs">
+                <h4 className="font-medium text-xs md:text-sm mb-1 truncate">{event.description || event.title}</h4>
+                <div className="flex items-center space-x-3 md:space-x-4 text-xs">
                   <span className="flex items-center">
                     <i className="fas fa-clock mr-1"></i>
                     {formatDistanceToNow(new Date(event.endDate), { addSuffix: true })}
                   </span>
-                  <span>Event Pool ₦ {totalPool.toLocaleString()}</span>
+                  <span>Pool ₦ {totalPool.toLocaleString()}</span>
                 </div>
               </div>
-              <div className="flex space-x-2 ml-3">
+              <div className="flex space-x-1 md:space-x-2 ml-2 md:ml-3">
                 {hasUserBet || userBetLocked ? (
                   <div className="flex items-center space-x-2">
                     <div className="bg-yellow-600 text-white px-3 py-1 rounded-full text-xs font-medium">
@@ -832,11 +832,11 @@ export default function EventChatPage() {
       )}
 
       {/* Message Input */}
-      <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 sticky bottom-0">
-        <div className"relative">
+      <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-2 md:p-3 sticky bottom-0 rounded-t-xl md:rounded-none">
+        <div className="relative">
           {/* Mentions dropdown */}
           {showMentions && filteredParticipants.length > 0 && (
-            <div className="absolute bottom-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-t-lg shadow-lg max-h-40 overflow-y-auto z-10">
+            <div className="absolute bottom-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-t-xl shadow-lg max-h-40 overflow-y-auto z-10">
               {filteredParticipants.slice(0, 5).map((participant: any) => (
                 <div
                   key={participant.user.id}
@@ -859,9 +859,9 @@ export default function EventChatPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-primary hover:bg-primary/10 p-2"
+              className="text-primary hover:bg-primary/10 p-2 rounded-full"
             >
-              <i className="fas fa-smile text-lg"></i>
+              <i className="fas fa-smile text-base md:text-lg"></i>
             </Button>
 
             <div className="flex-1 relative">
@@ -872,7 +872,7 @@ export default function EventChatPage() {
                 value={newMessage}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyPress}
-                className="bg-slate-100 dark:bg-slate-700 border-none rounded-full pl-4 pr-4 py-2"
+                className="bg-slate-100 dark:bg-slate-700 border-none rounded-full pl-4 pr-4 py-2 text-sm"
                 disabled={false}
               />
               {!isConnected && (
@@ -885,8 +885,8 @@ export default function EventChatPage() {
             <Button
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || sendMessageMutation.isPending}
-              className="bg-primary text-white hover:bg-primary/90 rounded-full p-2">
-              <i className="fas fa-paper-plane"></i>
+              className="bg-primary text-white hover:bg-primary/90 rounded-full p-2 active:scale-95">
+              <i className="fas fa-paper-plane text-sm"></i>
             </Button>
           </div>
         </div>

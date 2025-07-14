@@ -61,14 +61,14 @@ export function MobileNavigation() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border md:hidden z-50">
-      <div className="flex items-center justify-around px-2 py-2">
+    <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border md:hidden z-50 rounded-t-2xl mx-1 mb-1">
+      <div className="flex items-center justify-around px-2 py-3">
         {navItems.map((item) => (
           <button
             key={item.path}
             onClick={() => handleNavigation(item.path)}
             className={cn(
-              "flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out min-w-[60px]",
+              "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 ease-in-out min-w-[60px]",
               "hover:bg-accent/50 active:scale-95",
               item.isActive 
                 ? "text-primary bg-primary/10 scale-105" 
@@ -90,7 +90,7 @@ export function MobileNavigation() {
               {item.label}
             </span>
             {item.isActive && (
-              <div className="absolute -top-0.5 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full" />
+              <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-primary rounded-full" />
             )}
           </button>
         ))}
@@ -98,7 +98,7 @@ export function MobileNavigation() {
             onClick={() => navigateTo('/wallet')}
             data-tour="wallet"
             className={cn(
-              "flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out min-w-[60px]",
+              "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 ease-in-out min-w-[60px]",
               "hover:bg-accent/50 active:scale-95",
               location.startsWith('/wallet')
                 ? "text-primary bg-primary/10 scale-105" 
@@ -116,7 +116,7 @@ export function MobileNavigation() {
               {formatBalance(typeof balance === 'object' ? (balance.balance || 0) : (balance || 0))}
             </span>
             {location.startsWith('/wallet') && (
-              <div className="absolute -top-0.5 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full" />
+              <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-primary rounded-full" />
             )}
           </button>
       </div>

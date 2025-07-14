@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
@@ -35,21 +35,23 @@ import { DailySignInModal } from '@/components/DailySignInModal';
 import { useDailySignIn } from '@/hooks/useDailySignIn';
 import AdminLogin from "@/pages/AdminLogin"; // Assuming you have an AdminLogin component
 import { WebsiteTour, useTour } from "@/components/WebsiteTour";
+import { SplashScreen } from "@/components/SplashScreen"; //Import Splashscreen
+
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
-  
+
   // Initialize tour
   const tour = useTour();
-  
+
   // Add global tour event listener
   useEffect(() => {
     const handleStartTour = () => {
       tour.startTour();
     };
-    
+
     window.addEventListener('start-tour', handleStartTour);
-    
+
     return () => {
       window.removeEventListener('start-tour', handleStartTour);
     };
@@ -107,7 +109,7 @@ function Router() {
         currentStreak={signInStatus.currentStreak}
       />
     )}
-    
+
     {/* Website Tour */}
     {isAuthenticated && (
       <WebsiteTour 
@@ -120,13 +122,37 @@ function Router() {
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
+      <div className={`${isMobile ? 'mobile-app' : ''}`}>
+          {showSplash && isMobile ? (
+            <SplashScreen onComplete={handleSplashComplete} />
+          ) : (
         <TooltipProvider>
           <Toaster />
           <Router />
         </TooltipProvider>
+          )}
+        </div>
       </ThemeProvider>
     </QueryClientProvider>
   );

@@ -157,7 +157,7 @@ export default function Events() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div id="events-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
@@ -177,7 +177,7 @@ export default function Events() {
               ℹ️ Show rewards guide
             </Button>
           </div>
-          
+
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button id="create-event-btn" className="bg-primary text-white hover:bg-primary/90 mt-4 sm:mt-0">
@@ -207,7 +207,7 @@ export default function Events() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="description"
@@ -225,7 +225,7 @@ export default function Events() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="category"
@@ -253,7 +253,7 @@ export default function Events() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="grid grid-cols-2 gap-3">
                     <FormField
                       control={form.control}
@@ -268,7 +268,7 @@ export default function Events() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="maxParticipants"
@@ -283,7 +283,7 @@ export default function Events() {
                       )}
                     />
                   </div>
-                  
+
                   <FormField
                     control={form.control}
                     name="endDate"
@@ -301,7 +301,7 @@ export default function Events() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="isPrivate"
@@ -322,7 +322,7 @@ export default function Events() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="flex space-x-2 pt-4 sticky bottom-0 bg-white dark:bg-slate-800 pb-2 border-t border-slate-200 dark:border-slate-700 mt-4">
                     <Button
                       type="button"
@@ -427,7 +427,7 @@ export default function Events() {
       </div>
 
       <MobileNavigation />
-      
+
       {/* Onboarding Tooltip */}
       <OnboardingTooltip
         isOpen={showOnboarding}

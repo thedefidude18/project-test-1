@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* App-like navigation styles */
+/* Mobile App-like styles */
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -11,6 +11,63 @@
   body {
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Mobile-specific scrollbar hiding */
+  @media (max-width: 768px) {
+    * {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    
+    *::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+/* Mobile App Components */
+@layer components {
+  /* Compact mobile cards */
+  .mobile-card {
+    @apply bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3;
+  }
+
+  .mobile-card-compact {
+    @apply bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-2;
+  }
+
+  /* App-like sections */
+  .app-section {
+    @apply bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 mb-3;
+  }
+
+  .app-section-compact {
+    @apply bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-3 mb-2;
+  }
+
+  /* Mobile button styles */
+  .mobile-btn {
+    @apply rounded-full px-4 py-2 font-medium text-sm transition-all duration-200 active:scale-95;
+  }
+
+  .mobile-btn-primary {
+    @apply mobile-btn bg-primary text-white hover:bg-primary/90 shadow-md;
+  }
+
+  .mobile-btn-secondary {
+    @apply mobile-btn bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600;
+  }
+
+  /* Splash screen animation */
+  .animate-fade-out {
+    animation: fadeOut 0.3s ease-out 1.7s forwards;
+  }
+
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
   }
 }
 
