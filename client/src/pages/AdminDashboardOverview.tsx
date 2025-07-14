@@ -1,30 +1,38 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import AdminLayout from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import AdminLayout from "@/components/AdminLayout";
-import { formatDistanceToNow } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { 
   Users, 
+  DollarSign, 
   Trophy, 
   Target, 
-  DollarSign, 
-  TrendingUp, 
+  Activity,
   AlertCircle,
-  CheckCircle,
-  Bell,
   ArrowRight,
   Search,
+  TrendingUp,
   MessageSquare,
-  Activity,
-  Clock,
-  Star,
-  Zap
+  Zap,
+  Star
 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+
+interface AdminStats {
+  totalUsers: number;
+  activeUsers: number;
+  totalEvents: number;
+  totalChallenges: number;
+  totalRevenue: number;
+  dailyActiveUsers: number;
+  pendingPayouts: number;
+  totalNotifications: number;
+}
 
 interface Event {
   id: number;
@@ -78,62 +86,6 @@ interface Notification {
   createdAt: string;
 }
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import AdminLayout from "@/components/AdminLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
-import { 
-  Users, 
-  DollarSign, 
-  Trophy, 
-  Target, 
-  Activity,
-  AlertCircle,
-  ArrowRight,
-  Search,
-  BarChart3,
-  MessageSquare,
-  Zap
-} from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-
-interface AdminStats {
-  totalUsers: number;
-  activeUsers: number;
-  totalEvents: number;
-  totalChallenges: number;
-  totalRevenue: number;
-  dailyActiveUsers: number;
-  pendingPayouts: number;
-  totalNotifications: number;
-}
-
-interface Event {
-  id: number;
-  title: string;
-  status: string;
-  eventPool: string;
-  creatorFee: string;
-  endDate: string;
-  adminResult: boolean | null;
-  createdAt: string;
-}
-
-interface Challenge {
-  id: number;
-  title: string;
-  amount: string;
-  status: string;
-  dueDate: string;
-  result: string | null;
-  challengerUser: { username: string };
-  challengedUser: { username: string };
-}
-
 export default function AdminDashboardOverview() {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -172,15 +124,6 @@ export default function AdminDashboardOverview() {
     const now = new Date();
     return endDate <= now && event.status === 'active' && event.adminResult === null;
   };
-
-  const needsChallengeAction = (challenge: Challenge) => {
-    return challenge.status === 'active' && challenge.dueDate && 
-           new Date(challenge.dueDate) <= new Date() && !challenge.result;
-  };
-
-  const eventsNeedingAction = events.filter(needsEventAction);
-  const challengesNeedingAction = challenges.filter(needsChallengeAction);
-  const completedChallenges = challenges.filter((c: Challenge) => c.status === 'completed');
 
   const needsChallengeAction = (challenge: Challenge) => {
     return challenge.status === 'active' && challenge.dueDate && 
@@ -305,32 +248,7 @@ export default function AdminDashboardOverview() {
           </Card>
         </div>
 
-          <Card className="bg-slate-900 border-slate-700">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-400 text-sm">Platform Revenue</p>
-                  <p className="text-2xl font-bold text-white">₦{(totalCreatorFees + totalPlatformFees).toLocaleString()}</p>
-                  <p className="text-xs text-blue-400">Creator + Platform fees</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-purple-400" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-900 border-slate-700">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-400 text-sm">Pending Actions</p>
-                  <p className="text-2xl font-bold text-white">{eventsNeedingAction.length + challengesNeedingAction.length}</p>
-                  <p className="text-xs text-orange-400">Requires attention</p>
-                </div>
-                <AlertCircle className="w-8 h-8 text-orange-400" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          </div>
 
         {/* Action Required Section */}
         {(eventsNeedingAction.length > 0 || challengesNeedingAction.length > 0) && (
@@ -528,123 +446,6 @@ export default function AdminDashboardOverview() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </AdminLayout>
-  );
-}center">
-                    <p className="text-sm text-slate-400">Total Users</p>
-                    <p className="text-lg font-bold text-white">{allUsers.length}</p>
-                  </div>
-                  <div className="bg-slate-800 p-3 rounded-lg text-center">
-                    <p className="text-sm text-slate-400">New This Week</p>
-                    <p className="text-lg font-bold text-green-400">{recentUsers.length}</p>
-                  </div>
-                </div>
-
-                {searchQuery && (
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {filteredUsers.slice(0, 5).map((user: User) => (
-                      <div key={user.id} className="flex items-center justify-between p-2 bg-slate-800 rounded">
-                        <div>
-                          <p className="text-sm font-medium text-white">
-                            {user.firstName || user.username}
-                            {user.isAdmin && <Star className="w-3 h-3 text-yellow-400 ml-1 inline" />}
-                          </p>
-                          <p className="text-xs text-slate-400">Level {user.level}</p>
-                        </div>
-                        <Badge variant="outline" className="text-xs">
-                          ₦{parseFloat(user.balance).toLocaleString()}
-                        </Badge>
-                      </div>
-                    ))}
-                    {filteredUsers.length > 5 && (
-                      <p className="text-xs text-slate-400 text-center">
-                        +{filteredUsers.length - 5} more users
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card className="bg-slate-900 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center">
-                <Activity className="w-5 h-5 mr-2 text-orange-400" />
-                Recent Platform Activity
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[...completedEvents.slice(0, 3), ...completedChallenges.slice(0, 3)]
-                  .sort((a, b) => new Date(b.createdAt || b.completedAt || '').getTime() - new Date(a.createdAt || a.completedAt || '').getTime())
-                  .slice(0, 5)
-                  .map((item: any) => (
-                    <div key={`${item.id}-${item.challenger ? 'challenge' : 'event'}`} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        {item.challenger ? (
-                          <Target className="w-5 h-5 text-purple-400" />
-                        ) : (
-                          <Trophy className="w-5 h-5 text-blue-400" />
-                        )}
-                        <div>
-                          <p className="text-white font-medium">{item.title}</p>
-                          <p className="text-slate-400 text-sm">
-                            {item.challenger ? 'Challenge' : 'Event'} completed
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                          Completed
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <Card className="bg-slate-900 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center">
-              <Zap className="w-5 h-5 mr-2 text-yellow-400" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Link href="/admin/payouts">
-                <Button variant="outline" className="w-full border-slate-600 hover:bg-slate-800">
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  Manage Payouts
-                </Button>
-              </Link>
-              <Link href="/admin/events">
-                <Button variant="outline" className="w-full border-slate-600 hover:bg-slate-800">
-                  <Trophy className="w-4 h-4 mr-2" />
-                  Manage Events
-                </Button>
-              </Link>
-              <Link href="/admin/challenges">
-                <Button variant="outline" className="w-full border-slate-600 hover:bg-slate-800">
-                  <Target className="w-4 h-4 mr-2" />
-                  Manage Challenges
-                </Button>
-              </Link>
-              <Link href="/admin/users">
-                <Button variant="outline" className="w-full border-slate-600 hover:bg-slate-800">
-                  <Users className="w-4 h-4 mr-2" />
-                  User Management
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </AdminLayout>
   );
