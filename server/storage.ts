@@ -1292,24 +1292,7 @@ export class DatabaseStorage implements IStorage {
   // Get user profile with stats
   async getAllUsers() {
     const usersResult = await db
-      .select({
-        id: users.id,
-        username: users.username,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        email: users.email,
-        profileImageUrl: users.profileImageUrl,
-        balance: users.balance,
-        level: users.level,
-        points: users.points,
-        wins: users.wins,
-        losses: users.losses,
-        streak: users.streak,
-        createdAt: users.createdAt,
-        lastLogin: users.lastLogin,
-        status: users.status,
-        isAdmin: users.isAdmin,
-      })
+      .select()
       .from(users)
       .orderBy(desc(users.createdAt));
 

@@ -637,9 +637,11 @@ export default function EventChatPage() {
                           ✓
                         </div>
                         {/* Level badge */}
-                        <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-1 py-0.5 rounded-full text-[8px] font-bold leading-none">
-                          L{message.user.level || 1}
-                        </div>
+                        <img 
+                          src={`/assets/${message.user.level >= 50 ? 'master' : message.user.level >= 30 ? 'expert' : message.user.level >= 20 ? 'advanced' : message.user.level >= 10 ? 'amateur' : 'Beginner'}.svg`} 
+                          alt={`Level ${message.user.level || 1}`} 
+                          className="w-3 h-3" 
+                        />
                       </div>
                       <span className="text-xs text-slate-500 dark:text-slate-400">
                         {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
