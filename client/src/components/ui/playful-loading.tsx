@@ -92,7 +92,7 @@ export function PlayfulLoading({
   description, 
   className 
 }: PlayfulLoadingProps) {
-  const config = loadingConfigs[type];
+  const config = loadingConfigs[type] || loadingConfigs.general;
   const Character = config.character;
   
   return (
