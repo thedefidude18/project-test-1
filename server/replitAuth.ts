@@ -14,10 +14,21 @@ if (!process.env.REPLIT_DOMAINS) {
 
 const getOidcConfig = memoize(
   async () => {
-    return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
-    );
+    try {
+      const issuerUrl = process.env.ISSUER_URL ?? "https://replit.com/oidc";
+      const replId = process.env.REPL_ID!;
+      
+      console.log("OIDC Configuration:");
+      console.log("- Issuer URL:", issuerUrl);
+      console.log("- REPL_ID:", replId);
+      
+      const config = await client.discovery(new URL(issuerUrl), replId);
+      console.log("OIDC discovery successful");
+      return config;
+    } catch (error) {
+      console.error("OIDC discovery failed:", error);
+      throw error;
+    }
   },
   { maxAge: 3600 * 1000 }
 );
@@ -38,8 +49,9 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
+      sameSite: 'lax',
     },
   });
 }
@@ -144,10 +156,14 @@ export async function setupAuth(app: Express) {
           code: err.code
         });
         
-        // If it's an unknown_user_id error, try to redirect to login
-        if (err.message?.includes('unknown_user_id')) {
-          console.log("Unknown user ID error - redirecting to login");
-          return res.redirect('/api/login');
+        // If it's an unknown_user_id error, try alternative approach
+        if (err.message?.includes('unknown_user_id') || err.error === 'unknown_user_id') {
+          console.log("Unknown user ID error - trying alternative authentication");
+          // Clear any existing session and try again
+          req.session.destroy(() => {
+            return res.redirect('/api/login');
+          });
+          return;
         }
         
         return res.status(500).json({ 
@@ -168,6 +184,22 @@ export async function setupAuth(app: Express) {
         }).href
       );
     });
+  });
+
+  // Debug route to check authentication state
+  app.get("/api/debug/auth", (req, res) => {
+    const sessionInfo = {
+      sessionId: req.sessionID,
+      isAuthenticated: req.isAuthenticated(),
+      user: req.user ? {
+        claims: req.user.claims,
+        expires_at: req.user.expires_at,
+        hasAccessToken: !!req.user.access_token,
+        hasRefreshToken: !!req.user.refresh_token,
+      } : null,
+      session: req.session,
+    };
+    res.json(sessionInfo);
   });
 }
 
