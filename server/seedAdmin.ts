@@ -88,11 +88,9 @@ async function seedAdmin() {
     console.log("\n📋 Admin Login Credentials:");
     console.log("Username: admin");
     console.log("Password: admin123 (or use ADMIN_PASSWORD env var)");
-    console.log("Admin Key: betchat-admin-2024 (or use ADMIN_KEY env var)");
     console.log("\nBackup Admin:");
     console.log("Username: superadmin");
     console.log("Password: admin123 (or use ADMIN_PASSWORD env var)");
-    console.log("Admin Key: betchat-admin-2024 (or use ADMIN_KEY env var)");
     console.log("\n🌐 Admin Login URL: /admin/login");
 
   } catch (error) {

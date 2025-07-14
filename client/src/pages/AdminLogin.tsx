@@ -13,11 +13,9 @@ import { Lock, Shield, Eye, EyeOff } from "lucide-react";
 export default function AdminLogin() {
   const [credentials, setCredentials] = useState({
     username: '',
-    password: '',
-    adminKey: ''
+    password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showAdminKey, setShowAdminKey] = useState(false);
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
@@ -45,7 +43,7 @@ export default function AdminLogin() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!credentials.username || !credentials.password || !credentials.adminKey) {
+    if (!credentials.username || !credentials.password) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
@@ -129,33 +127,6 @@ export default function AdminLogin() {
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Admin Key Field */}
-              <div className="space-y-2">
-                <label htmlFor="adminKey" className="text-sm font-medium text-slate-300">
-                  Admin Key
-                </label>
-                <div className="relative">
-                  <Input
-                    id="adminKey"
-                    type={showAdminKey ? "text" : "password"}
-                    placeholder="Enter admin access key"
-                    value={credentials.adminKey}
-                    onChange={(e) => handleInputChange('adminKey', e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 pr-10"
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white"
-                    onClick={() => setShowAdminKey(!showAdminKey)}
-                  >
-                    {showAdminKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
                 </div>
               </div>

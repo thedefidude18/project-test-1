@@ -1,4 +1,3 @@
-
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
@@ -62,10 +61,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
-      
+
       // Check and create daily login record
       await storage.checkDailyLogin(userId);
-      
+
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -546,11 +545,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const challengeId = parseInt(req.params.id);
       const challenge = await storage.getChallengeById(challengeId);
-      
+
       if (!challenge) {
         return res.status(404).json({ message: "Challenge not found" });
       }
-      
+
       res.json(challenge);
     } catch (error) {
       console.error("Error fetching challenge:", error);
@@ -561,7 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/challenges', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.claims.sub;
-      
+
       // Prepare data for validation
       const dataToValidate = {
         ...req.body,
@@ -569,9 +568,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: req.body.amount.toString(), // Ensure it's a string for decimal field
         dueDate: req.body.dueDate ? new Date(req.body.dueDate) : undefined // Convert string to Date
       };
-      
+
       console.log('Challenge data to validate:', dataToValidate);
-      
+
       const challengeData = insertChallengeSchema.parse(dataToValidate);
       const challenge = await storage.createChallenge(challengeData);
 
@@ -874,7 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Send real-time notification via Pusher
-      await pusher.trigger(`user-${friend.requesterId}`, 'friend-accepted', {
+      await pusher.trigger(`user-${friend.requesterId}`, 'friend-accepted`, {
         title: '✅ Friend Request Accepted',
         message: `${user?.firstName || user?.username || 'Someone'} accepted your friend request!`,
         friendId: userId,
@@ -1239,7 +1238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get user info
       const user = await storage.getUser(userId);
-      
+
       // Create message in BetChat
       const newMessage = await storage.createGlobalChatMessage({
         userId,
@@ -1279,7 +1278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/telegram/status', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const telegramSync = getTelegramSync();
-      
+
       if (!telegramSync) {
         return res.json({ 
           enabled: false, 
@@ -1489,15 +1488,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let currentStreak = 1;
       if (latestLogin.length > 0) {
         currentStreak = latestLogin[0].streak;
-        
+
         // If they haven't signed in today, reset streak if yesterday wasn't their last login
         if (!hasSignedInToday) {
           const yesterday = new Date(today);
           yesterday.setDate(yesterday.getDate() - 1);
-          
+
           const lastLoginDate = new Date(latestLogin[0].date);
           lastLoginDate.setHours(0, 0, 0, 0);
-          
+
           if (lastLoginDate.getTime() !== yesterday.getTime()) {
             currentStreak = 1; // Reset streak
           } else {
@@ -1742,7 +1741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       const allAdmins = await storage.getAdminUsers();
-      
+
       res.json({
         currentUser: {
           id: userId,
@@ -1751,7 +1750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: user?.firstName
         },
         totalAdmins: allAdmins.length,
-        adminUsers: allAdmins.map(admin => ({
+        adminUsers:Removing admin key check during login.        adminUsers: allAdmins.map(admin => ({
           id: admin.id,
           username: admin.username,
           firstName: admin.firstName
@@ -1951,7 +1950,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/users/search', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const { query, limit = 50 } = req.query;
-      
+
       if (!query || typeof query !== 'string') {
         return res.status(400).json({ message: "Search query is required" });
       }
@@ -1979,11 +1978,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/friends/performance', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.claims.sub;
-      
+
       // Get user's friends
       const friendsData = await storage.getFriends(userId);
       const acceptedFriends = friendsData.filter((f: any) => f.status === 'accepted');
-      
+
       if (acceptedFriends.length === 0) {
         return res.json({ 
           message: "No friends found", 
@@ -2000,7 +1999,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get current user's performance stats
       const userStats = await storage.getUserStats(userId);
-      
+
       // Get friends' performance stats
       const friendsStats = await Promise.all(
         friendIds.map(async (friendId: string) => {
@@ -2030,7 +2029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Calculate rankings
       const allUsers = [userPerformance, ...friendsStats];
-      
+
       const winRateRanking = allUsers
         .map(u => ({
           ...u,
@@ -2068,7 +2067,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/events/add-funds', isAdmin, async (req, res) => {
     try {
       const { eventId, amount } = req.body;
-      
+
       if (!eventId || !amount || amount <= 0) {
         return res.status(400).json({ message: 'Invalid event ID or amount' });
       }
@@ -2085,7 +2084,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/users/give-points', isAdmin, async (req, res) => {
     try {
       const { userId, points } = req.body;
-      
+
       if (!userId || !points || points <= 0) {
         return res.status(400).json({ message: 'Invalid user ID or points amount' });
       }
@@ -2102,7 +2101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/events/update-capacity', isAdmin, async (req, res) => {
     try {
       const { eventId, additionalSlots } = req.body;
-      
+
       if (!eventId || !additionalSlots || additionalSlots <= 0) {
         return res.status(400).json({ message: 'Invalid event ID or additional slots' });
       }
@@ -2119,7 +2118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/broadcast', isAdmin, async (req, res) => {
     try {
       const { message, type } = req.body;
-      
+
       if (!message || !type) {
         return res.status(400).json({ message: 'Message and type are required' });
       }
@@ -2135,23 +2134,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin Login Route
   app.post('/api/admin/login', async (req, res) => {
     try {
-      const { username, password, adminKey } = req.body;
+      const { username, password } = req.body;
 
-      if (!username || !password || !adminKey) {
-        return res.status(400).json({ message: 'Username, password, and admin key are required' });
-      }
-
-      // Verify admin key
-      const expectedAdminKey = process.env.ADMIN_KEY || 'betchat-admin-2024';
-      if (adminKey !== expectedAdminKey) {
-        console.log(`Failed admin login attempt with invalid key: ${username}`);
-        return res.status(401).json({ message: 'Invalid admin credentials' });
+      if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
       }
 
       // Find user by username
       const user = await storage.getUserByUsername(username);
       if (!user) {
-        console.log(`Failed admin login attempt - user not found: ${username}`);
+        console.log(`Failed admin login attempt - user not found or not admin: ${username}`);
+        return res.status(401).json({ message: 'Invalid admin credentials' });
+      }
+
+      // Verify admin password
+      const expectedPassword = process.env.ADMIN_PASSWORD || 'admin123';
+      if (password !== expectedPassword) {
+        console.log(`Failed admin login attempt - invalid password for user: ${username}`);
         return res.status(401).json({ message: 'Invalid admin credentials' });
       }
 
@@ -2161,17 +2160,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Access denied: Admin privileges required' });
       }
 
-      // Verify password (for demo purposes, using simple comparison)
-      // In production, you should use proper password hashing
-      const expectedPassword = process.env.ADMIN_PASSWORD || 'admin123';
-      if (password !== expectedPassword) {
-        console.log(`Failed admin login attempt - invalid password: ${username}`);
-        return res.status(401).json({ message: 'Invalid admin credentials' });
-      }
 
       // Generate admin token
       const adminToken = `admin_${user.id}_${Date.now()}`;
-      
+
       // Update user's last login
       await storage.updateUserProfile(user.id, {
         lastLogin: new Date()
