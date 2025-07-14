@@ -62,7 +62,7 @@ export default function WalletPage() {
   const depositMutation = useMutation({
     mutationFn: async (amount: number) => {
       const response = await apiRequest("POST", "/api/wallet/deposit", { amount });
-      return await response.json();
+      return response;
     },
     onSuccess: (data: any) => {
       console.log("Deposit response:", data);
