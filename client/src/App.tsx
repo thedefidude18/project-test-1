@@ -21,21 +21,22 @@ import ReferralPage from "@/pages/ReferralPage";
 import EventChatPage from "@/pages/EventChatPage";
 import History from "@/pages/History";
 import Settings from "@/pages/Settings";
-import AdminDashboard from "@/pages/AdminDashboard";
 import AdminDashboardOverview from "@/pages/AdminDashboardOverview";
 import AdminEventPayouts from "@/pages/AdminEventPayouts";
 import AdminChallengePayouts from "@/pages/AdminChallengePayouts";
-import AdminPayoutCenter from "@/pages/AdminPayoutCenter";
 import AdminUsersManagement from "@/pages/AdminUsersManagement";
+import AdminAnalytics from "@/pages/AdminAnalytics";
+import AdminNotifications from "@/pages/AdminNotifications";
+import AdminSettings from "@/pages/AdminSettings";
 import { DailySignInModal } from '@/components/DailySignInModal';
 import { useDailySignIn } from '@/hooks/useDailySignIn';
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
-  
+
   // Initialize notifications for authenticated users
   const notifications = useNotifications();
-  
+
   // Initialize daily sign-in for authenticated users
   const dailySignIn = useDailySignIn();
   const { signInStatus, showModal, setShowModal } = dailySignIn;
@@ -61,15 +62,17 @@ function Router() {
           <Route path="/history" component={History} />
           <Route path="/settings" component={Settings} />
           <Route path="/admin" component={AdminDashboardOverview} />
-          <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/events" component={AdminEventPayouts} />
           <Route path="/admin/challenges" component={AdminChallengePayouts} />
           <Route path="/admin/users" component={AdminUsersManagement} />
+          <Route path="/admin/analytics" component={AdminAnalytics} />
+          <Route path="/admin/notifications" component={AdminNotifications} />
+          <Route path="/admin/settings" component={AdminSettings} />
         </>
       )}
       <Route component={NotFound} />
     </Switch>
-    
+
     {/* Daily Sign-In Modal */}
     {isAuthenticated && signInStatus && (
       <DailySignInModal 

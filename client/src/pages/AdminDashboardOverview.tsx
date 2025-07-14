@@ -78,6 +78,29 @@ interface Notification {
   createdAt: string;
 }
 
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import AdminLayout from "@/components/AdminLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
+import { 
+  Users, 
+  DollarSign, 
+  Trophy, 
+  Target, 
+  Activity,
+  AlertCircle,
+  ArrowRight,
+  Search,
+  BarChart3,
+  MessageSquare,
+  Zap
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+
 interface AdminStats {
   totalUsers: number;
   activeUsers: number;
@@ -87,6 +110,28 @@ interface AdminStats {
   dailyActiveUsers: number;
   pendingPayouts: number;
   totalNotifications: number;
+}
+
+interface Event {
+  id: number;
+  title: string;
+  status: string;
+  eventPool: string;
+  creatorFee: string;
+  endDate: string;
+  adminResult: boolean | null;
+  createdAt: string;
+}
+
+interface Challenge {
+  id: number;
+  title: string;
+  amount: string;
+  status: string;
+  dueDate: string;
+  result: string | null;
+  challengerUser: { username: string };
+  challengedUser: { username: string };
 }
 
 export default function AdminDashboardOverview() {
@@ -127,6 +172,15 @@ export default function AdminDashboardOverview() {
     const now = new Date();
     return endDate <= now && event.status === 'active' && event.adminResult === null;
   };
+
+  const needsChallengeAction = (challenge: Challenge) => {
+    return challenge.status === 'active' && challenge.dueDate && 
+           new Date(challenge.dueDate) <= new Date() && !challenge.result;
+  };
+
+  const eventsNeedingAction = events.filter(needsEventAction);
+  const challengesNeedingAction = challenges.filter(needsChallengeAction);
+  const completedChallenges = challenges.filter((c: Challenge) => c.status === 'completed');
 
   const needsChallengeAction = (challenge: Challenge) => {
     return challenge.status === 'active' && challenge.dueDate && 
@@ -210,6 +264,33 @@ export default function AdminDashboardOverview() {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="bg-slate-900 border-slate-700">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Active Events</p>
+                  <p className="text-2xl font-bold text-white">{events.filter((e: Event) => e.status === 'active').length}</p>
+                  <p className="text-xs text-blue-400">Currently running</p>
+                </div>
+                <Trophy className="w-8 h-8 text-blue-400" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900 border-slate-700">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Pending Actions</p>
+                  <p className="text-2xl font-bold text-white">{eventsNeedingAction.length + challengesNeedingAction.length}</p>
+                  <p className="text-xs text-red-400">Need admin intervention</p>
+                </div>
+                <AlertCircle className="w-8 h-8 text-red-400" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>d>
 
           <Card className="bg-slate-900 border-slate-700">
             <CardContent className="p-4">
@@ -391,6 +472,53 @@ export default function AdminDashboardOverview() {
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-slate-800 p-3 rounded-lg text-center">
+                    <p className="text-slate-400 text-sm">Online Users</p>
+                    <p className="text-xl font-bold text-green-400">{allUsers.filter((u: any) => u.status === 'Online').length}</p>
+                  </div>
+                  <div className="bg-slate-800 p-3 rounded-lg text-center">
+                    <p className="text-slate-400 text-sm">New This Week</p>
+                    <p className="text-xl font-bold text-blue-400">{recentUsers.length}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Platform Activity */}
+          <Card className="bg-slate-900 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center">
+                <Activity className="w-5 h-5 mr-2 text-purple-400" />
+                Recent Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {platformActivity.length > 0 ? (
+                  platformActivity.slice(0, 5).map((activity: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-slate-800 rounded">
+                      <div>
+                        <p className="text-white text-sm">{activity.description}</p>
+                        <p className="text-xs text-slate-400">{formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}</p>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {activity.type}
+                      </Badge>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-slate-400 text-sm">No recent activity</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </AdminLayout>
+  );
+}center">
                     <p className="text-sm text-slate-400">Total Users</p>
                     <p className="text-lg font-bold text-white">{allUsers.length}</p>
                   </div>
