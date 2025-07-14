@@ -70,8 +70,9 @@ export function useNotifications() {
           });
         }
         
-        // Refresh notifications list
+        // Refresh notifications list immediately
         queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+        queryClient.refetchQueries({ queryKey: ['/api/notifications'] });
       });
     });
 

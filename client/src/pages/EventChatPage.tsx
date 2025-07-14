@@ -47,6 +47,7 @@ interface ExtendedMessage {
     lastName?: string;
     username?: string;
     profileImageUrl?: string;
+    level?: number;
   };
   reactions?: MessageReaction[];
   replyTo?: {
@@ -627,9 +628,19 @@ export default function EventChatPage() {
                 <div className={`flex-1 max-w-[75%] ${isCurrentUser ? 'text-right' : ''} ${!showAvatar && !isCurrentUser ? 'ml-8' : ''}`}>
                   {showAvatar && (
                     <div className={`flex items-center space-x-2 mb-1 ${isCurrentUser ? 'justify-end' : ''}`}>
-                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                        {message.user.firstName || message.user.username || 'Anonymous'}
-                      </span>
+                      <div className="flex items-center space-x-1">
+                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                          {message.user.firstName || message.user.username || 'Anonymous'}
+                        </span>
+                        {/* Verification badge */}
+                        <div className="bg-blue-500 text-white px-1 py-0.5 rounded-full text-[8px] font-bold leading-none">
+                          ✓
+                        </div>
+                        {/* Level badge */}
+                        <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-1 py-0.5 rounded-full text-[8px] font-bold leading-none">
+                          L{message.user.level || 1}
+                        </div>
+                      </div>
                       <span className="text-xs text-slate-500 dark:text-slate-400">
                         {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                       </span>
@@ -804,7 +815,7 @@ export default function EventChatPage() {
                 onChange={handleInputChange}
                 onKeyDown={handleKeyPress}
                 className="bg-slate-100 dark:bg-slate-700 border-none rounded-full pl-4 pr-4 py-2"
-                disabled={!isConnected}
+                disabled={false}
               />
               {!isConnected && (
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -815,7 +826,7 @@ export default function EventChatPage() {
 
             <Button
               onClick={handleSendMessage}
-              disabled={!newMessage.trim() || !isConnected || sendMessageMutation.isPending}
+              disabled={!newMessage.trim() || sendMessageMutation.isPending}
               className="bg-primary text-white hover:bg-primary/90 rounded-full p-2">
               <i className="fas fafa-paper-plane"></i>
             </Button>

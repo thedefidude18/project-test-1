@@ -1722,7 +1722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Leaderboard route
-  app.get('/api/leaderboard', async (req, res) => {
+  app.get('/api/leaderboard', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const leaderboard = await storage.getLeaderboard();
       res.json(leaderboard);

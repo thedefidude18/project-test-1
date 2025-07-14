@@ -79,9 +79,6 @@ export default function Challenges() {
   const { data: allUsers = [], isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ["/api/users"],
     retry: false,
-    onSuccess: (data) => {
-      console.log('Users fetched successfully:', data);
-    },
     onError: (error: Error) => {
       console.error('Error fetching users:', error);
       if (isUnauthorizedError(error)) {

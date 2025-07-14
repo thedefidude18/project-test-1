@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useNotifications } from "@/hooks/useNotifications";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -19,10 +20,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 export function Navigation() {
   const { user } = useAuth();
 
-  const { data: notifications = [] } = useQuery({
-    queryKey: ["/api/notifications"],
-    retry: false,
-  });
+  const { notifications, unreadCount } = useNotifications();
 
   const { data: balance = 0 } = useQuery({
     queryKey: ["/api/wallet/balance"],
@@ -30,8 +28,6 @@ export function Navigation() {
     enabled: !!user,
     refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
   });
-
-  const unreadCount = Array.isArray(notifications) ? notifications.filter((n: any) => !n.read).length : 0;
 
   const [, navigate] = useLocation();
 
