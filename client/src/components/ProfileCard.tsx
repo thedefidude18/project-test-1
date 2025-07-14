@@ -340,7 +340,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                     {profile.firstName || profile.username || 'User'}
                   </h2>
                   <p className="text-xs text-slate-600 dark:text-slate-400">
-                    @{profile.username || `user_${profile.id?.slice(0, 8)}`}
+                    @{profile.username || profile.email?.split('@')[0] || `user_${profile.id?.slice(0, 8)}`}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
                     Joined {profile.createdAt && !isNaN(new Date(profile.createdAt).getTime()) 
