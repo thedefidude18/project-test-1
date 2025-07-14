@@ -75,6 +75,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
     },
     retry: false,
     enabled: !!userId,
+    staleTime: 0, // Force refresh
     onError: (error: Error) => {
       console.error("Profile query error:", error);
       if (isUnauthorizedError(error)) {
