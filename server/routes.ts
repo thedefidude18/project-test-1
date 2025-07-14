@@ -1294,18 +1294,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
-        message: `Your withdrawal of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is being processed.`,
-        data: { amount, method },
-      });
-
-      res.json({ message: "Withdrawal request submitted successfully" });
-    } catch (error) {
-      console.error("Error processing withdrawal:", error);
-      res.status(500).json({ message: "Failed to process withdrawal" });
-    }
-  });
-
   // Follow/Unfollow user route
   app.post('/api/users/:userId/follow', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
