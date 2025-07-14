@@ -23,10 +23,7 @@ export default function AdminLogin() {
 
   const adminLoginMutation = useMutation({
     mutationFn: async (loginData: typeof credentials) => {
-      return apiRequest('/api/admin/login', {
-        method: 'POST',
-        body: loginData,
-      });
+      return apiRequest('POST', '/api/admin/login', loginData);
     },
     onSuccess: (data) => {
       localStorage.setItem('adminToken', data.token);
