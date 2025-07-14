@@ -542,11 +542,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/challenges', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.claims.sub;
-      const challengeData = insertChallengeSchema.parse({ 
-        ...req.body, 
+      
+      // Prepare data for validation
+      const dataToValidate = {
+        ...req.body,
         challenger: userId,
-        amount: parseFloat(req.body.amount) // Convert string to number
-      });
+        amount: req.body.amount.toString(), // Ensure it's a string for decimal field
+        dueDate: req.body.dueDate ? new Date(req.body.dueDate) : undefined // Convert string to Date
+      };
+      
+      console.log('Challenge data to validate:', dataToValidate);
+      
+      const challengeData = insertChallengeSchema.parse(dataToValidate);
       const challenge = await storage.createChallenge(challengeData);
 
       // Get challenger and challenged user info
