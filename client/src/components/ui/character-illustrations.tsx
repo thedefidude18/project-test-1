@@ -230,49 +230,7 @@ export function WalletCharacter({ className, animate = true }: CharacterProps) {
   );
 }
 
-export function TrophyCharacter({ className, animate = true }: CharacterProps) {
-  return (
-    <motion.div
-      className={cn("inline-block", className)}
-      animate={animate ? {
-        scale: [1, 1.1, 1],
-        rotate: [0, 3, -3, 0]
-      } : {}}
-      transition={{
-        duration: 2,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }}
-    >
-      <svg width="80" height="80" viewBox="0 0 80 80">
-        <defs>
-          <linearGradient id="trophyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FFD700" />
-            <stop offset="100%" stopColor="#FFA500" />
-          </linearGradient>
-        </defs>
-        
-        {/* Trophy cup */}
-        <path d="M 25 35 L 25 45 Q 25 50 30 50 L 50 50 Q 55 50 55 45 L 55 35 Q 55 30 50 30 L 30 30 Q 25 30 25 35" 
-              fill="url(#trophyGradient)" />
-        
-        {/* Trophy handles */}
-        <circle cx="20" cy="40" r="5" fill="none" stroke="url(#trophyGradient)" strokeWidth="3" />
-        <circle cx="60" cy="40" r="5" fill="none" stroke="url(#trophyGradient)" strokeWidth="3" />
-        
-        {/* Trophy base */}
-        <rect x="32" y="50" width="16" height="8" fill="url(#trophyGradient)" />
-        <rect x="28" y="58" width="24" height="4" fill="url(#trophyGradient)" />
-        
-        {/* Character face */}
-        <circle cx="40" cy="20" r="8" fill="hsl(var(--primary))" />
-        <circle cx="37" cy="18" r="1.5" fill="white" />
-        <circle cx="43" cy="18" r="1.5" fill="white" />
-        <path d="M 36 22 Q 40 24 44 22" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      </svg>
-    </motion.div>
-  );
-}
+
 
 export function ChatBubbleCharacter({ className, animate = true }: CharacterProps) {
   return (
