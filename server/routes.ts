@@ -542,7 +542,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/challenges', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.claims.sub;
-      const challengeData = insertChallengeSchema.parse({ ...req.body, challenger: userId });
+      const challengeData = insertChallengeSchema.parse({ 
+        ...req.body, 
+        challenger: userId,
+        amount: parseFloat(req.body.amount) // Convert string to number
+      });
       const challenge = await storage.createChallenge(challengeData);
 
       // Get challenger and challenged user info
