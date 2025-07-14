@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ export default function AdminLogin() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showAdminKey, setShowAdminKey] = useState(false);
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
 
   const adminLoginMutation = useMutation({
@@ -35,7 +35,7 @@ export default function AdminLogin() {
         title: "Admin Login Successful",
         description: `Welcome back, ${data.user.firstName || data.user.username}!`,
       });
-      navigate('/admin/dashboard');
+      navigate('/admin');
     },
     onError: (error: Error) => {
       toast({
