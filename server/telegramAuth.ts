@@ -53,8 +53,5 @@ async function authenticateTelegram() {
   }
 }
 
-if (require.main === module) {
-  authenticateTelegram().catch(console.error);
-}
-
+// Export the function for use in the authentication script
 export { authenticateTelegram };
