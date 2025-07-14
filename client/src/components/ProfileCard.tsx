@@ -67,6 +67,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
     queryFn: async () => {
       try {
         const response = await apiRequest("GET", `/api/users/${userId}/profile`);
+        console.log("Profile API response:", response);
         return response as UserProfile;
       } catch (err) {
         console.error("Error fetching profile:", err);
@@ -301,6 +302,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
     return null;
   }
 
+  // Debug logging
+  console.log("Profile data in component:", profile);
+  console.log("Profile username:", profile?.username);
+  console.log("Profile firstName:", profile?.firstName);
+
   const calculateLevel = (xp: number) => Math.floor(xp / 1000) + 1;
   const currentLevel = profile?.level || 1;
   const currentXP = profile?.xp || 0;
@@ -338,10 +344,10 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
 
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    {profile.firstName || profile.username || 'User'}
+                    {profile?.firstName || profile?.username || 'User'}
                   </h2>
                   <p className="text-xs text-slate-600 dark:text-slate-400">
-                    @{profile.username || profile.email?.split('@')[0] || `user_${profile.id?.slice(0, 8)}`}
+                    @{profile?.username || profile?.email?.split('@')[0] || `user_${profile?.id?.slice(0, 8)}`}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
                     Joined {profile.createdAt && !isNaN(new Date(profile.createdAt).getTime()) 
