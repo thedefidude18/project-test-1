@@ -1197,6 +1197,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: 'withdrawal',
         title: '📤 Withdrawal Requested',
+        message: `Your withdrawal of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is being processed.`,
+        data: { amount, method },
+      });
+
+      res.json({ message: "Withdrawal request submitted successfully" });
+    } catch (error) {
+      console.error("Error processing withdrawal:", error);
+      res.status(500).json({ message: "Failed to process withdrawal" });
+    }
+  });
 
   // Global chat routes
   app.get('/api/chat/messages', isAuthenticated, async (req: AuthenticatedRequest, res) => {
