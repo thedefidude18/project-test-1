@@ -103,7 +103,8 @@ export default function Challenges() {
     mutationFn: async (data: z.infer<typeof createChallengeSchema>) => {
       const challengeData = {
         ...data,
-        amount: parseFloat(data.amount)
+        amount: data.amount, // Keep as string for backend validation
+        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined
       };
       await apiRequest("POST", "/api/challenges", challengeData);
     },
