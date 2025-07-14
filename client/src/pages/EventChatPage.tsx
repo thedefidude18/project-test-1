@@ -364,10 +364,15 @@ export default function EventChatPage() {
   };
 
   const handleSendMessage = () => {
-    if (!newMessage.trim() || !isConnected) return;
+    console.log("handleSendMessage called with:", { newMessage, isPending: sendMessageMutation.isPending });
+    if (!newMessage.trim()) {
+      console.log("Message is empty, returning");
+      return;
+    }
 
     // Extract mentions
     const mentions = extractMentions(newMessage);
+    console.log("Sending message with mentions:", { message: newMessage, mentions });
 
     sendMessageMutation.mutate({
       message: newMessage,
