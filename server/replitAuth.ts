@@ -78,10 +78,25 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
+    try {
+      const claims = tokens.claims();
+      console.log("Token claims:", claims);
+      
+      if (!claims || !claims.sub) {
+        console.error("Invalid claims - missing sub (user ID)");
+        return verified(new Error("Invalid user claims"), null);
+      }
+      
+      const user = {};
+      updateUserSession(user, tokens);
+      await upsertUser(claims);
+      
+      console.log("User authenticated successfully:", claims.sub);
+      verified(null, user);
+    } catch (error) {
+      console.error("Error in verify function:", error);
+      verified(error, null);
+    }
   };
 
   for (const domain of process.env
@@ -102,6 +117,9 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
+    console.log("Login request for hostname:", req.hostname);
+    console.log("Available strategies:", Object.keys(passport._strategies || {}));
+    
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
@@ -109,10 +127,36 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
+    // Log the callback URL and parameters for debugging
+    console.log("Callback URL:", req.url);
+    console.log("Callback query:", req.query);
+    console.log("Hostname:", req.hostname);
+    
     passport.authenticate(`replitauth:${req.hostname}`, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
-    })(req, res, next);
+    })(req, res, (err) => {
+      if (err) {
+        console.error("Authentication error:", err);
+        console.error("Error details:", {
+          message: err.message,
+          stack: err.stack,
+          code: err.code
+        });
+        
+        // If it's an unknown_user_id error, try to redirect to login
+        if (err.message?.includes('unknown_user_id')) {
+          console.log("Unknown user ID error - redirecting to login");
+          return res.redirect('/api/login');
+        }
+        
+        return res.status(500).json({ 
+          message: "Authentication failed", 
+          error: err.message 
+        });
+      }
+      next();
+    });
   });
 
   app.get("/api/logout", (req, res) => {
