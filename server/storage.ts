@@ -20,6 +20,7 @@ import {
   messageReactions,
   eventTyping,
   eventActivity,
+  escrow,
   type User,
   type UpsertUser,
   type Event,
