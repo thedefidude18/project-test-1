@@ -14,6 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { formatDistanceToNow } from "date-fns";
+import { FriendsPerformanceComparison } from "@/components/FriendsPerformanceComparison";
 
 export default function Friends() {
   const { user } = useAuth();
@@ -229,9 +230,12 @@ export default function Friends() {
 
         {/* Friends Tabs */}
         <Tabs defaultValue="friends" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="friends">
               Friends ({acceptedFriends.length})
+            </TabsTrigger>
+            <TabsTrigger value="performance">
+              Performance
             </TabsTrigger>
             <TabsTrigger value="requests">
               Requests ({pendingRequests.length})
@@ -315,6 +319,10 @@ export default function Friends() {
                 })}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="performance" className="space-y-4">
+            <FriendsPerformanceComparison />
           </TabsContent>
 
           <TabsContent value="requests" className="space-y-4">

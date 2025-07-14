@@ -38,15 +38,8 @@ const pusher = new Pusher({
 });
 
 // Initialize Telegram sync service
-const telegramSync = createTelegramSync(pusher);
-if (telegramSync) {
-  telegramSync.initialize().catch((error) => {
-    console.error("❌ Failed to initialize Telegram sync:", error);
-  });
-  console.log("🚀 Telegram sync service created successfully");
-} else {
-  console.log("⚠️ Telegram sync service not available - check environment variables");
-}
+let telegramSync = null;
+console.log("🔧 Telegram sync disabled via TELEGRAM_DISABLED environment variable");
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -1941,6 +1934,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
       res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  // Friends Performance Comparison API
+  app.get('/api/friends/performance', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Get user's friends
+      const friendsData = await storage.getFriends(userId);
+      const acceptedFriends = friendsData.filter((f: any) => f.status === 'accepted');
+      
+      if (acceptedFriends.length === 0) {
+        return res.json({ 
+          message: "No friends found", 
+          userStats: null,
+          friendsStats: [],
+          comparison: null
+        });
+      }
+
+      // Get friend IDs
+      const friendIds = acceptedFriends.map((f: any) => 
+        f.requesterId === userId ? f.addresseeId : f.requesterId
+      );
+
+      // Get current user's performance stats
+      const userStats = await storage.getUserStats(userId);
+      
+      // Get friends' performance stats
+      const friendsStats = await Promise.all(
+        friendIds.map(async (friendId: string) => {
+          const friend = await storage.getUser(friendId);
+          const stats = await storage.getUserStats(friendId);
+          return {
+            id: friendId,
+            name: friend?.firstName || friend?.username || 'Unknown',
+            profileImageUrl: friend?.profileImageUrl,
+            level: friend?.level || 1,
+            xp: friend?.xp || 0,
+            stats: stats
+          };
+        })
+      );
+
+      // Calculate performance comparison
+      const currentUser = await storage.getUser(userId);
+      const userPerformance = {
+        id: userId,
+        name: currentUser?.firstName || currentUser?.username || 'You',
+        profileImageUrl: currentUser?.profileImageUrl,
+        level: currentUser?.level || 1,
+        xp: currentUser?.xp || 0,
+        stats: userStats
+      };
+
+      // Calculate rankings
+      const allUsers = [userPerformance, ...friendsStats];
+      
+      const winRateRanking = allUsers
+        .map(u => ({
+          ...u,
+          winRate: u.stats.totalBets > 0 ? (u.stats.wins / u.stats.totalBets * 100) : 0
+        }))
+        .sort((a, b) => b.winRate - a.winRate);
+
+      const xpRanking = allUsers.sort((a, b) => b.xp - a.xp);
+      const levelRanking = allUsers.sort((a, b) => b.level - a.level);
+
+      const comparison = {
+        winRateRank: winRateRanking.findIndex(u => u.id === userId) + 1,
+        xpRank: xpRanking.findIndex(u => u.id === userId) + 1,
+        levelRank: levelRanking.findIndex(u => u.id === userId) + 1,
+        totalFriends: friendsStats.length,
+        rankings: {
+          winRate: winRateRanking,
+          xp: xpRanking,
+          level: levelRanking
+        }
+      };
+
+      res.json({
+        userStats: userPerformance,
+        friendsStats,
+        comparison
+      });
+    } catch (error) {
+      console.error("Error fetching friends performance:", error);
+      res.status(500).json({ message: "Failed to fetch friends performance" });
     }
   });
 
