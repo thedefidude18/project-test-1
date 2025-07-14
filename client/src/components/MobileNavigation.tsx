@@ -22,17 +22,10 @@ export function MobileNavigation() {
 
   const navItems = [
     { 
-      path: "/", 
-      icon: "fas fa-home", 
-      label: "Home",
-      isActive: location === "/",
-      tourId: "home"
-    },
-    { 
       path: "/events", 
       icon: "fas fa-calendar", 
       label: "Events",
-      isActive: location.startsWith("/events"),
+      isActive: location.startsWith("/events") || location === "/",
       tourId: "events"
     },
     { 
@@ -59,7 +52,12 @@ export function MobileNavigation() {
   ];
 
   const handleNavigation = (path: string) => {
-    navigate(path);
+    // Redirect home to events on mobile
+    if (path === "/" || path === "/events") {
+      navigate("/events");
+    } else {
+      navigate(path);
+    }
   };
 
   return (
