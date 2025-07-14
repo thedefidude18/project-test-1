@@ -639,7 +639,7 @@ export default function EventChatPage() {
       </div>
 
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2 flex flex-col-reverse">
+      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2 flex flex-col">
         
         {messages.length === 0 ? (
           <div className="text-center text-slate-500 dark:text-slate-400 py-8">
@@ -647,7 +647,7 @@ export default function EventChatPage() {
             <p>No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          [...messages].reverse().map((message: ExtendedMessage, index: number) => {
+          messages.map((message: ExtendedMessage, index: number) => {
             // Check if this is a system message
             const isSystemMessage = message.type === 'system';
             
@@ -715,7 +715,7 @@ export default function EventChatPage() {
                   )}
 
                   <div className="group relative">
-                    <div className={`inline-block px-3 py-2 rounded-2xl text-sm max-w-full break-words ${
+                    <div className={`inline-block px-3 py-2 rounded-2xl text-sm max-w-full break-words relative ${
                       isCurrentUser 
                         ? 'bg-primary text-white' 
                         : 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100'
@@ -728,41 +728,41 @@ export default function EventChatPage() {
                         </div>
                       )}
                       <p className="break-words">{message.message}</p>
-                    </div>
+                      
+                      {/* Message actions - positioned at bottom right of bubble */}
+                      <div className={`absolute -bottom-1 ${isCurrentUser ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 bg-white dark:bg-slate-800 shadow-lg rounded-lg px-1 py-1 z-10 border`}>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button size="sm" variant="ghost" className="h-5 w-5 p-0">
+                              <i className="fas fa-smile text-[10px]"></i>
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-2">
+                            <div className="flex space-x-1">
+                              {COMMON_REACTIONS.map((emoji) => (
+                                <Button
+                                  key={emoji}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 text-lg hover:bg-slate-100"
+                                  onClick={() => handleReaction(message.id, emoji)}
+                                >
+                                  {emoji}
+                                </Button>
+                              ))}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
 
-                    {/* Message actions - moved closer to bubble */}
-                    <div className={`absolute top-0 ${isCurrentUser ? 'left-0 -translate-x-12' : 'right-0 translate-x-12'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 bg-white dark:bg-slate-800 shadow-lg rounded-lg px-2 py-1 z-10`}>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
-                            <i className="fas fa-smile text-xs"></i>
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-2">
-                          <div className="flex space-x-1">
-                            {COMMON_REACTIONS.map((emoji) => (
-                              <Button
-                                key={emoji}
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 text-lg hover:bg-slate-100"
-                                onClick={() => handleReaction(message.id, emoji)}
-                              >
-                                {emoji}
-                              </Button>
-                            ))}
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="h-6 w-6 p-0"
-                        onClick={() => handleReply(message)}
-                      >
-                        <i className="fas fa-reply text-xs"></i>
-                      </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="h-5 w-5 p-0"
+                          onClick={() => handleReply(message)}
+                        >
+                          <i className="fas fa-reply text-[10px]"></i>
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
