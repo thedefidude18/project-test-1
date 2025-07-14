@@ -830,7 +830,7 @@ export default function EventChatPage() {
               onClick={handleSendMessage}
               disabled={!newMessage.trim() || sendMessageMutation.isPending}
               className="bg-primary text-white hover:bg-primary/90 rounded-full p-2">
-              <i className="fas fafa-paper-plane"></i>
+              <i className="fas fa-paper-plane"></i>
             </Button>
           </div>
         </div>
