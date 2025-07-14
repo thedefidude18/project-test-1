@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { MessageCircle, Check, X, Eye, Trophy } from "lucide-react";
 
 interface ChallengeCardProps {
@@ -41,12 +42,11 @@ interface ChallengeCardProps {
 export function ChallengeCard({ challenge, onChatClick }: ChallengeCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const acceptChallengeMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/challenges/${challenge.id}/accept`, {
-        method: "POST",
-      });
+      return await apiRequest("POST", `/api/challenges/${challenge.id}/accept`);
     },
     onSuccess: () => {
       toast({
@@ -147,7 +147,7 @@ export function ChallengeCard({ challenge, onChatClick }: ChallengeCardProps) {
           </div>
 
           <div className="flex space-x-2">
-            {challenge.status === 'pending' && (
+            {challenge.status === 'pending' && user?.id === challenge.challenged && (
               <>
                 <Button
                   size="sm"
@@ -168,6 +168,17 @@ export function ChallengeCard({ challenge, onChatClick }: ChallengeCardProps) {
                   Decline
                 </Button>
               </>
+            )}
+            {challenge.status === 'pending' && user?.id === challenge.challenger && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => declineChallengeMutation.mutate()}
+                disabled={declineChallengeMutation.isPending}
+              >
+                <X className="w-4 h-4 mr-1" />
+                Cancel
+              </Button>
             )}
             {(challenge.status === 'active' || challenge.status === 'pending') && onChatClick && (
               <Button 

@@ -10,6 +10,7 @@ import { Send, Upload, AlertCircle, Clock, Shield, MessageCircle, Users } from "
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { pusher } from "@/lib/pusher";
 
 interface Challenge {
   id: number;
@@ -67,21 +68,24 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
   const [timeLeft, setTimeLeft] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [realTimeMessages, setRealTimeMessages] = useState<Message[]>([]);
+  
   const { data: messages = [], isLoading } = useQuery({
     queryKey: ["/api/challenges", challenge.id, "messages"],
-    refetchInterval: 2000, // Refresh every 2 seconds for real-time feel
+    onSuccess: (data) => {
+      setRealTimeMessages(data);
+    }
   });
+
+  // Use real-time messages instead of polling
+  const displayMessages = realTimeMessages.length > 0 ? realTimeMessages : messages;
 
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: { message: string }) => {
-      return await apiRequest(`/api/challenges/${challenge.id}/messages`, {
-        method: "POST",
-        body: messageData,
-      });
+      return await apiRequest("POST", `/api/challenges/${challenge.id}/messages`, messageData);
     },
     onSuccess: () => {
       setMessage("");
-      queryClient.invalidateQueries({ queryKey: ["/api/challenges", challenge.id, "messages"] });
       scrollToBottom();
     },
     onError: (error) => {
@@ -95,9 +99,7 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
 
   const acceptChallengeMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/challenges/${challenge.id}/accept`, {
-        method: "POST",
-      });
+      return await apiRequest("POST", `/api/challenges/${challenge.id}/accept`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/challenges"] });
@@ -117,10 +119,7 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
 
   const disputeChallengeMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/challenges/${challenge.id}`, {
-        method: "PATCH",
-        body: { status: "disputed" },
-      });
+      return await apiRequest("PATCH", `/api/challenges/${challenge.id}`, { status: "disputed" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/challenges"] });
@@ -159,7 +158,23 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [displayMessages]);
+
+  // Set up Pusher for real-time challenge messages
+  useEffect(() => {
+    if (!user || !challenge.id) return;
+    
+    const channel = pusher.subscribe(`challenge-${challenge.id}`);
+    
+    channel.bind('new-message', (data: Message) => {
+      setRealTimeMessages(prev => [...prev, data]);
+      scrollToBottom();
+    });
+
+    return () => {
+      pusher.unsubscribe(`challenge-${challenge.id}`);
+    };
+  }, [user, challenge.id]);
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
@@ -282,7 +297,7 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
           <div className="flex justify-center items-center h-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
-        ) : messages.length === 0 ? (
+        ) : displayMessages.length === 0 ? (
           <div className="text-center py-8">
             <MessageCircle className="w-12 h-12 mx-auto mb-4 text-slate-400" />
             <p className="text-slate-600 dark:text-slate-400">No messages yet</p>
@@ -291,7 +306,7 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
             </p>
           </div>
         ) : (
-          messages.map((msg: Message) => (
+          displayMessages.map((msg: Message) => (
             <div
               key={msg.id}
               className={`flex ${isMyMessage(msg) ? 'justify-end' : 'justify-start'}`}
