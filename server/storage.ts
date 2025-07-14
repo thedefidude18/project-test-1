@@ -1878,6 +1878,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Admin Functions
+  async getAdminUsers() {
+    const admins = await db.select({
+      id: users.id,
+      username: users.username,
+      firstName: users.firstName,
+      email: users.email,
+      level: users.level,
+      points: users.points,
+      createdAt: users.createdAt,
+      lastLogin: users.lastLogin,
+      status: users.status
+    }).from(users).where(eq(users.isAdmin, true));
+    
+    return admins;
+  }
+
   async getAdminStats() {
     const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
     const totalEvents = await db.select({ count: sql<number>`count(*)` }).from(events);

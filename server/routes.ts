@@ -1725,6 +1725,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get current admin users
+  app.get('/api/admin/list', isAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const admins = await storage.getAdminUsers();
+      res.json(admins);
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+      res.status(500).json({ message: "Failed to fetch admin users" });
+    }
+  });
+
   // Admin settings routes
   app.get('/api/admin/settings', isAdmin, async (req: AuthenticatedRequest, res) => {
     try {
