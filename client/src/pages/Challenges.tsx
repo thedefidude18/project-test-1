@@ -38,6 +38,7 @@ export default function Challenges() {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [userSearchTerm, setUserSearchTerm] = useState("");
   const [selectedChallenge, setSelectedChallenge] = useState<any>(null);
   const [showChat, setShowChat] = useState(false);
 
@@ -453,8 +454,8 @@ export default function Challenges() {
             <div className="mb-4">
               <Input
                 placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={userSearchTerm}
+                onChange={(e) => setUserSearchTerm(e.target.value)}
                 className="bg-slate-50 dark:bg-slate-700"
               />
             </div>
@@ -476,8 +477,8 @@ export default function Challenges() {
                 {allUsers
                   .filter((u: any) => u.id !== user?.id)
                   .filter((u: any) => {
-                    if (!searchTerm) return true;
-                    const searchLower = searchTerm.toLowerCase();
+                    if (!userSearchTerm) return true;
+                    const searchLower = userSearchTerm.toLowerCase();
                     const firstName = (u.firstName || '').toLowerCase();
                     const lastName = (u.lastName || '').toLowerCase();
                     const username = (u.username || '').toLowerCase();
