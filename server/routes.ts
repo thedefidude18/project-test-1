@@ -1470,7 +1470,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all users route (for user search and listing)
-  app.get('/api/users', async (req, res) => {
+  app.get('/api/users', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
