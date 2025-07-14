@@ -322,8 +322,17 @@ export default function EventChatPage() {
   });
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
+
+  // Scroll to bottom when component mounts
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "instant" });
+    }
+  }, []);
 
   // Send join notification when user enters the chat
   useEffect(() => {
@@ -639,7 +648,7 @@ export default function EventChatPage() {
       </div>
 
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2 flex flex-col">
+      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2">
         
         {messages.length === 0 ? (
           <div className="text-center text-slate-500 dark:text-slate-400 py-8">
@@ -662,7 +671,7 @@ export default function EventChatPage() {
               );
             }
 
-            const showAvatar = index === messages.length - 1 || messages[index + 1]?.userId !== message.userId;
+            const showAvatar = index === 0 || messages[index - 1]?.userId !== message.userId;
             const isCurrentUser = message.userId === user?.id;
             const isConsecutive = index > 0 && messages[index - 1]?.userId === message.userId;
 
@@ -729,8 +738,8 @@ export default function EventChatPage() {
                       )}
                       <p className="break-words">{message.message}</p>
                       
-                      {/* Message actions - positioned at bottom right of bubble */}
-                      <div className={`absolute -bottom-1 ${isCurrentUser ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 bg-white dark:bg-slate-800 shadow-lg rounded-lg px-1 py-1 z-10 border`}>
+                      {/* Message actions - positioned closer to bubble */}
+                      <div className={`absolute top-1/2 -translate-y-1/2 ${isCurrentUser ? '-left-16' : '-right-16'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 bg-white dark:bg-slate-800 shadow-lg rounded-lg px-1 py-1 z-10 border`}>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button size="sm" variant="ghost" className="h-5 w-5 p-0">
