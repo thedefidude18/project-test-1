@@ -649,17 +649,19 @@ export default function EventChatPage() {
 
       {/* Chat Messages Area */}
       <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2">
-        
         {messages.length === 0 ? (
           <div className="text-center text-slate-500 dark:text-slate-400 py-8">
             <i className="fas fa-comments text-2xl mb-2"></i>
             <p>No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message: ExtendedMessage, index: number) => {
+          <>
+            {/* Spacer to push messages to bottom */}
+            <div className="flex-1"></div>
+            {messages.map((message: ExtendedMessage, index: number) => {
             // Check if this is a system message
             const isSystemMessage = message.type === 'system';
-            
+
             if (isSystemMessage) {
               return (
                 <div key={message.id} className="flex justify-center my-3">
@@ -671,9 +673,9 @@ export default function EventChatPage() {
               );
             }
 
-            const showAvatar = index === 0 || messages[index - 1]?.userId !== message.userId;
+            const showAvatar = index === messages.length - 1 || messages[index + 1]?.userId !== message.userId;
             const isCurrentUser = message.userId === user?.id;
-            const isConsecutive = index > 0 && messages[index - 1]?.userId === message.userId;
+            const isConsecutive = index < messages.length - 1 && messages[index + 1]?.userId === message.userId;
 
             return (
               <div key={message.id} className={`flex space-x-2 ${isCurrentUser ? 'flex-row-reverse space-x-reverse' : ''} ${isConsecutive ? 'mt-1' : 'mt-3'}`}>
@@ -737,7 +739,7 @@ export default function EventChatPage() {
                         </div>
                       )}
                       <p className="break-words">{message.message}</p>
-                      
+
                       {/* Message actions - positioned closer to bubble */}
                       <div className={`absolute top-1/2 -translate-y-1/2 ${isCurrentUser ? '-left-16' : '-right-16'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 bg-white dark:bg-slate-800 shadow-lg rounded-lg px-1 py-1 z-10 border`}>
                         <Popover>
@@ -797,7 +799,8 @@ export default function EventChatPage() {
                 </div>
               </div>
             );
-          })
+          })}
+        </>
         )}
 
         {/* Typing Indicators */}
@@ -805,7 +808,7 @@ export default function EventChatPage() {
           typingUsers={typingUsers.map(u => u.name)} 
           className="px-4 py-2"
         />
-        
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -830,7 +833,7 @@ export default function EventChatPage() {
 
       {/* Message Input */}
       <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 sticky bottom-0">
-        <div className="relative">
+        <div className"relative">
           {/* Mentions dropdown */}
           {showMentions && filteredParticipants.length > 0 && (
             <div className="absolute bottom-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-t-lg shadow-lg max-h-40 overflow-y-auto z-10">
