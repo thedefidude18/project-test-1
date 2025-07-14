@@ -1885,7 +1885,7 @@ export class DatabaseStorage implements IStorage {
 
     // Calculate revenue from completed events and challenges
     const eventRevenue = await db.select({
-      totalCreatorFees: sql<number>`COALESCE(SUM(CAST(creatorFee AS DECIMAL)), 0)`
+      totalCreatorFees: sql<number>`COALESCE(SUM(CAST(creator_fee AS DECIMAL)), 0)`
     }).from(events).where(eq(events.status, 'completed'));
 
     const challengeRevenue = await db.select({

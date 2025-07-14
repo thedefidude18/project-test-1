@@ -65,10 +65,7 @@ export default function AdminChallengePayouts() {
 
   const setResultMutation = useMutation({
     mutationFn: async ({ challengeId, result }: { challengeId: number; result: string }) => {
-      return apiRequest(`/api/admin/challenges/${challengeId}/result`, {
-        method: 'POST',
-        body: { result },
-      });
+      return apiRequest(`/api/admin/challenges/${challengeId}/result`, 'POST', { result });
     },
     onSuccess: (data) => {
       toast({
