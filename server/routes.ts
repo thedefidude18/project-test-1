@@ -40,10 +40,12 @@ const pusher = new Pusher({
 // Initialize Telegram sync service
 const telegramSync = createTelegramSync(pusher);
 if (telegramSync) {
-  telegramSync.initialize().catch(console.error);
-  console.log("🚀 Telegram sync service initialized");
+  telegramSync.initialize().catch((error) => {
+    console.error("❌ Failed to initialize Telegram sync:", error);
+  });
+  console.log("🚀 Telegram sync service created successfully");
 } else {
-  console.log("⚠️ Telegram sync service not available");
+  console.log("⚠️ Telegram sync service not available - check environment variables");
 }
 
 interface AuthenticatedRequest extends Request {

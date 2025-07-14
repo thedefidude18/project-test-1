@@ -241,8 +241,14 @@ export function createTelegramSync(pusher: Pusher): TelegramSyncService | null {
     return null;
   }
 
-  if (!stringSession) {
-    console.log("⚠️ Telegram session string not found. Please authenticate first.");
+  if (!stringSession || stringSession.trim() === '') {
+    console.log("⚠️ Telegram session string not found or empty. Please authenticate first.");
+    return null;
+  }
+
+  // Validate session string format (basic check)
+  if (stringSession.length < 50) {
+    console.log("⚠️ Telegram session string appears to be invalid (too short). Please re-authenticate.");
     return null;
   }
 
@@ -250,14 +256,20 @@ export function createTelegramSync(pusher: Pusher): TelegramSyncService | null {
     return telegramSync;
   }
 
-  telegramSync = new TelegramSyncService({
-    apiId: parseInt(apiId),
-    apiHash,
-    stringSession,
-    groupId,
-  }, pusher);
+  try {
+    telegramSync = new TelegramSyncService({
+      apiId: parseInt(apiId),
+      apiHash,
+      stringSession,
+      groupId,
+    }, pusher);
 
-  return telegramSync;
+    return telegramSync;
+  } catch (error) {
+    console.error("❌ Failed to create Telegram sync service:", error);
+    console.log("⚠️ Telegram sync disabled due to configuration error. Please check your session string.");
+    return null;
+  }
 }
 
 export function getTelegramSync(): TelegramSyncService | null {
