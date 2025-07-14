@@ -22,6 +22,13 @@ Preferred communication style: Simple, everyday language.
   - Three dedicated admin pages: Dashboard Overview, Event Payouts, Challenge Payouts
   - Real-time statistics and pending actions monitoring
   - Automated notification system for payout completion
+✓ **ProfileCard and Notification Fixes (January 2025)** - Fixed critical display issues:
+  - Fixed apiRequest function to properly parse JSON responses instead of returning Response objects
+  - Updated notification messages to show actual usernames with @ symbols ("You tipped @sheri ₦678!" instead of generic text)
+  - Fixed ProfileCard username display by resolving API response parsing issue
+  - Updated all users with null usernames in database to use firstName or email prefix
+  - Added proper error handling for notifications array filtering
+  - Verified real-time notifications working correctly via Pusher for logged-in users
 
 ## System Architecture
 

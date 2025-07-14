@@ -66,9 +66,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
     queryKey: [`/api/users/${userId}/profile`],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", `/api/users/${userId}/profile`);
-        console.log("Profile API response:", response);
-        return response as UserProfile;
+        const data = await apiRequest("GET", `/api/users/${userId}/profile`);
+        return data as UserProfile;
       } catch (err) {
         console.error("Error fetching profile:", err);
         throw err;
@@ -301,11 +300,6 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
   if (!profile) {
     return null;
   }
-
-  // Debug logging
-  console.log("Profile data in component:", profile);
-  console.log("Profile username:", profile?.username);
-  console.log("Profile firstName:", profile?.firstName);
 
   const calculateLevel = (xp: number) => Math.floor(xp / 1000) + 1;
   const currentLevel = profile?.level || 1;
