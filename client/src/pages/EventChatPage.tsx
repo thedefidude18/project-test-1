@@ -27,6 +27,7 @@ import {
 import { formatBalance } from "@/utils/currencyUtils";
 import { getAvatarUrl } from "@/utils/avatarUtils";
 import { UserAvatar } from "@/components/UserAvatar";
+import { TypingIndicator } from "@/components/TypingIndicator";
 
 interface MessageReaction {
   emoji: string;
@@ -735,23 +736,10 @@ export default function EventChatPage() {
         )}
 
         {/* Typing Indicators */}
-        {typingUsers.length > 0 && (
-          <div className="flex space-x-2">
-            <div className="w-6 h-6 bg-slate-200 dark:bg-slate-600 rounded-full flex-shrink-0"></div>
-            <div className="flex-1">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-slate-500 dark:text-slate-400 italic">
-                  {typingUsers.length === 1 ? 'Someone is' : `${typingUsers.length} people are`} typing...
-                </span>
-                <div className="flex space-x-1">
-                  <div className="w-1 h-1 bg-slate-400 rounded-full animate-bounce"></div>
-                  <div className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <TypingIndicator 
+          typingUsers={typingUsers} 
+          className="px-4 py-2"
+        />
 
         <div ref={messagesEndRef} />
       </div>

@@ -19,6 +19,9 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { PlayfulLoading } from "@/components/ui/playful-loading";
+import { AnimatedButton } from "@/components/ui/animated-button";
+import { SkeletonCard } from "@/components/ui/loading-states";
 
 const createEventSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long"),
@@ -329,13 +332,16 @@ export default function Events() {
                     >
                       Cancel
                     </Button>
-                    <Button
+                    <AnimatedButton
                       type="submit"
                       disabled={createEventMutation.isPending}
+                      isLoading={createEventMutation.isPending}
+                      loadingText="Creating..."
                       className="flex-1 bg-primary text-white hover:bg-primary/90"
+                      icon={<i className="fas fa-plus"></i>}
                     >
-                      {createEventMutation.isPending ? "Creating..." : "Create Event (+1000 Points)"}
-                    </Button>
+                      Create Event (+1000 Points)
+                    </AnimatedButton>
                   </div>
                 </form>
               </Form>
@@ -377,10 +383,12 @@ export default function Events() {
 
         {/* Events Grid */}
         {isLoading ? (
-          <div className="text-center py-12">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-slate-600 dark:text-slate-400">Loading events...</p>
-          </div>
+          <PlayfulLoading 
+            type="events" 
+            title="Loading Events" 
+            description="Finding exciting prediction challenges..."
+            className="py-12"
+          />
         ) : filteredEvents.length === 0 ? (
           <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
             <CardContent className="text-center py-12">

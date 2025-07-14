@@ -11,6 +11,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { pusher } from "@/lib/pusher";
+import { TypingIndicator } from "@/components/TypingIndicator";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 interface Challenge {
   id: number;
@@ -66,7 +68,9 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
   const [message, setMessage] = useState("");
   const [showDispute, setShowDispute] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>("");
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout>();
 
   const [realTimeMessages, setRealTimeMessages] = useState<Message[]>([]);
   
@@ -74,6 +78,22 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
     queryKey: ["/api/challenges", challenge.id, "messages"],
     onSuccess: (data) => {
       setRealTimeMessages(data);
+    }
+  });
+
+  // WebSocket for real-time messaging and typing
+  const { sendMessage: sendWebSocketMessage, isConnected } = useWebSocket({
+    onMessage: (data) => {
+      if (data.type === 'challenge_message' && data.challengeId === challenge.id) {
+        queryClient.invalidateQueries({ queryKey: ["/api/challenges", challenge.id, "messages"] });
+      } else if (data.type === 'user_typing' && data.challengeId === challenge.id) {
+        if (data.userId !== user?.id) {
+          setTypingUsers(prev => {
+            const filtered = prev.filter(id => id !== data.userId);
+            return data.isTyping ? [...filtered, data.userId] : filtered;
+          });
+        }
+      }
     }
   });
 
@@ -176,9 +196,44 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
     };
   }, [user, challenge.id]);
 
+  const handleTyping = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    sendWebSocketMessage({
+      type: 'user_typing',
+      challengeId: challenge.id,
+      userId: user?.id,
+      isTyping: true,
+    });
+
+    typingTimeoutRef.current = setTimeout(() => {
+      sendWebSocketMessage({
+        type: 'user_typing',
+        challengeId: challenge.id,
+        userId: user?.id,
+        isTyping: false,
+      });
+    }, 3000);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(e.target.value);
+    handleTyping();
+  };
+
   const handleSendMessage = () => {
     if (!message.trim()) return;
     sendMessageMutation.mutate({ message });
+    
+    // Send WebSocket message for real-time updates
+    sendWebSocketMessage({
+      type: 'challenge_message',
+      challengeId: challenge.id,
+      message,
+      userId: user?.id,
+    });
   };
 
   const handleAcceptChallenge = () => {
@@ -320,7 +375,7 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
               >
                 <div className="flex items-center space-x-2 mb-1">
                   <span className="text-sm font-medium">
-                    {msg.user.firstName || msg.user.username}
+                    {msg.user?.firstName || msg.user?.username || 'Unknown User'}
                   </span>
                   <span className="text-xs opacity-70">
                     {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
@@ -331,6 +386,13 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
             </div>
           ))
         )}
+        
+        {/* Typing Indicators */}
+        <TypingIndicator 
+          typingUsers={typingUsers} 
+          className="px-4 py-2"
+        />
+        
         <div ref={messagesEndRef} />
       </div>
 
@@ -340,7 +402,7 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
           <div className="flex items-center space-x-2">
             <Input
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={handleInputChange}
               placeholder="Type your message..."
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
               className="flex-1"

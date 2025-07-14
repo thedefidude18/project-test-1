@@ -341,13 +341,16 @@ export default function WalletPage() {
                         >
                           Cancel
                         </Button>
-                        <Button
+                        <AnimatedButton
                           onClick={handleDeposit}
                           disabled={!depositAmount || depositMutation.isPending}
+                          isLoading={depositMutation.isPending}
+                          loadingText="Processing..."
                           className="flex-1 bg-primary text-white hover:bg-primary/90"
+                          icon={<i className="fas fa-plus"></i>}
                         >
-                          {depositMutation.isPending ? "Processing..." : "Deposit"}
-                        </Button>
+                          Deposit
+                        </AnimatedButton>
                       </div>
                     </div>
                   </DialogContent>
@@ -387,13 +390,16 @@ export default function WalletPage() {
                         >
                           Cancel
                         </Button>
-                        <Button
+                        <AnimatedButton
                           onClick={handleWithdraw}
                           disabled={!withdrawAmount || withdrawMutation.isPending}
+                          isLoading={withdrawMutation.isPending}
+                          loadingText="Processing..."
                           className="flex-1 bg-primary text-white hover:bg-primary/90"
+                          icon={<i className="fas fa-minus"></i>}
                         >
-                          {withdrawMutation.isPending ? "Processing..." : "Withdraw"}
-                        </Button>
+                          Withdraw
+                        </AnimatedButton>
                       </div>
                     </div>
                   </DialogContent>
@@ -474,10 +480,12 @@ export default function WalletPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-slate-600 dark:text-slate-400">Loading transactions...</p>
-              </div>
+              <PlayfulLoading 
+                type="wallet" 
+                title="Loading Transactions" 
+                description="Organizing your financial history..."
+                className="py-8"
+              />
             ) : transactions.length === 0 ? (
               <div className="text-center py-12">
                 <i className="fas fa-receipt text-4xl text-slate-400 mb-4"></i>
