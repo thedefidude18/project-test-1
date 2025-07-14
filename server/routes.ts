@@ -873,7 +873,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Send real-time notification via Pusher
-      await pusher.trigger(`user-${friend.requesterId}`, 'friend-accepted`, {
+      await pusher.trigger(`user-${friend.requesterId}`, 'friend-accepted', {
         title: '✅ Friend Request Accepted',
         message: `${user?.firstName || user?.username || 'Someone'} accepted your friend request!`,
         friendId: userId,
@@ -1749,8 +1749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           username: user?.username,
           firstName: user?.firstName
         },
-        totalAdmins: allAdmins.length,
-        adminUsers:Removing admin key check during login.        adminUsers: allAdmins.map(admin => ({
+        totalAdmins: allAdmins.length,        adminUsers: allAdmins.map(admin => ({
           id: admin.id,
           username: admin.username,
           firstName: admin.firstName
@@ -2159,7 +2158,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Failed admin login attempt - user not admin: ${username}`);
         return res.status(401).json({ message: 'Access denied: Admin privileges required' });
       }
-
 
       // Generate admin token
       const adminToken = `admin_${user.id}_${Date.now()}`;
