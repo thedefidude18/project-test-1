@@ -29,6 +29,12 @@ Preferred communication style: Simple, everyday language.
   - Updated all users with null usernames in database to use firstName or email prefix
   - Added proper error handling for notifications array filtering
   - Verified real-time notifications working correctly via Pusher for logged-in users
+✓ **Challenge Form UX Improvements (January 2025)** - Enhanced challenge creation experience:
+  - Simplified challenge form by removing username selection field when user is pre-selected from Users tab
+  - Added dynamic dialog title showing selected user name ("Challenge @username" vs "Create New Challenge")
+  - Added user profile preview card in challenge form when pre-selected
+  - Implemented proper state management for pre-selected users with form reset on dialog close
+  - ProfileCard challenge modal already optimized for single-user challenges
 
 ## System Architecture
 

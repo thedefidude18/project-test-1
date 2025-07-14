@@ -41,6 +41,7 @@ export default function Challenges() {
   const [userSearchTerm, setUserSearchTerm] = useState("");
   const [selectedChallenge, setSelectedChallenge] = useState<any>(null);
   const [showChat, setShowChat] = useState(false);
+  const [preSelectedUser, setPreSelectedUser] = useState<any>(null);
 
   const form = useForm<z.infer<typeof createChallengeSchema>>({
     resolver: zodResolver(createChallengeSchema),
@@ -115,6 +116,7 @@ export default function Challenges() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/challenges"] });
       setIsCreateDialogOpen(false);
+      setPreSelectedUser(null);
       form.reset();
     },
     onError: (error: Error) => {
@@ -222,7 +224,13 @@ export default function Challenges() {
             </p>
           </div>
           
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+            setIsCreateDialogOpen(open);
+            if (!open) {
+              setPreSelectedUser(null);
+              form.reset();
+            }
+          }}>
             <DialogTrigger asChild>
               <Button className="bg-primary text-white hover:bg-primary/90 mt-4 sm:mt-0">
                 <i className="fas fa-plus mr-2"></i>
@@ -231,37 +239,60 @@ export default function Challenges() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Create New Challenge</DialogTitle>
+                <DialogTitle>
+                  {preSelectedUser 
+                    ? `Challenge ${preSelectedUser.firstName || preSelectedUser.username}` 
+                    : 'Create New Challenge'
+                  }
+                </DialogTitle>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="challenged"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Challenge Friend</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a friend" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {friends.map((friend: any) => {
-                              const friendUser = friend.requesterId === user.id ? friend.addressee : friend.requester;
-                              return (
-                                <SelectItem key={friendUser.id} value={friendUser.id}>
-                                  {friendUser.firstName || friendUser.username}
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {!preSelectedUser && (
+                    <FormField
+                      control={form.control}
+                      name="challenged"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Challenge Friend</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a friend" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {friends.map((friend: any) => {
+                                const friendUser = friend.requesterId === user.id ? friend.addressee : friend.requester;
+                                return (
+                                  <SelectItem key={friendUser.id} value={friendUser.id}>
+                                    {friendUser.firstName || friendUser.username}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
+                  {preSelectedUser && (
+                    <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                        {(preSelectedUser.firstName || preSelectedUser.username || 'U').charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">
+                          {preSelectedUser.firstName || preSelectedUser.username}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Level {preSelectedUser.level || 1} • {preSelectedUser.points || 0} points
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   
                   <FormField
                     control={form.control}
@@ -585,6 +616,7 @@ export default function Challenges() {
                                 className="flex-1 bg-red-600 hover:bg-red-700 text-white"
                                 onClick={() => {
                                   form.setValue('challenged', userItem.id);
+                                  setPreSelectedUser(userItem);
                                   setIsCreateDialogOpen(true);
                                 }}
                               >
