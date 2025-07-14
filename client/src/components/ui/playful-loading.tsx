@@ -1,17 +1,12 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { 
-  BettingDiceCharacter, 
-  WalletCharacter, 
-  TrophyCharacter, 
-  ChatBubbleCharacter, 
-  RocketCharacter 
-} from "./character-illustrations";
 import { LoadingSpinner } from "./loading-spinner";
 import { cn } from "@/lib/utils";
 
+export type LoadingType = "betting" | "wallet" | "trophy" | "chat" | "rocket" | "general";
+
 interface PlayfulLoadingProps {
-  type: "betting" | "wallet" | "trophy" | "chat" | "rocket" | "general";
+  type?: LoadingType;
   title?: string;
   description?: string;
   className?: string;
@@ -19,7 +14,7 @@ interface PlayfulLoadingProps {
 
 const loadingConfigs = {
   betting: {
-    character: BettingDiceCharacter,
+    icon: "🎲",
     defaultTitle: "Placing Your Bet",
     defaultDescription: "Rolling the dice of fortune...",
     messages: [
@@ -30,7 +25,7 @@ const loadingConfigs = {
     ]
   },
   wallet: {
-    character: WalletCharacter,
+    icon: "💰",
     defaultTitle: "Processing Payment",
     defaultDescription: "Counting your coins...",
     messages: [
@@ -41,7 +36,7 @@ const loadingConfigs = {
     ]
   },
   trophy: {
-    character: TrophyCharacter,
+    icon: "🏆",
     defaultTitle: "Calculating Results",
     defaultDescription: "Preparing your victory...",
     messages: [
@@ -52,7 +47,7 @@ const loadingConfigs = {
     ]
   },
   chat: {
-    character: ChatBubbleCharacter,
+    icon: "💬",
     defaultTitle: "Loading Messages",
     defaultDescription: "Gathering conversations...",
     messages: [
@@ -63,7 +58,7 @@ const loadingConfigs = {
     ]
   },
   rocket: {
-    character: RocketCharacter,
+    icon: "🚀",
     defaultTitle: "Launching",
     defaultDescription: "Preparing for takeoff...",
     messages: [
@@ -74,83 +69,67 @@ const loadingConfigs = {
     ]
   },
   general: {
-    character: BettingDiceCharacter,
+    icon: "⚡",
     defaultTitle: "Loading",
-    defaultDescription: "Just a moment...",
+    defaultDescription: "Getting things ready...",
     messages: [
-      "Loading...",
-      "Almost there...",
+      "Loading data...",
       "Preparing content...",
-      "Getting things ready..."
+      "Almost there...",
+      "Just a moment..."
     ]
   }
 };
 
-export function PlayfulLoading({ 
-  type, 
-  title, 
-  description, 
-  className 
+export function PlayfulLoading({
+  type = "general",
+  title,
+  description,
+  className
 }: PlayfulLoadingProps) {
-  const config = loadingConfigs[type] || loadingConfigs.general;
-  const Character = config.character;
-  
+  const config = loadingConfigs[type];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className={cn("flex flex-col items-center space-y-6 p-8", className)}
+      exit={{ opacity: 0, y: -20 }}
+      className={cn("flex flex-col items-center justify-center p-8", className)}
     >
-      <Character className="w-20 h-20" />
-      
-      <div className="text-center space-y-2">
-        <motion.h3 
-          className="text-xl font-semibold"
-          animate={{ opacity: [0.7, 1, 0.7] }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        >
-          {title || config.defaultTitle}
-        </motion.h3>
-        
-        <p className="text-muted-foreground">
-          {description || config.defaultDescription}
-        </p>
-      </div>
-      
-      <LoadingSpinner variant="dots" className="justify-center" />
+      <motion.div
+        className="text-6xl mb-4"
+        animate={{
+          scale: [1, 1.2, 1],
+          rotate: [0, 5, -5, 0]
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      >
+        {config.icon}
+      </motion.div>
+
+      <LoadingSpinner className="mb-4" />
+
+      <h3 className="text-lg font-semibold mb-2">
+        {title || config.defaultTitle}
+      </h3>
+
+      <p className="text-sm text-muted-foreground text-center max-w-xs">
+        {description || config.defaultDescription}
+      </p>
     </motion.div>
   );
 }
 
-export function PlayfulLoadingCard({ 
-  type, 
-  title, 
-  description, 
-  className 
-}: PlayfulLoadingProps) {
-  return (
-    <Card className={cn("w-full max-w-md mx-auto", className)}>
-      <PlayfulLoading 
-        type={type} 
-        title={title} 
-        description={description} 
-      />
-    </Card>
-  );
-}
-
 export function PlayfulLoadingOverlay({
-  isVisible,
-  type,
+  type = "general",
   title,
   description
-}: PlayfulLoadingProps & { isVisible: boolean }) {
-  if (!isVisible) return null;
+}: PlayfulLoadingProps) {
+  const config = loadingConfigs[type];
 
   return (
     <motion.div
@@ -159,49 +138,13 @@ export function PlayfulLoadingOverlay({
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center"
     >
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <PlayfulLoadingCard 
+      <Card className="p-8 max-w-sm">
+        <PlayfulLoading
           type={type}
           title={title}
           description={description}
         />
-      </motion.div>
+      </Card>
     </motion.div>
-  );
-}
-
-export function InlinePlayfulLoading({ 
-  type, 
-  size = "sm",
-  className 
-}: { 
-  type: PlayfulLoadingProps['type']; 
-  size?: "sm" | "md" | "lg";
-  className?: string;
-}) {
-  const config = loadingConfigs[type];
-  const Character = config.character;
-  
-  const sizeClasses = {
-    sm: "w-8 h-8",
-    md: "w-12 h-12",
-    lg: "w-16 h-16"
-  };
-  
-  return (
-    <div className={cn("flex items-center space-x-3", className)}>
-      <Character className={sizeClasses[size]} />
-      <div className="flex items-center space-x-2">
-        <LoadingSpinner variant="dots" size="sm" />
-        <span className="text-sm text-muted-foreground">
-          {config.defaultTitle}...
-        </span>
-      </div>
-    </div>
   );
 }
