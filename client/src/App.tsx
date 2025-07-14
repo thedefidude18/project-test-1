@@ -26,8 +26,9 @@ import AdminEventPayouts from "./pages/AdminEventPayouts";
 import AdminChallengePayouts from "./pages/AdminChallengePayouts";
 import AdminPayouts from "./pages/AdminPayouts";
 import AdminAnalytics from "./pages/AdminAnalytics";
-import AdminNotifications from "./pages/AdminNotifications";
-import AdminSettings from "./pages/AdminSettings";
+import AdminNotifications from "@/pages/AdminNotifications";
+import AdminUsersManagement from "@/pages/AdminUsersManagement";
+import AdminSettings from "@/pages/AdminSettings";
 import ChallengeDetail from "./pages/ChallengeDetail";
 import { DailySignInModal } from '@/components/DailySignInModal';
 import { useDailySignIn } from '@/hooks/useDailySignIn';
@@ -72,6 +73,7 @@ function Router() {
           <Route path="/admin/challenges" component={AdminChallengePayouts} />
           <Route path="/admin/analytics" component={AdminAnalytics} />
           <Route path="/admin/notifications" component={AdminNotifications} />
+          <Route path="/admin/users" component={AdminUsersManagement} />
           <Route path="/admin/settings" component={AdminSettings} />
         </>
       )}

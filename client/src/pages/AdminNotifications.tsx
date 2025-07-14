@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
@@ -405,7 +404,7 @@ export default function AdminNotifications() {
                         </div>
                         <p className="text-slate-300 text-sm mb-2">{notification.message}</p>
                         <div className="flex items-center space-x-4 text-xs text-slate-400">
-                          <span>Sent {formatDistanceToNow(new Date(notification.sentAt), { addSuffix: true })}</span>
+                          <span>Sent {notification.sentAt ? formatDistanceToNow(new Date(notification.sentAt), { addSuffix: true }) : 'Unknown'}</span>
                           <span>•</span>
                           <span>{notification.readCount}/{notification.totalRecipients} read</span>
                           <span>•</span>

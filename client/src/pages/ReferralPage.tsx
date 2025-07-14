@@ -72,8 +72,9 @@ export default function ReferralPage() {
 
   if (!user) return null;
 
-  const totalReferrals = referrals.length;
-  const activeReferrals = referrals.filter((r: any) => r.status === 'active').length;
+  const referralArray = Array.isArray(referrals) ? referrals : [];
+  const totalReferrals = referralArray.length;
+  const activeReferrals = referralArray.filter((r: any) => r.status === 'active').length;
   const totalRewards = totalReferrals * 100; // Assuming 100 points per referral
 
   return (
@@ -258,7 +259,7 @@ export default function ReferralPage() {
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                 <p className="text-slate-600 dark:text-slate-400">Loading referrals...</p>
               </div>
-            ) : referrals.length === 0 ? (
+            ) : referralArray.length === 0 ? (
               <div className="text-center py-12">
                 <i className="fas fa-user-friends text-4xl text-slate-400 mb-4"></i>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
@@ -277,7 +278,7 @@ export default function ReferralPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {referrals.map((referral: any) => (
+                {referralArray.map((referral: any) => (
                   <div
                     key={referral.id}
                     className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg"

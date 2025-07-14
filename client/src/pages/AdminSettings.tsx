@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
@@ -10,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Settings, 
   Shield, 
@@ -61,7 +61,7 @@ export default function AdminSettings() {
   const queryClient = useQueryClient();
   const [settings, setSettings] = useState<Partial<PlatformSettings>>({});
   const [hasChanges, setHasChanges] = useState(false);
-  
+
   // Admin tool states
   const [selectedEventId, setSelectedEventId] = useState('');
   const [fundAmount, setFundAmount] = useState('');
@@ -71,7 +71,7 @@ export default function AdminSettings() {
   const [broadcastType, setBroadcastType] = useState('daily');
   const [eventCapacityId, setEventCapacityId] = useState('');
   const [additionalSlots, setAdditionalSlots] = useState('');
-  
+
   // Loading states
   const [isAddingFunds, setIsAddingFunds] = useState(false);
   const [isGivingPoints, setIsGivingPoints] = useState(false);
@@ -80,6 +80,16 @@ export default function AdminSettings() {
 
   const { data: platformSettings, isLoading } = useQuery({
     queryKey: ["/api/admin/settings"],
+    retry: false,
+  });
+
+   const { data: users } = useQuery({
+    queryKey: ["/api/admin/users"],
+    retry: false,
+  });
+
+  const { data: events } = useQuery({
+    queryKey: ["/api/admin/events"],
     retry: false,
   });
 
@@ -391,7 +401,7 @@ export default function AdminSettings() {
                 onCheckedChange={(checked) => handleSettingChange('maintenanceMode', checked)}
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div>
                 <Label className="text-slate-300">User Registration</Label>
@@ -466,7 +476,7 @@ export default function AdminSettings() {
                   onCheckedChange={(checked) => handleSettingChange('withdrawalEnabled', checked)}
                 />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-slate-300">Deposits Enabled</Label>
@@ -521,7 +531,7 @@ export default function AdminSettings() {
                 onCheckedChange={(checked) => handleSettingChange('eventCreationEnabled', checked)}
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div>
                 <Label className="text-slate-300">Chat System</Label>
@@ -636,12 +646,18 @@ export default function AdminSettings() {
                 Add Funds to Event Pool
               </h3>
               <div className="flex gap-3">
-                <Input
-                  placeholder="Event ID"
-                  value={selectedEventId}
-                  onChange={(e) => setSelectedEventId(e.target.value)}
-                  className="bg-slate-800 border-slate-700 max-w-[120px]"
-                />
+                <Select value={selectedEventId} onValueChange={setSelectedEventId}>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectValue placeholder="Choose an event" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    {events?.map((event: any) => (
+                      <SelectItem key={event.id} value={event.id.toString()}>
+                        {event.title} (ID: {event.id})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input
                   placeholder="Amount (₦)"
                   value={fundAmount}
@@ -666,12 +682,18 @@ export default function AdminSettings() {
                 Give Points to User
               </h3>
               <div className="flex gap-3">
-                <Input
-                  placeholder="User ID"
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="bg-slate-800 border-slate-700 max-w-[150px]"
-                />
+                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectValue placeholder="Choose a user" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    {users?.map((user: any) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.username || user.firstName || user.email} (ID: {user.id})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input
                   placeholder="Points Amount"
                   value={pointsAmount}
@@ -684,7 +706,7 @@ export default function AdminSettings() {
                   className="bg-yellow-600 hover:bg-yellow-700"
                 >
                   <Coins className="w-4 h-4 mr-2" />
-                  {isGivingPoints ? "Giving..." : "Give Points"}
+                  {isGivingPoints ? "Give Points" : "Give Points"}
                 </Button>
               </div>
             </div>
@@ -696,12 +718,18 @@ export default function AdminSettings() {
                 Increase Event Capacity
               </h3>
               <div className="flex gap-3">
-                <Input
-                  placeholder="Event ID"
-                  value={eventCapacityId}
-                  onChange={(e) => setEventCapacityId(e.target.value)}
-                  className="bg-slate-800 border-slate-700 max-w-[120px]"
-                />
+                <Select value={eventCapacityId} onValueChange={setEventCapacityId}>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectValue placeholder="Choose an event" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-700">
+                    {events?.map((event: any) => (
+                      <SelectItem key={event.id} value={event.id.toString()}>
+                        {event.title} (ID: {event.id})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input
                   placeholder="Additional Slots"
                   value={additionalSlots}
@@ -714,7 +742,7 @@ export default function AdminSettings() {
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
-                  {isUpdatingCapacity ? "Updating..." : "Update Capacity"}
+                  {isUpdatingCapacity ? "Update Capacity" : "Update Capacity"}
                 </Button>
               </div>
             </div>
