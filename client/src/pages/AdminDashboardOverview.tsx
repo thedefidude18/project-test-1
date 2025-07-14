@@ -238,7 +238,7 @@ export default function AdminDashboardOverview() {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <Card className="bg-slate-900 border-slate-700">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -256,11 +256,24 @@ export default function AdminDashboardOverview() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-400 text-sm">Total Pool Value</p>
+                  <p className="text-slate-400 text-sm">Total Volume</p>
                   <p className="text-2xl font-bold text-white">₦{(totalEventPool + totalChallengeStaked).toLocaleString()}</p>
-                  <p className="text-xs text-green-400">Events + Challenges</p>
+                  <p className="text-xs text-blue-400">All-time trading</p>
                 </div>
                 <DollarSign className="w-8 h-8 text-green-400" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-900 border-slate-700">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Platform Revenue</p>
+                  <p className="text-2xl font-bold text-white">₦{(totalCreatorFees + totalPlatformFees).toLocaleString()}</p>
+                  <p className="text-xs text-purple-400">Creator + Platform fees</p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-purple-400" />
               </div>
             </CardContent>
           </Card>
@@ -290,7 +303,7 @@ export default function AdminDashboardOverview() {
               </div>
             </CardContent>
           </Card>
-        </div>d>
+        </div>
 
           <Card className="bg-slate-900 border-slate-700">
             <CardContent className="p-4">
@@ -605,6 +618,12 @@ export default function AdminDashboardOverview() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Link href="/admin/payouts">
+                <Button variant="outline" className="w-full border-slate-600 hover:bg-slate-800">
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  Manage Payouts
+                </Button>
+              </Link>
               <Link href="/admin/events">
                 <Button variant="outline" className="w-full border-slate-600 hover:bg-slate-800">
                   <Trophy className="w-4 h-4 mr-2" />
@@ -623,10 +642,6 @@ export default function AdminDashboardOverview() {
                   User Management
                 </Button>
               </Link>
-              <Button variant="outline" className="w-full border-slate-600 hover:bg-slate-800">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Platform Messages
-              </Button>
             </div>
           </CardContent>
         </Card>

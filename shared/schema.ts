@@ -69,6 +69,7 @@ export const events = pgTable("events", {
   isPrivate: boolean("is_private").default(false), // Private events need approval
   maxParticipants: integer("max_participants").default(100), // FCFS limit
   imageUrl: varchar("image_url"),
+  chatEnabled: boolean("chat_enabled").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

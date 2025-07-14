@@ -21,13 +21,13 @@ import ReferralPage from "@/pages/ReferralPage";
 import EventChatPage from "@/pages/EventChatPage";
 import History from "@/pages/History";
 import Settings from "@/pages/Settings";
-import AdminDashboardOverview from "@/pages/AdminDashboardOverview";
-import AdminEventPayouts from "@/pages/AdminEventPayouts";
-import AdminChallengePayouts from "@/pages/AdminChallengePayouts";
-import AdminUsersManagement from "@/pages/AdminUsersManagement";
-import AdminAnalytics from "@/pages/AdminAnalytics";
-import AdminNotifications from "@/pages/AdminNotifications";
-import AdminSettings from "@/pages/AdminSettings";
+import AdminDashboardOverview from "./pages/AdminDashboardOverview";
+import AdminEventPayouts from "./pages/AdminEventPayouts";
+import AdminChallengePayouts from "./pages/AdminChallengePayouts";
+import AdminPayouts from "./pages/AdminPayouts";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminNotifications from "./pages/AdminNotifications";
+import AdminSettings from "./pages/AdminSettings";
 import { DailySignInModal } from '@/components/DailySignInModal';
 import { useDailySignIn } from '@/hooks/useDailySignIn';
 
@@ -62,9 +62,9 @@ function Router() {
           <Route path="/history" component={History} />
           <Route path="/settings" component={Settings} />
           <Route path="/admin" component={AdminDashboardOverview} />
+          <Route path="/admin/payouts" component={AdminPayouts} />
           <Route path="/admin/events" component={AdminEventPayouts} />
           <Route path="/admin/challenges" component={AdminChallengePayouts} />
-          <Route path="/admin/users" component={AdminUsersManagement} />
           <Route path="/admin/analytics" component={AdminAnalytics} />
           <Route path="/admin/notifications" component={AdminNotifications} />
           <Route path="/admin/settings" component={AdminSettings} />

@@ -1669,6 +1669,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin event management routes
+  app.delete('/api/admin/events/:id', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      await storage.deleteEvent(eventId);
+      res.json({ message: "Event deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      res.status(500).json({ message: "Failed to delete event" });
+    }
+  });
+
+  app.patch('/api/admin/events/:id/chat', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const { enabled } = req.body;
+      await storage.toggleEventChat(eventId, enabled);
+      res.json({ message: `Event chat ${enabled ? 'enabled' : 'disabled'}`, enabled });
+    } catch (error) {
+      console.error("Error toggling event chat:", error);
+      res.status(500).json({ message: "Failed to toggle event chat" });
+    }
+  });
+
+  // Admin challenge management routes
+  app.delete('/api/admin/challenges/:id', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const challengeId = parseInt(req.params.id);
+      await storage.deleteChallenge(challengeId);
+      res.json({ message: "Challenge deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting challenge:", error);
+      res.status(500).json({ message: "Failed to delete challenge" });
+    }
+  });
+
   // Admin statistics routes
   app.get('/api/admin/stats', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {

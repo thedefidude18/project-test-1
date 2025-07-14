@@ -152,6 +152,14 @@ export interface IStorage {
   // Global Chat
   createGlobalChatMessage(messageData: any): Promise<any>;
   getGlobalChatMessages(limit?: number): Promise<any[]>;
+
+  // Admin Management Functions
+  deleteEvent(eventId: number): Promise<void>;
+  toggleEventChat(eventId: number, enabled: boolean): Promise<void>;
+  deleteChallenge(challengeId: number): Promise<void>;
+
+  // Admin Functions
+  getAdminStats(): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1815,6 +1823,68 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(eventParticipants.joinedAt));
 
     return joinedEvents;
+  }
+
+  // Admin Management Functions
+  async deleteEvent(eventId: number) {
+    // Delete related records first
+    await db.delete(eventParticipants).where(eq(eventParticipants.eventId, eventId));
+    await db.delete(eventMessages).where(eq(eventMessages.eventId, eventId));
+    await db.delete(messageReactions).where(eq(messageReactions.messageId, sql`(SELECT id FROM event_messages WHERE event_id = ${eventId})`));
+
+    // Delete the event
+    await db.delete(events).where(eq(events.id, eventId));
+
+    console.log(`Event ${eventId} deleted by admin`);
+  }
+
+  async toggleEventChat(eventId: number, enabled: boolean) {
+    await db.update(events)
+      .set({ 
+        chatEnabled: enabled,
+        updatedAt: new Date()
+      })
+      .where(eq(events.id, eventId));
+
+    console.log(`Event ${eventId} chat ${enabled ? 'enabled' : 'disabled'} by admin`);
+  }
+
+  async deleteChallenge(challengeId: number) {
+    // Delete related records first
+    // await db.delete(challengeParticipants).where(eq(challengeParticipants.challengeId, challengeId)); // Assuming you have a challengeParticipants table
+
+    // Delete the challenge
+    await db.delete(challenges).where(eq(challenges.id, challengeId));
+
+    console.log(`Challenge ${challengeId} deleted by admin`);
+  }
+
+  // Admin Functions
+  async getAdminStats() {
+    const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const totalEvents = await db.select({ count: sql<number>`count(*)` }).from(events);
+    const totalChallenges = await db.select({ count: sql<number>`count(*)` }).from(challenges);
+
+    // Calculate revenue from completed events and challenges
+    const eventRevenue = await db.select({
+      totalCreatorFees: sql<number>`COALESCE(SUM(CAST(creatorFee AS DECIMAL)), 0)`
+    }).from(events).where(eq(events.status, 'completed'));
+
+    const challengeRevenue = await db.select({
+      totalPlatformFees: sql<number>`COALESCE(SUM(CAST(amount AS DECIMAL) * 2 * 0.05), 0)`
+    }).from(challenges).where(eq(challenges.status, 'completed'));
+
+    const totalRevenue = (eventRevenue[0]?.totalCreatorFees || 0) + (challengeRevenue[0]?.totalPlatformFees || 0);
+
+    return {
+      totalUsers: totalUsers[0].count,
+      totalEvents: totalEvents[0].count,
+      totalChallenges: totalChallenges[0].count,
+      dailyActiveUsers: 0, // TODO: Implement proper DAU calculation
+      pendingPayouts: 0, // TODO: Implement pending payouts count
+      totalRevenue: totalRevenue,
+      totalNotifications: 0, // TODO: Implement notifications count
+    };
   }
 }
 
