@@ -17,6 +17,7 @@ interface DailySignInModalProps {
 export function DailySignInModal({ isOpen, onClose, pointsToAward, currentStreak }: DailySignInModalProps) {
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimed, setClaimed] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -26,6 +27,12 @@ export function DailySignInModal({ isOpen, onClose, pointsToAward, currentStreak
       await apiRequest('POST', '/api/daily-signin/claim');
       
       setClaimed(true);
+      setShowConfetti(true);
+      
+      // Hide confetti after animation
+      setTimeout(() => {
+        setShowConfetti(false);
+      }, 3000);
       
       // Refresh user data and notifications
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
@@ -38,10 +45,10 @@ export function DailySignInModal({ isOpen, onClose, pointsToAward, currentStreak
         duration: 5000,
       });
 
-      // Auto-close after 2 seconds
+      // Auto-close after 3 seconds to let confetti finish
       setTimeout(() => {
-        onClose();
-      }, 2000);
+        handleClose();
+      }, 3000);
       
     } catch (error: any) {
       console.error('Error claiming daily sign-in:', error);
@@ -57,11 +64,43 @@ export function DailySignInModal({ isOpen, onClose, pointsToAward, currentStreak
 
   const handleSkip = () => {
     // This will add the notification to their notifications list
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setClaimed(false);
+    setShowConfetti(false);
     onClose();
   };
 
+  // Confetti component
+  const Confetti = () => {
+    if (!showConfetti) return null;
+    
+    return (
+      <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+        {[...Array(50)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-2 h-2 animate-bounce"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              backgroundColor: ['#fbbf24', '#f59e0b', '#d97706', '#92400e', '#78350f'][Math.floor(Math.random() * 5)],
+              animationDelay: `${Math.random() * 2}s`,
+              animationDuration: `${2 + Math.random() * 2}s`,
+              transform: `rotate(${Math.random() * 360}deg)`,
+            }}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <>
+      <Confetti />
+      <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-bold">
@@ -136,5 +175,6 @@ export function DailySignInModal({ isOpen, onClose, pointsToAward, currentStreak
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
