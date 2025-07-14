@@ -223,9 +223,9 @@ export default function ChallengeDetail() {
                         <div className="text-sm text-gray-500">Challenger</div>
                       </div>
                     </div>
-                    <Badge variant="outline">Host</Badge>
+                    <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">Challenger</Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
@@ -240,7 +240,7 @@ export default function ChallengeDetail() {
                         <div className="text-sm text-gray-500">Challenged</div>
                       </div>
                     </div>
-                    <Badge variant="outline">Opponent</Badge>
+                    <Badge className="bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">Challenged</Badge>
                   </div>
                 </div>
               </CardContent>
