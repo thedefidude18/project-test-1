@@ -94,15 +94,15 @@ export default function AdminChallengePayouts() {
 
     const resultText = result === 'challenger_won' ? 'Challenger Wins' : 
                       result === 'challenged_won' ? 'Challenged Wins' : 'Draw';
-    
+
     const totalAmount = parseFloat(challenge.amount) * 2;
     const platformFee = totalAmount * 0.05;
     const winnerPayout = totalAmount - platformFee;
-    
+
     const confirmMessage = result === 'draw' 
       ? `Set challenge result to DRAW? Both participants will receive their stakes back (₦${challenge.amount} each).`
       : `Set challenge result to ${resultText}? Winner will receive ₦${winnerPayout.toLocaleString()}, platform fee: ₦${platformFee.toLocaleString()}`;
-    
+
     if (confirm(confirmMessage)) {
       setResultMutation.mutate({ challengeId, result });
     }
@@ -251,12 +251,12 @@ export default function AdminChallengePayouts() {
                       <p className="text-slate-400 text-sm">
                         Due {formatDistanceToNow(new Date(challenge.dueDate), { addSuffix: true })}
                       </p>
-                      <div className="flex items-center mt-2 space-x-4">
+                      <div className="flex items-center space-x-4">
                         <span className="text-sm text-slate-300">
                           Stake: ₦{parseFloat(challenge.amount).toLocaleString()} each
                         </span>
                         <span className="text-sm text-blue-400">
-                          {challenge.challengerUser.username} vs {challenge.challengedUser.username}
+                          {challenge.challengerUser?.username || challenge.challengerUser?.firstName || 'Unknown'} vs {challenge.challengedUser?.username || challenge.challengedUser?.firstName || 'Unknown'}
                         </span>
                       </div>
                     </div>
@@ -328,7 +328,7 @@ export default function AdminChallengePayouts() {
                       <div className="flex items-center space-x-2">
                         <Users className="w-4 h-4" />
                         <span className="text-xs">
-                          {challenge.challengerUser.username} vs {challenge.challengedUser.username}
+                          {challenge.challengerUser?.username || challenge.challengerUser?.firstName || 'Unknown'} vs {challenge.challengedUser?.username || challenge.challengedUser?.firstName || 'Unknown'}
                         </span>
                       </div>
                     </td>
