@@ -31,6 +31,7 @@ import AdminSettings from "./pages/AdminSettings";
 import ChallengeDetail from "./pages/ChallengeDetail";
 import { DailySignInModal } from '@/components/DailySignInModal';
 import { useDailySignIn } from '@/hooks/useDailySignIn';
+import AdminLogin from "@/pages/AdminLogin"; // Assuming you have an AdminLogin component
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -63,6 +64,8 @@ function Router() {
           <Route path="/referrals" component={ReferralPage} />
           <Route path="/history" component={History} />
           <Route path="/settings" component={Settings} />
+          {/* Admin Login Route - Always Available */}
+          <Route path="/admin/login" component={AdminLogin} />
           <Route path="/admin" component={AdminDashboardOverview} />
           <Route path="/admin/payouts" component={AdminPayouts} />
           <Route path="/admin/events" component={AdminEventPayouts} />

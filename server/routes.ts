@@ -2132,6 +2132,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Login Route
+  app.post('/api/admin/login', async (req, res) => {
+    try {
+      const { username, password, adminKey } = req.body;
+
+      if (!username || !password || !adminKey) {
+        return res.status(400).json({ message: 'Username, password, and admin key are required' });
+      }
+
+      // Verify admin key
+      const expectedAdminKey = process.env.ADMIN_KEY || 'betchat-admin-2024';
+      if (adminKey !== expectedAdminKey) {
+        console.log(`Failed admin login attempt with invalid key: ${username}`);
+        return res.status(401).json({ message: 'Invalid admin credentials' });
+      }
+
+      // Find user by username
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        console.log(`Failed admin login attempt - user not found: ${username}`);
+        return res.status(401).json({ message: 'Invalid admin credentials' });
+      }
+
+      // Check if user is admin
+      if (!user.isAdmin) {
+        console.log(`Failed admin login attempt - user not admin: ${username}`);
+        return res.status(401).json({ message: 'Access denied: Admin privileges required' });
+      }
+
+      // Verify password (for demo purposes, using simple comparison)
+      // In production, you should use proper password hashing
+      const expectedPassword = process.env.ADMIN_PASSWORD || 'admin123';
+      if (password !== expectedPassword) {
+        console.log(`Failed admin login attempt - invalid password: ${username}`);
+        return res.status(401).json({ message: 'Invalid admin credentials' });
+      }
+
+      // Generate admin token
+      const adminToken = `admin_${user.id}_${Date.now()}`;
+      
+      // Update user's last login
+      await storage.updateUserProfile(user.id, {
+        lastLogin: new Date()
+      });
+
+      // Log successful admin login
+      console.log(`Successful admin login: ${username} (${user.id})`);
+
+      res.json({
+        message: 'Admin login successful',
+        token: adminToken,
+        user: {
+          id: user.id,
+          username: user.username,
+          firstName: user.firstName,
+          email: user.email,
+          isAdmin: user.isAdmin
+        }
+      });
+
+    } catch (error) {
+      console.error('Error during admin login:', error);
+      res.status(500).json({ message: 'Admin login failed' });
+    }
+  });
+
+  // Admin logout route
+  app.post('/api/admin/logout', async (req, res) => {
+    try {
+      const adminToken = req.headers.authorization?.replace('Bearer ', '');
+      if (adminToken) {
+        console.log(`Admin logout: ${adminToken}`);
+      }
+      res.json({ message: 'Admin logout successful' });
+    } catch (error) {
+      console.error('Error during admin logout:', error);
+      res.status(500).json({ message: 'Admin logout failed' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -76,10 +77,23 @@ const adminNavigation = [
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const { user } = useAuth();
+  const { adminUser, isAdmin, isLoading, logout } = useAdminAuth();
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigate = useLocation()[0];
 
-  if (!user) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white">Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -185,6 +199,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
           {/* Footer */}
           <div className="p-4 border-t border-slate-700">
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={logout}
+              className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Admin Logout
+            </Button>
+            
             <Link href="/">
               <Button variant="outline" className="w-full border-slate-600 text-slate-300 hover:bg-slate-800">
                 <Home className="w-4 h-4 mr-2" />
