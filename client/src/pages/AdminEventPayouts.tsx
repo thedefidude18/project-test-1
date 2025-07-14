@@ -57,26 +57,23 @@ export default function AdminEventPayouts() {
 
   const setResultMutation = useMutation({
     mutationFn: async ({ eventId, result }: { eventId: number; result: boolean }) => {
-      const response = await fetch(`/api/admin/events/${eventId}/result`, {
+      return apiRequest(`/api/admin/events/${eventId}/result`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ result }),
-        credentials: 'include',
+        body: { result },
       });
-      if (!response.ok) throw new Error('Failed to set result');
-      return response.json();
     },
     onSuccess: (data) => {
       toast({
-        title: "Event Resolved",
+        title: "Event Resolved ✅",
         description: data.message,
       });
       refetch();
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      setSelectedEventId(null); // Clear selection after successful payout
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: "Payout Failed ❌",
         description: error.message,
         variant: "destructive",
       });
@@ -84,7 +81,17 @@ export default function AdminEventPayouts() {
   });
 
   const handleSetResult = (eventId: number, result: boolean) => {
-    if (confirm(`Set event result to ${result ? 'YES' : 'NO'}? This will trigger automatic payouts.`)) {
+    const event = events.find((e: Event) => e.id === eventId);
+    if (!event) return;
+
+    const resultText = result ? 'YES' : 'NO';
+    const totalPool = parseFloat(event.eventPool);
+    const creatorFee = totalPool * 0.03;
+    const payoutPool = totalPool - creatorFee;
+    
+    const confirmMessage = `Set event result to ${resultText}?\n\nPayout Details:\n- Total Pool: ₦${totalPool.toLocaleString()}\n- Creator Fee (3%): ₦${creatorFee.toLocaleString()}\n- Winner Payout: ₦${payoutPool.toLocaleString()}\n\nThis will trigger automatic payouts to all winners.`;
+    
+    if (confirm(confirmMessage)) {
       setResultMutation.mutate({ eventId, result });
     }
   };

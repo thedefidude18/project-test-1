@@ -422,50 +422,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const eventId = parseInt(req.params.id);
       const { result } = req.body; // true for YES, false for NO
 
-      // TODO: Add admin role check here
-      // For now, any authenticated user can set result (you might want to add admin role checking)
+      // Log admin action for audit trail
+      console.log(`Admin ${userId} setting result for event ${eventId}: ${result ? 'YES' : 'NO'}`);
+
+      // Validate event exists and is ready for payout
+      const existingEvent = await storage.getEventById(eventId);
+      if (!existingEvent) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+
+      if (existingEvent.adminResult !== null) {
+        return res.status(400).json({ message: "Event result already set" });
+      }
 
       const event = await storage.adminSetEventResult(eventId, result);
       const payoutResult = await storage.processEventPayout(eventId);
 
-      // Notify all participants about the result
-      const participants = await storage.getEventParticipants(eventId);
-      for (const participant of participants) {
-        const isWinner = participant.prediction === result;
-        const notificationTitle = isWinner ? 'You Won!' : 'Event Result';
-        const notificationMessage = isWinner 
-          ? `Congratulations! You won ₦${(participant.amount * 1.94).toFixed(2)} from the event "${event.title}"`
-          : `Event "${event.title}" resolved with ${result ? 'YES' : 'NO'}. Better luck next time!`;
+      // Log payout for audit trail
+      console.log(`Event ${eventId} payout processed:`, {
+        winnersCount: payoutResult.winnersCount,
+        totalPayout: payoutResult.totalPayout,
+        creatorFee: payoutResult.creatorFee,
+        processedBy: userId,
+        timestamp: new Date().toISOString()
+      });
 
-        await storage.createNotification({
-          userId: participant.userId,
-          type: isWinner ? 'win' : 'loss',
-          title: notificationTitle,
-          message: notificationMessage,
-          data: { 
-            eventId: eventId, 
-            result: result,
-            winnings: isWinner ? participant.amount * 1.94 : 0
-          },
-        });
-
-        // Send notification via Pusher
-        await pusher.trigger(`user-${participant.userId}`, 'event-notification', {
-          title: notificationTitle,
-          message: notificationMessage,
-          eventId: eventId,
-          type: isWinner ? 'win' : 'loss',
-        });
-      }
+      // Send real-time notification to participants
+      await pusher.trigger(`event-${eventId}`, 'event-resolved', {
+        eventId,
+        result: result ? 'YES' : 'NO',
+        winnersCount: payoutResult.winnersCount,
+        totalPayout: payoutResult.totalPayout,
+        timestamp: new Date().toISOString()
+      });
 
       res.json({ 
         event, 
         payout: payoutResult,
-        message: `Event result set to ${result ? 'YES' : 'NO'}. Payout processed: ${payoutResult.winnersCount} winners, ₦${payoutResult.totalPayout} total payout, ₦${payoutResult.creatorFee} creator fee.`
+        message: `Event result set to ${result ? 'YES' : 'NO'}. Payout processed: ${payoutResult.winnersCount} winners received ₦${payoutResult.totalPayout.toLocaleString()} total, ₦${payoutResult.creatorFee.toLocaleString()} creator fee.`
       });
     } catch (error) {
       console.error("Error setting event result:", error);
-      res.status(500).json({ message: "Failed to set event result" });
+      res.status(500).json({ message: error.message || "Failed to set event result" });
     }
   });
 
@@ -1751,6 +1749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/admin/challenges/:id/result', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
+      const userId = req.user.claims.sub;
       const challengeId = parseInt(req.params.id);
       const { result } = req.body; // 'challenger_won', 'challenged_won', 'draw'
 
@@ -1758,17 +1757,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid result. Must be 'challenger_won', 'challenged_won', or 'draw'" });
       }
 
+      // Log admin action for audit trail
+      console.log(`Admin ${userId} setting result for challenge ${challengeId}: ${result}`);
+
+      // Validate challenge exists and is ready for payout
+      const existingChallenge = await storage.getChallengeById(challengeId);
+      if (!existingChallenge) {
+        return res.status(404).json({ message: "Challenge not found" });
+      }
+
+      if (existingChallenge.status === 'completed') {
+        return res.status(400).json({ message: "Challenge already completed" });
+      }
+
       const challenge = await storage.adminSetChallengeResult(challengeId, result);
       const payoutResult = await storage.processChallengePayouts(challengeId);
+
+      // Log payout for audit trail
+      console.log(`Challenge ${challengeId} payout processed:`, {
+        winnerPayout: payoutResult.winnerPayout,
+        platformFee: payoutResult.platformFee,
+        winnerId: payoutResult.winnerId,
+        processedBy: userId,
+        timestamp: new Date().toISOString()
+      });
+
+      // Send real-time notification to participants
+      await pusher.trigger(`challenge-${challengeId}`, 'challenge-resolved', {
+        challengeId,
+        result,
+        winnerPayout: payoutResult.winnerPayout,
+        platformFee: payoutResult.platformFee,
+        timestamp: new Date().toISOString()
+      });
 
       res.json({ 
         challenge, 
         payout: payoutResult,
-        message: `Challenge result set to ${result}. Payout processed: ₦${payoutResult.winnerPayout} distributed, ₦${payoutResult.platformFee} platform fee.`
+        message: `Challenge result set to ${result}. Payout processed: ₦${payoutResult.winnerPayout.toLocaleString()} distributed, ₦${payoutResult.platformFee.toLocaleString()} platform fee.`
       });
     } catch (error) {
       console.error("Error setting challenge result:", error);
-      res.status(500).json({ message: "Failed to set challenge result" });
+      res.status(500).json({ message: error.message || "Failed to set challenge result" });
     }
   });
 

@@ -25,6 +25,7 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import AdminDashboardOverview from "@/pages/AdminDashboardOverview";
 import AdminEventPayouts from "@/pages/AdminEventPayouts";
 import AdminChallengePayouts from "@/pages/AdminChallengePayouts";
+import AdminPayoutCenter from "@/pages/AdminPayoutCenter";
 import AdminUsersManagement from "@/pages/AdminUsersManagement";
 import { DailySignInModal } from '@/components/DailySignInModal';
 import { useDailySignIn } from '@/hooks/useDailySignIn';
