@@ -78,8 +78,8 @@ self.addEventListener('push', (event) => {
     notificationData = {
       title: 'New Notification',
       body: 'You have a new notification',
-      icon: '/logo192.png',
-      badge: '/notification-badge.png',
+      icon: '/assets/bantahlogo.png',
+      badge: '/assets/notification.svg',
       data: {
         url: '/notifications'
       }
@@ -92,13 +92,30 @@ self.addEventListener('push', (event) => {
   const title = notificationData.title || 'New Notification';
   const options = {
     body: notificationData.body || 'You have a new notification',
-    icon: notificationData.icon || '/logo192.png',
-    badge: notificationData.badge || '/notification-badge.png',
+    icon: notificationData.icon || '/assets/bantahlogo.png',
+    badge: notificationData.badge || '/assets/notification.svg',
     data: notificationData.data || {},
     // Vibration pattern
     vibrate: [100, 50, 100],
     // Show notification even if app is in foreground
-    requireInteraction: true
+    requireInteraction: true,
+    // Add action buttons for interactive notifications
+    actions: [
+      {
+        action: 'view',
+        title: 'View',
+        icon: '/assets/icons/view.png'
+      },
+      {
+        action: 'close',
+        title: 'Close',
+        icon: '/assets/icons/close.png'
+      }
+    ],
+    // Add silent notification option
+    silent: false,
+    // Add tag to group similar notifications
+    tag: notificationData.type || 'general'
   };
 
   event.waitUntil(

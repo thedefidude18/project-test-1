@@ -22,6 +22,7 @@ import {
   eventActivity,
   escrow,
   platformSettings,
+  pushSubscriptions,
   type User,
   type UpsertUser,
   type Event,
@@ -173,6 +174,11 @@ export interface IStorage {
   addEventFunds(eventId: number, amount: number): Promise<void>;
   giveUserPoints(userId: string, points: number): Promise<void>;
   updateEventCapacity(eventId: number, additionalSlots: number): Promise<void>;
+
+  // Push Notification operations
+  savePushSubscription(userId: string, subscription: any): Promise<void>;
+  getPushSubscriptions(userId: string): Promise<any[]>;
+  removePushSubscription(endpoint: string): Promise<void>;
   broadcastMessage(message: string, type: string): Promise<void>;
   
   // Missing admin functions
@@ -2058,6 +2064,40 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users)
       .where(sql`${users.username} ILIKE ${`%${query}%`} OR ${users.firstName} ILIKE ${`%${query}%`}`)
       .limit(limit);
+  }
+
+  // Push notification subscription methods
+  async savePushSubscription(userId: string, subscription: any): Promise<void> {
+    await db.insert(pushSubscriptions).values({
+      userId,
+      endpoint: subscription.endpoint,
+      p256dh: subscription.keys.p256dh,
+      auth: subscription.keys.auth,
+      userAgent: subscription.userAgent || null,
+    });
+  }
+
+  async getPushSubscriptions(userId: string): Promise<any[]> {
+    const subscriptions = await db
+      .select({
+        endpoint: pushSubscriptions.endpoint,
+        p256dh: pushSubscriptions.p256dh,
+        auth: pushSubscriptions.auth,
+      })
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
+
+    return subscriptions.map(sub => ({
+      endpoint: sub.endpoint,
+      keys: {
+        p256dh: sub.p256dh,
+        auth: sub.auth,
+      },
+    }));
+  }
+
+  async removePushSubscription(endpoint: string): Promise<void> {
+    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
   }
 }
 

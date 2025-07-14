@@ -26,6 +26,7 @@ import {
 import { sql } from "drizzle-orm";
 import crypto from "crypto";
 import { createTelegramSync, getTelegramSync } from "./telegramSync";
+import webpush from "web-push";
 
 // Initialize Pusher
 const pusher = new Pusher({
@@ -35,6 +36,15 @@ const pusher = new Pusher({
   cluster: "mt1",
   useTLS: true,
 });
+
+// Configure Web Push
+webpush.setVapidDetails(
+  'mailto:support@betchat.com',
+  'BKZ0LNy05CTv807lF4dSwM3wB7nxrBHXDP5AYPvbCCPZYWrK08rTYFQO6BmKrW3f0xmIe5wUxtLN67XOSQ7W--o',
+  'uNkb_1Ntqe1IKeqDeAlbyOJcXTt8wrvwArWSh7GML0A'
+);
+
+
 
 // Initialize Telegram sync service
 let telegramSync = null;
@@ -2202,6 +2212,362 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Push notification subscription route
+  app.post('/api/push/subscribe', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { subscription } = req.body;
+      
+      if (!subscription) {
+        return res.status(400).json({ message: 'Subscription data is required' });
+      }
+
+      // Store subscription in database
+      await storage.savePushSubscription(userId, subscription);
+      
+      res.json({ message: 'Push subscription saved successfully' });
+    } catch (error) {
+      console.error('Error saving push subscription:', error);
+      res.status(500).json({ message: 'Failed to save push subscription' });
+    }
+  });
+
+  // Send push notification to user
+  app.post('/api/push/send', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { userId, title, body, data } = req.body;
+      
+      if (!userId || !title || !body) {
+        return res.status(400).json({ message: 'User ID, title, and body are required' });
+      }
+
+      // Send push notification
+      await sendPushNotification(userId, { title, body, data });
+      
+      res.json({ message: 'Push notification sent successfully' });
+    } catch (error) {
+      console.error('Error sending push notification:', error);
+      res.status(500).json({ message: 'Failed to send push notification' });
+    }
+  });
+
+  // Helper function to send push notifications
+  async function sendPushNotification(userId: string, payload: { title: string; body: string; data?: any }) {
+    try {
+      const subscriptions = await storage.getPushSubscriptions(userId);
+      
+      if (subscriptions.length === 0) {
+        console.log(`No push subscriptions found for user ${userId}`);
+        return;
+      }
+
+      const notificationPayload = JSON.stringify({
+        title: payload.title,
+        body: payload.body,
+        icon: '/assets/bantahlogo.png',
+        badge: '/assets/notification.svg',
+        data: payload.data || {},
+        timestamp: Date.now()
+      });
+
+      const promises = subscriptions.map(async (subscription) => {
+        try {
+          await webpush.sendNotification(subscription, notificationPayload);
+        } catch (error) {
+          console.error('Error sending notification to subscription:', error);
+          // Remove invalid subscription
+          await storage.removePushSubscription(subscription.endpoint);
+        }
+      });
+
+      await Promise.all(promises);
+    } catch (error) {
+      console.error('Error in sendPushNotification:', error);
+    }
+  }
+
+  // Helper function to send push notifications to event participants
+  async function sendEventPushNotifications(eventId: number, payload: { title: string; body: string; data?: any }) {
+    try {
+      const participants = await storage.getEventParticipants(eventId);
+      
+      for (const participant of participants) {
+        await sendPushNotification(participant.userId, payload);
+      }
+    } catch (error) {
+      console.error('Error sending event push notifications:', error);
+    }
+  }
+
   const httpServer = createServer(app);
+  
+  // WebSocket server for real-time messaging
+  const wss = new WebSocketServer({ 
+    server: httpServer,
+    path: '/ws' 
+  });
+  
+  // Store connected clients
+  const clients = new Map<string, WebSocket>();
+  
+  wss.on('connection', (ws, req) => {
+    console.log('New WebSocket connection');
+    
+    ws.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        switch (data.type) {
+          case 'user_join':
+            // Store user connection
+            clients.set(data.userId, ws);
+            
+            // Broadcast join notification to event participants
+            if (data.eventId) {
+              await broadcastEventSystemMessage(data.eventId, 'user_join', {
+                userId: data.userId,
+                username: data.username || 'User',
+                eventId: data.eventId
+              });
+            }
+            break;
+            
+          case 'user_leave':
+            // Remove user connection
+            clients.delete(data.userId);
+            
+            // Broadcast leave notification to event participants
+            if (data.eventId) {
+              await broadcastEventSystemMessage(data.eventId, 'user_leave', {
+                userId: data.userId,
+                username: data.username || 'User',
+                eventId: data.eventId
+              });
+            }
+            break;
+            
+          case 'user_typing':
+            // Broadcast typing indicator
+            await broadcastToEventParticipants(data.eventId, {
+              type: 'user_typing',
+              userId: data.userId,
+              eventId: data.eventId,
+              isTyping: data.isTyping
+            });
+            break;
+            
+          case 'event_message':
+            // Broadcast new message
+            await broadcastToEventParticipants(data.eventId, {
+              type: 'event_message',
+              eventId: data.eventId,
+              messageId: data.messageId
+            });
+            break;
+            
+          case 'message_reaction':
+            // Broadcast reaction update
+            await broadcastToEventParticipants(data.eventId, {
+              type: 'message_reaction',
+              eventId: data.eventId,
+              messageId: data.messageId,
+              userId: data.userId
+            });
+            break;
+            
+          case 'event_started':
+            // Broadcast event start notification
+            await broadcastEventSystemMessage(data.eventId, 'event_started', {
+              eventId: data.eventId,
+              eventTitle: data.eventTitle,
+              endTime: data.endTime
+            });
+            break;
+            
+          case 'event_ended':
+            // Broadcast event end notification
+            await broadcastEventSystemMessage(data.eventId, 'event_ended', {
+              eventId: data.eventId,
+              eventTitle: data.eventTitle,
+              result: data.result
+            });
+            break;
+            
+          default:
+            console.log('Unknown WebSocket message type:', data.type);
+        }
+      } catch (error) {
+        console.error('Error handling WebSocket message:', error);
+      }
+    });
+    
+    ws.on('close', () => {
+      // Remove from clients map when connection closes
+      for (const [userId, client] of clients.entries()) {
+        if (client === ws) {
+          clients.delete(userId);
+          break;
+        }
+      }
+    });
+    
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
+  });
+  
+  // Helper function to broadcast to all event participants
+  async function broadcastToEventParticipants(eventId: number, message: any) {
+    try {
+      const participants = await storage.getEventParticipants(eventId);
+      
+      for (const participant of participants) {
+        const client = clients.get(participant.userId);
+        if (client && client.readyState === WebSocket.OPEN) {
+          // Send real-time message via WebSocket
+          client.send(JSON.stringify(message));
+        } else {
+          // User is offline/idle, send push notification
+          if (message.type === 'user' && message.userId !== participant.userId) {
+            const event = await storage.getEventById(eventId);
+            const sender = message.user?.firstName || message.user?.username || 'Someone';
+            
+            await sendPushNotification(participant.userId, {
+              title: `💬 New message in ${event?.title}`,
+              body: `${sender}: ${message.message}`,
+              data: {
+                type: 'event_message',
+                eventId,
+                messageId: message.id,
+                url: `/events/${eventId}`,
+              },
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error broadcasting to event participants:', error);
+    }
+  }
+  
+  // Helper function to broadcast system messages
+  async function broadcastEventSystemMessage(eventId: number, type: string, data: any) {
+    try {
+      // Create system message based on type
+      let systemMessage;
+      
+      switch (type) {
+        case 'user_join':
+          systemMessage = {
+            id: `system_${Date.now()}`,
+            type: 'system',
+            eventId: eventId,
+            message: `@${data.username} joined the event`,
+            createdAt: new Date().toISOString(),
+            systemType: 'user_join'
+          };
+          break;
+          
+        case 'user_leave':
+          systemMessage = {
+            id: `system_${Date.now()}`,
+            type: 'system',
+            eventId: eventId,
+            message: `@${data.username} left the event`,
+            createdAt: new Date().toISOString(),
+            systemType: 'user_leave'
+          };
+          break;
+          
+        case 'event_started':
+          const endTime = new Date(data.endTime);
+          const timeLeft = Math.max(0, endTime.getTime() - Date.now());
+          const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
+          const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+          
+          systemMessage = {
+            id: `system_${Date.now()}`,
+            type: 'system',
+            eventId: eventId,
+            message: `Event has started! ${hoursLeft}h ${minutesLeft}m remaining`,
+            createdAt: new Date().toISOString(),
+            systemType: 'event_started'
+          };
+          break;
+          
+        case 'event_ended':
+          systemMessage = {
+            id: `system_${Date.now()}`,
+            type: 'system',
+            eventId: eventId,
+            message: `Event has ended! ${data.result ? `Result: ${data.result}` : 'Check results'}`,
+            createdAt: new Date().toISOString(),
+            systemType: 'event_ended'
+          };
+          break;
+          
+        default:
+          return;
+      }
+      
+      // Broadcast via WebSocket
+      await broadcastToEventParticipants(eventId, {
+        type: 'system_message',
+        eventId: eventId,
+        message: systemMessage
+      });
+      
+      // Also broadcast via Pusher for fallback
+      await pusher.trigger(`event-${eventId}`, 'system-message', systemMessage);
+
+      // Send push notifications for important system events
+      if (['user_join', 'user_leave', 'event_started', 'event_ended'].includes(type)) {
+        const event = await storage.getEventById(eventId);
+        const participants = await storage.getEventParticipants(eventId);
+        
+        let notificationTitle = '';
+        let notificationBody = '';
+        
+        switch (type) {
+          case 'event_started':
+            notificationTitle = `🚀 Event Started`;
+            notificationBody = `${event?.title} has begun!`;
+            break;
+          case 'event_ended':
+            notificationTitle = `🏁 Event Ended`;
+            notificationBody = `${event?.title} has concluded`;
+            break;
+          case 'user_join':
+            notificationTitle = `👋 New Participant`;
+            notificationBody = `@${data.username} joined ${event?.title}`;
+            break;
+          case 'user_leave':
+            notificationTitle = `👋 Participant Left`;
+            notificationBody = `@${data.username} left ${event?.title}`;
+            break;
+        }
+
+        for (const participant of participants) {
+          // Don't send notification to the user who triggered the event
+          if (data.userId && data.userId === participant.userId) continue;
+          
+          await sendPushNotification(participant.userId, {
+            title: notificationTitle,
+            body: notificationBody,
+            data: {
+              type: 'system_event',
+              eventId,
+              systemType: type,
+              url: `/events/${eventId}`,
+            },
+          });
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error broadcasting system message:', error);
+    }
+  }
+  
   return httpServer;
 }

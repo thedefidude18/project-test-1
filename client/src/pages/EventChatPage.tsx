@@ -28,6 +28,7 @@ import { formatBalance } from "@/utils/currencyUtils";
 import { getAvatarUrl } from "@/utils/avatarUtils";
 import { UserAvatar } from "@/components/UserAvatar";
 import { TypingIndicator } from "@/components/TypingIndicator";
+import PushNotificationTest from "@/components/PushNotificationTest";
 
 interface MessageReaction {
   emoji: string;
@@ -42,6 +43,8 @@ interface ExtendedMessage {
   userId: string;
   message: string;
   createdAt: string;
+  type?: 'system' | 'user';
+  systemType?: 'user_join' | 'user_leave' | 'event_started' | 'event_ended';
   user: {
     id: string;
     firstName?: string;
@@ -74,7 +77,7 @@ export default function EventChatPage() {
   const [prediction, setPrediction] = useState<boolean | null>(null);
   const [betAmount, setBetAmount] = useState("");
   const [isBettingDialogOpen, setIsBettingDialogOpen] = useState(false);
-  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [typingUsers, setTypingUsers] = useState<{userId: string, name: string}[]>([]);
   const [replyingTo, setReplyingTo] = useState<ExtendedMessage | null>(null);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
@@ -155,11 +158,17 @@ export default function EventChatPage() {
       } else if (data.type === 'user_typing' && data.eventId === eventId) {
         if (data.userId !== user?.id) {
           setTypingUsers(prev => {
-            const filtered = prev.filter(id => id !== data.userId);
-            return data.isTyping ? [...filtered, data.userId] : filtered;
+            const filtered = prev.filter(u => u.userId !== data.userId);
+            if (data.isTyping) {
+              return [...filtered, { userId: data.userId, name: data.username || 'User' }];
+            }
+            return filtered;
           });
         }
       } else if (data.type === 'message_reaction' && data.eventId === eventId) {
+        refetchMessages();
+      } else if (data.type === 'system_message' && data.eventId === eventId) {
+        // Handle system messages (join/leave/event start/end)
         refetchMessages();
       }
     }
@@ -316,6 +325,30 @@ export default function EventChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Send join notification when user enters the chat
+  useEffect(() => {
+    if (user && eventId && sendMessage && isConnected) {
+      sendMessage({
+        type: 'user_join',
+        eventId,
+        userId: user.id,
+        username: user.firstName || user.username || 'User'
+      });
+    }
+
+    // Send leave notification when user leaves
+    return () => {
+      if (user && eventId && sendMessage) {
+        sendMessage({
+          type: 'user_leave',
+          eventId,
+          userId: user.id,
+          username: user.firstName || user.username || 'User'
+        });
+      }
+    };
+  }, [user, eventId, sendMessage, isConnected]);
+
   // Handle typing indicators
   const handleTyping = () => {
     if (!sendMessage || typingTimeoutRef.current) {
@@ -328,6 +361,7 @@ export default function EventChatPage() {
         type: 'user_typing',
         eventId,
         userId: user.id,
+        username: user.firstName || user.username || 'User',
         isTyping: true,
       });
 
@@ -336,6 +370,7 @@ export default function EventChatPage() {
           type: 'user_typing',
           eventId,
           userId: user.id,
+          username: user.firstName || user.username || 'User',
           isTyping: false,
         });
       }, 3000);
@@ -604,7 +639,7 @@ export default function EventChatPage() {
       </div>
 
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2 flex flex-col">
+      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2 flex flex-col-reverse">
         
         {messages.length === 0 ? (
           <div className="text-center text-slate-500 dark:text-slate-400 py-8">
@@ -612,7 +647,21 @@ export default function EventChatPage() {
             <p>No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message: ExtendedMessage, index: number) => {
+          [...messages].reverse().map((message: ExtendedMessage, index: number) => {
+            // Check if this is a system message
+            const isSystemMessage = message.type === 'system';
+            
+            if (isSystemMessage) {
+              return (
+                <div key={message.id} className="flex justify-center my-3">
+                  <div className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 px-3 py-1 rounded-full text-xs font-medium">
+                    <i className="fas fa-info-circle mr-1"></i>
+                    {message.message}
+                  </div>
+                </div>
+              );
+            }
+
             const showAvatar = index === messages.length - 1 || messages[index + 1]?.userId !== message.userId;
             const isCurrentUser = message.userId === user?.id;
             const isConsecutive = index > 0 && messages[index - 1]?.userId === message.userId;
@@ -681,8 +730,8 @@ export default function EventChatPage() {
                       <p className="break-words">{message.message}</p>
                     </div>
 
-                    {/* Message actions */}
-                    <div className={`absolute top-0 ${isCurrentUser ? 'left-0 -translate-x-full' : 'right-0 translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 bg-white dark:bg-slate-800 shadow-lg rounded-lg px-2 py-1`}>
+                    {/* Message actions - moved closer to bubble */}
+                    <div className={`absolute top-0 ${isCurrentUser ? 'left-0 -translate-x-12' : 'right-0 translate-x-12'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 bg-white dark:bg-slate-800 shadow-lg rounded-lg px-2 py-1 z-10`}>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
@@ -742,13 +791,13 @@ export default function EventChatPage() {
           })
         )}
 
-        <div ref={messagesEndRef} />
-        
         {/* Typing Indicators */}
         <TypingIndicator 
-          typingUsers={typingUsers} 
+          typingUsers={typingUsers.map(u => u.name)} 
           className="px-4 py-2"
         />
+        
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Reply indicator */}
