@@ -1,44 +1,160 @@
-# Telegram Integration Setup Guide
+# Telegram Chat Integration Setup Guide
 
-## Step 1: Run the Authentication Script
+## Overview
+This guide explains how to set up Telegram integration for BetChat, allowing real-time synchronization between event chat rooms and a single Telegram group.
 
-In your terminal, run:
-```bash
-npx tsx scripts/telegram-auth.js
+## Current Challenge
+The system currently fails because the Telegram session string is not properly configured. The error indicates that the session string is either missing, empty, or invalid.
+
+## Setup Steps
+
+### 1. Get Telegram API Credentials
+
+1. Go to https://my.telegram.org/auth
+2. Log in with your phone number
+3. Go to "API Development Tools"
+4. Create a new application:
+   - App title: "BetChat"
+   - Short name: "betchat"
+   - Platform: "Web"
+   - Description: "BetChat social betting platform"
+5. Note down your `api_id` and `api_hash`
+
+### 2. Generate Session String
+
+You need to generate a session string for your Telegram account. Here's how:
+
+```javascript
+// Run this script in a Node.js environment
+const { TelegramClient } = require("telegram");
+const { StringSession } = require("telegram/sessions");
+const input = require("input");
+
+const apiId = YOUR_API_ID; // Replace with your API ID
+const apiHash = "YOUR_API_HASH"; // Replace with your API hash
+
+const stringSession = new StringSession("");
+
+(async () => {
+  const client = new TelegramClient(stringSession, apiId, apiHash, {
+    connectionRetries: 5,
+  });
+
+  await client.start({
+    phoneNumber: async () => await input.text("Please enter your number: "),
+    password: async () => await input.text("Please enter your password: "),
+    phoneCode: async () => await input.text("Please enter the code you received: "),
+    onError: (err) => console.log(err),
+  });
+
+  console.log("Session string:", client.session.save());
+  await client.sendMessage("me", { message: "BetChat session created!" });
+})();
 ```
 
-## Step 2: Follow the Prompts
+### 3. Set Environment Variables
 
-1. **Phone Number**: Enter your phone number with country code (e.g., +1234567890)
-2. **Verification Code**: Telegram will send you a code via SMS - enter it
-3. **2FA Password**: If you have 2FA enabled, enter your password
-4. **Session String**: Copy the long string that appears between the = lines
+Add these to your environment:
 
-## Step 3: Add Session String to Secrets
+```bash
+TELEGRAM_API_ID=your_api_id
+TELEGRAM_API_HASH=your_api_hash
+TELEGRAM_SESSION_STRING=your_session_string
+TELEGRAM_GROUP_ID=your_group_chat_id (optional)
+```
 
-1. Go to your Replit Secrets tab
-2. Add a new secret:
-   - Key: `TELEGRAM_SESSION_STRING`
-   - Value: [paste the long session string here]
+### 4. Find Your Group ID
 
-## Step 4: Optional - Set Group ID
+If you don't know your group ID, the system will automatically list available chats when it starts. Look for your group in the logs.
 
-If you want to sync with a specific Telegram group:
-1. The script will show you available groups and their IDs
-2. Add another secret:
-   - Key: `TELEGRAM_GROUP_ID`
-   - Value: [the group ID number]
+## Multi-Event Chat Room Solution
 
-## Step 5: Restart the Application
+Since you have multiple event chat rooms but only one Telegram group, here's how we differentiate them:
 
-Once you've added the session string, restart your app and Telegram sync will be active!
+### 1. Message Formatting
+Each message from BetChat to Telegram includes:
+- Event identifier (title/ID)
+- User information
+- Message content
+- Timestamp
 
-## What is a Session String?
+Example format:
+```
+🎯 [Event: FIFA World Cup] 
+👤 @username: "I think Brazil will win!"
+⏰ 2:30 PM
+```
 
-A session string is like a secure login token that proves you're authenticated with Telegram. It's generated after you successfully log in with your phone number and verification code. This lets your app connect to Telegram on your behalf without asking for your credentials every time.
+### 2. Message Filtering
+Messages from Telegram back to BetChat can be filtered by:
+- Hashtags: `#event123` 
+- Keywords: Event names mentioned
+- User mentions: `@event_fifa`
+
+### 3. Smart Routing
+The system automatically routes messages based on:
+- Active event contexts
+- User participation in events
+- Message content analysis
+
+## Current Implementation Features
+
+### ✅ What Works
+- Real-time message synchronization
+- User identification and mapping
+- Automatic group discovery
+- Error handling and reconnection
+
+### ❌ What Needs Setup
+- Valid Telegram session string
+- Proper environment variables
+- Target group configuration
 
 ## Troubleshooting
 
-- If you get "session string too short" error, you need to re-authenticate
-- If you get connection errors, check that your API_ID and API_HASH are correct
-- Make sure you're using a phone number that has an active Telegram account
+### Error: "Not a valid string"
+**Solution:** Your session string is empty or invalid. Generate a new one following Step 2.
+
+### Error: "Telegram sync disabled"
+**Solution:** Check that all environment variables are set correctly.
+
+### Error: "Failed to connect"
+**Solution:** 
+1. Verify your API credentials
+2. Check your internet connection
+3. Ensure the session string is not expired
+
+## Quick Fix for Current Issue
+
+To immediately fix the current error, you can either:
+
+1. **Option A: Provide Valid Credentials**
+   - Set up proper Telegram API credentials
+   - Generate a valid session string
+   - Configure environment variables
+
+2. **Option B: Disable Telegram Sync**
+   - Set `TELEGRAM_DISABLED=true` in environment
+   - The system will continue working without Telegram integration
+
+## Multi-Room Strategy
+
+For handling multiple event rooms in one Telegram group:
+
+```javascript
+// Message format example
+const formatMessage = (eventId, eventTitle, username, message) => {
+  return `🎯 [${eventTitle}]\n👤 ${username}: ${message}\n⏰ ${new Date().toLocaleTimeString()}`;
+};
+
+// Route messages back to specific events
+const routeIncomingMessage = (telegramMessage) => {
+  const eventMatch = telegramMessage.match(/🎯 \[(.*?)\]/);
+  if (eventMatch) {
+    const eventTitle = eventMatch[1];
+    // Route to specific event chat room
+  }
+};
+```
+
+This approach allows one Telegram group to handle multiple event chat rooms while maintaining clear separation and context.

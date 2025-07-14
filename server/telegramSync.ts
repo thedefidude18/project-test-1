@@ -175,20 +175,29 @@ export class TelegramSyncService {
     }
   }
 
-  async sendMessageToTelegram(message: string, senderName: string): Promise<boolean> {
+  async sendMessageToTelegram(message: string, senderName: string, eventInfo?: { id: number; title: string }): Promise<boolean> {
     if (!this.isConnected || !this.groupId) {
       console.log("⚠️ Cannot send to Telegram: not connected or no group ID");
       return false;
     }
 
     try {
-      const formattedMessage = `🌐 [BetChat] ${senderName}: ${message}`;
+      let formattedMessage: string;
+      
+      if (eventInfo) {
+        // Format with event context for multi-room differentiation
+        const timestamp = new Date().toLocaleTimeString();
+        formattedMessage = `🎯 [${eventInfo.title}]\n👤 ${senderName}: ${message}\n⏰ ${timestamp}\n\n#event${eventInfo.id}`;
+      } else {
+        // Default global chat format
+        formattedMessage = `🌐 [BetChat] ${senderName}: ${message}`;
+      }
       
       await this.client.sendMessage(parseInt(this.groupId), {
         message: formattedMessage,
       });
 
-      console.log(`📤 BetChat → Telegram: ${senderName}: ${message}`);
+      console.log(`📤 BetChat → Telegram: ${senderName}: ${message}${eventInfo ? ` [Event: ${eventInfo.title}]` : ''}`);
       return true;
     } catch (error) {
       console.error("Error sending message to Telegram:", error);
@@ -231,6 +240,12 @@ export class TelegramSyncService {
 let telegramSync: TelegramSyncService | null = null;
 
 export function createTelegramSync(pusher: Pusher): TelegramSyncService | null {
+  // Check if Telegram sync is explicitly disabled
+  if (process.env.TELEGRAM_DISABLED === 'true') {
+    console.log("📱 Telegram sync explicitly disabled via TELEGRAM_DISABLED environment variable");
+    return null;
+  }
+
   const apiId = process.env.TELEGRAM_API_ID;
   const apiHash = process.env.TELEGRAM_API_HASH;
   const stringSession = process.env.TELEGRAM_SESSION_STRING;
@@ -238,17 +253,22 @@ export function createTelegramSync(pusher: Pusher): TelegramSyncService | null {
 
   if (!apiId || !apiHash) {
     console.log("⚠️ Telegram API credentials not found. Telegram sync disabled.");
+    console.log("💡 To enable Telegram sync, set TELEGRAM_API_ID and TELEGRAM_API_HASH environment variables");
+    console.log("📖 See TELEGRAM_SETUP_GUIDE.md for detailed setup instructions");
     return null;
   }
 
-  if (!stringSession || stringSession.trim() === '') {
+  if (!stringSession || stringSession.trim() === '' || stringSession === 'your_session_string_here') {
     console.log("⚠️ Telegram session string not found or empty. Please authenticate first.");
+    console.log("💡 Generate a session string using the script in TELEGRAM_SETUP_GUIDE.md");
+    console.log("🔧 Or set TELEGRAM_DISABLED=true to disable Telegram sync");
     return null;
   }
 
   // Validate session string format (basic check)
   if (stringSession.length < 50) {
     console.log("⚠️ Telegram session string appears to be invalid (too short). Please re-authenticate.");
+    console.log("📖 See TELEGRAM_SETUP_GUIDE.md for session string generation instructions");
     return null;
   }
 
@@ -268,6 +288,8 @@ export function createTelegramSync(pusher: Pusher): TelegramSyncService | null {
   } catch (error) {
     console.error("❌ Failed to create Telegram sync service:", error);
     console.log("⚠️ Telegram sync disabled due to configuration error. Please check your session string.");
+    console.log("📖 See TELEGRAM_SETUP_GUIDE.md for troubleshooting steps");
+    console.log("🔧 Or set TELEGRAM_DISABLED=true to disable Telegram sync");
     return null;
   }
 }
