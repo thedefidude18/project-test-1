@@ -20,7 +20,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-primary to-secondary flex items-center justify-center z-50 animate-fade-out">
+    <div className="fixed inset-0 bg-white flex items-center justify-center z-50 animate-fade-out">
       <div className="text-center">
         <div className="mb-8">
           <img 
@@ -28,12 +28,12 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             alt="BetChat" 
             className="w-20 h-20 mx-auto mb-4 animate-pulse"
           />
-          <h1 className="text-white text-2xl font-bold mb-2">BetChat</h1>
-          <p className="text-white/80 text-sm">Predict • Chat • Win</p>
+          <h1 className="text-primary text-2xl font-bold mb-2">BetChat</h1>
+          <p className="text-slate-600 text-sm">Predict • Chat • Win</p>
         </div>
         
         <div className="flex justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
         </div>
       </div>
     </div>

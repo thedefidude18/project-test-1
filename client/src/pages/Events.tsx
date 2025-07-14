@@ -158,10 +158,10 @@ export default function Events() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 md:px-4 sm:px-6 lg:px-8 py-3 md:py-8">
         {/* Header */}
-        <div id="events-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-          <div>
+        <div id="events-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-8">
+          <div className="hidden md:block">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
               Events 🎯
             </h1>
@@ -177,12 +177,25 @@ export default function Events() {
               ℹ️ Show rewards guide
             </Button>
           </div>
+          
+          {/* Mobile compact header */}
+          <div className="flex md:hidden w-full justify-between items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowOnboarding(true)}
+              className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              ℹ️ Rewards guide
+            </Button>
+          </div>
 
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button id="create-event-btn" className="bg-primary text-white hover:bg-primary/90 mt-4 sm:mt-0">
-                <i className="fas fa-plus mr-2"></i>
-                Create Event
+              <Button id="create-event-btn" className="mobile-btn-primary mt-2 md:mt-4 sm:mt-0 md:bg-primary md:text-white md:hover:bg-primary/90">
+                <i className="fas fa-plus mr-1 md:mr-2"></i>
+                <span className="hidden sm:inline">Create Event</span>
+                <span className="sm:hidden">Create</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
@@ -350,8 +363,8 @@ export default function Events() {
         </div>
 
         {/* Filters */}
-        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 mb-8">
-          <CardContent className="p-6">
+        <Card className="mobile-card-compact md:bg-white md:dark:bg-slate-800 md:border-slate-200 md:dark:border-slate-700 mb-3 md:mb-8">
+          <CardContent className="p-3 md:p-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <Input
@@ -414,7 +427,7 @@ export default function Events() {
             </CardContent>
           </Card>
         ) : (
-          <div id="events-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div id="events-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
             {filteredEvents.map((event: any, index: number) => (
               <EventCard 
                 key={event.id} 

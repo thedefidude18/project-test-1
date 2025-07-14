@@ -524,7 +524,7 @@ export default function EventChatPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col md:bg-slate-50 md:dark:bg-slate-900">
       {/* Header with Event Info and Back Button */}
       <div className="bg-gradient-to-r from-primary to-secondary text-white sticky top-0 z-50 rounded-b-xl md:rounded-none">
         <div className="px-3 md:px-4 py-2 md:py-3">
@@ -648,7 +648,7 @@ export default function EventChatPage() {
       </div>
 
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2">
+      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-2 md:px-3 py-2 md:py-3 space-y-1 md:space-y-2">
         {messages.length === 0 ? (
           <div className="text-center text-slate-500 dark:text-slate-400 py-8">
             <i className="fas fa-comments text-2xl mb-2"></i>
@@ -832,7 +832,7 @@ export default function EventChatPage() {
       )}
 
       {/* Message Input */}
-      <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-2 md:p-3 sticky bottom-0 rounded-t-xl md:rounded-none">
+      <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-2 sticky bottom-0 rounded-t-2xl md:rounded-none mobile-nav-safe-area">
         <div className="relative">
           {/* Mentions dropdown */}
           {showMentions && filteredParticipants.length > 0 && (
