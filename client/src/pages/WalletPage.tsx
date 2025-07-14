@@ -15,6 +15,9 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { formatDistanceToNow } from "date-fns";
 import { formatBalance } from "@/utils/currencyUtils";
 import { PaymentTestPanel } from "@/components/PaymentTestPanel";
+import { PlayfulLoading, PlayfulLoadingOverlay } from "@/components/ui/playful-loading";
+import { AnimatedButton } from "@/components/ui/animated-button";
+import { SkeletonCard } from "@/components/ui/loading-states";
 
 export default function WalletPage() {
   const { user } = useAuth();
