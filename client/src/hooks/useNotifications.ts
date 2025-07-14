@@ -3,10 +3,12 @@ import { useAuth } from './useAuth';
 import { apiRequest } from '@/lib/queryClient';
 import { useEffect } from 'react';
 import { pusher } from '@/lib/pusher';
+import { useToast } from './use-toast';
 
 export function useNotifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['/api/notifications'],
@@ -49,7 +51,26 @@ export function useNotifications() {
     notificationEvents.forEach(eventName => {
       channel.bind(eventName, (data: any) => {
         console.log(`Received ${eventName}:`, data);
-        // Refresh notifications
+        
+        // Show instant toast notification for receiving events (not sent events)
+        if (eventName === 'tip-received' || eventName === 'new-follower' || eventName === 'challenge-received' || eventName === 'friend-request') {
+          // Play notification sound
+          try {
+            const audio = new Audio('/assets/message-notification.mp3');
+            audio.volume = 0.3;
+            audio.play().catch(console.error);
+          } catch (e) {
+            console.error('Failed to play notification sound:', e);
+          }
+
+          toast({
+            title: data.title || '🔔 New Notification',
+            description: data.message || 'You have a new notification',
+            duration: 5000,
+          });
+        }
+        
+        // Refresh notifications list
         queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
       });
     });
@@ -60,7 +81,7 @@ export function useNotifications() {
       });
       pusher.unsubscribe(`user-${user.id}`);
     };
-  }, [user?.id, queryClient]);
+  }, [user?.id, queryClient, toast]);
 
   return {
     notifications: notifications || [],
