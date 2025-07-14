@@ -1,9 +1,6 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-
 interface CharacterProps {
   className?: string;
   animate?: boolean;
