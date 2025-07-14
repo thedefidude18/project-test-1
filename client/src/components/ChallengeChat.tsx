@@ -378,7 +378,10 @@ export function ChallengeChat({ challenge, onClose }: ChallengeChatProps) {
                     {msg.user?.firstName || msg.user?.username || 'Unknown User'}
                   </span>
                   <span className="text-xs opacity-70">
-                    {formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })}
+                    {msg.createdAt && !isNaN(new Date(msg.createdAt).getTime()) 
+                      ? formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true })
+                      : 'Just now'
+                    }
                   </span>
                 </div>
                 <p className="text-sm">{msg.message}</p>
