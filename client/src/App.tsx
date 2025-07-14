@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
@@ -33,9 +34,26 @@ import ChallengeDetail from "./pages/ChallengeDetail";
 import { DailySignInModal } from '@/components/DailySignInModal';
 import { useDailySignIn } from '@/hooks/useDailySignIn';
 import AdminLogin from "@/pages/AdminLogin"; // Assuming you have an AdminLogin component
+import { WebsiteTour, useTour } from "@/components/WebsiteTour";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  
+  // Initialize tour
+  const tour = useTour();
+  
+  // Add global tour event listener
+  useEffect(() => {
+    const handleStartTour = () => {
+      tour.startTour();
+    };
+    
+    window.addEventListener('start-tour', handleStartTour);
+    
+    return () => {
+      window.removeEventListener('start-tour', handleStartTour);
+    };
+  }, [tour]);
 
   // Initialize notifications for authenticated users
   const notifications = useNotifications();
@@ -87,6 +105,14 @@ function Router() {
         onClose={() => setShowModal(false)}
         pointsToAward={signInStatus.pointsToAward}
         currentStreak={signInStatus.currentStreak}
+      />
+    )}
+    
+    {/* Website Tour */}
+    {isAuthenticated && (
+      <WebsiteTour 
+        isOpen={tour.isOpen}
+        onClose={tour.closeTour}
       />
     )}
     </div>

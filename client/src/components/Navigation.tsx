@@ -67,18 +67,21 @@ export function Navigation() {
             <button
               onClick={() => handleNavigation('/events')}
               className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+              data-tour="events"
             >
               Events
             </button>
             <button
               onClick={() => handleNavigation('/challenges')}
               className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+              data-tour="challenges"
             >
               Challenges
             </button>
             <button
               onClick={() => handleNavigation('/friends')}
               className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+              data-tour="friends"
             >
               Friends
             </button>
@@ -102,6 +105,7 @@ export function Navigation() {
             <button
               onClick={() => handleNavigation('/wallet')}
               className="hidden sm:flex items-center space-x-2 bg-slate-100 dark:bg-slate-700 px-3 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              data-tour="wallet"
             >
               <i className="fas fa-wallet text-emerald-500"></i>
               <span className="text-sm font-medium">{formatBalance(typeof balance === 'object' ? (balance.balance || 0) : (balance || 0))}</span>
@@ -111,6 +115,7 @@ export function Navigation() {
             <button
               onClick={() => handleNavigation('/notifications')}
               className="relative p-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+              data-tour="notifications"
             >
               <i className="fas fa-bell"></i>
               {unreadCount > 0 && (
@@ -122,11 +127,24 @@ export function Navigation() {
 
             {/* Theme Toggle */}
             <ThemeToggle />
+            
+            {/* Tour Button */}
+            <button
+              onClick={() => {
+                // Add tour functionality
+                const event = new CustomEvent('start-tour');
+                window.dispatchEvent(event);
+              }}
+              className="p-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+              title="Start Website Tour"
+            >
+              <i className="fas fa-question-circle"></i>
+            </button>
 
             {/* Profile */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2 p-2">
+                <Button variant="ghost" className="flex items-center space-x-2 p-2" data-tour="profile">
                   <UserAvatar
                     userId={user.id}
                     username={user.username}

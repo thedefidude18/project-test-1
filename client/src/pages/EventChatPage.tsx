@@ -318,25 +318,28 @@ export default function EventChatPage() {
 
   // Handle typing indicators
   const handleTyping = () => {
-    if (typingTimeoutRef.current) {
+    if (!sendMessage || typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    sendMessage({
-      type: 'user_typing',
-      eventId,
-      userId: user?.id,
-      isTyping: true,
-    });
-
-    typingTimeoutRef.current = setTimeout(() => {
+    // Only send typing if WebSocket is connected
+    if (sendMessage && user?.id) {
       sendMessage({
         type: 'user_typing',
         eventId,
-        userId: user?.id,
-        isTyping: false,
+        userId: user.id,
+        isTyping: true,
       });
-    }, 3000);
+
+      typingTimeoutRef.current = setTimeout(() => {
+        sendMessage({
+          type: 'user_typing',
+          eventId,
+          userId: user.id,
+          isTyping: false,
+        });
+      }, 3000);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -601,7 +604,7 @@ export default function EventChatPage() {
       </div>
 
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2 flex flex-col-reverse">
+      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-3 py-3 space-y-2 flex flex-col">
         
         {messages.length === 0 ? (
           <div className="text-center text-slate-500 dark:text-slate-400 py-8">
@@ -609,11 +612,10 @@ export default function EventChatPage() {
             <p>No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          [...messages]
-            .reverse().map((message: ExtendedMessage, index: number) => {
-            const showAvatar = index === 0 || messages[messages.length - 2 - index]?.userId !== message.userId;
+          messages.map((message: ExtendedMessage, index: number) => {
+            const showAvatar = index === messages.length - 1 || messages[index + 1]?.userId !== message.userId;
             const isCurrentUser = message.userId === user?.id;
-            const isConsecutive = index > 0 && messages[messages.length - 2 - index]?.userId === message.userId;
+            const isConsecutive = index > 0 && messages[index - 1]?.userId === message.userId;
 
             return (
               <div key={message.id} className={`flex space-x-2 ${isCurrentUser ? 'flex-row-reverse space-x-reverse' : ''} ${isConsecutive ? 'mt-1' : 'mt-3'}`}>
@@ -740,13 +742,13 @@ export default function EventChatPage() {
           })
         )}
 
+        <div ref={messagesEndRef} />
+        
         {/* Typing Indicators */}
         <TypingIndicator 
           typingUsers={typingUsers} 
           className="px-4 py-2"
         />
-
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Reply indicator */}

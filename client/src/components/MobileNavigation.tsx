@@ -25,31 +25,36 @@ export function MobileNavigation() {
       path: "/", 
       icon: "fas fa-home", 
       label: "Home",
-      isActive: location === "/"
+      isActive: location === "/",
+      tourId: "home"
     },
     { 
       path: "/events", 
       icon: "fas fa-calendar", 
       label: "Events",
-      isActive: location.startsWith("/events")
+      isActive: location.startsWith("/events"),
+      tourId: "events"
     },
     { 
       path: "/challenges", 
       icon: "fas fa-swords", 
       label: "Challenges",
-      isActive: location.startsWith("/challenges")
+      isActive: location.startsWith("/challenges"),
+      tourId: "challenges"
     },
     { 
       path: "/friends", 
       icon: "fas fa-users", 
       label: "Friends",
-      isActive: location.startsWith("/friends")
+      isActive: location.startsWith("/friends"),
+      tourId: "friends"
     },
     { 
       path: "/profile", 
       icon: "fas fa-user", 
       label: "Profile",
-      isActive: location.startsWith("/profile")
+      isActive: location.startsWith("/profile"),
+      tourId: "profile"
     },
   ];
 
@@ -71,6 +76,7 @@ export function MobileNavigation() {
                 ? "text-primary bg-primary/10 scale-105" 
                 : "text-muted-foreground hover:text-foreground"
             )}
+            data-tour={item.tourId}
           >
             <i 
               className={cn(
@@ -92,6 +98,7 @@ export function MobileNavigation() {
         ))}
          <button
             onClick={() => navigateTo('/wallet')}
+            data-tour="wallet"
             className={cn(
               "flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 ease-in-out min-w-[60px]",
               "hover:bg-accent/50 active:scale-95",
