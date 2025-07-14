@@ -38,6 +38,7 @@ export function DailySignInModal({ isOpen, onClose, pointsToAward, currentStreak
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/wallet/balance'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/daily-signin/status'] });
 
       toast({
         title: "🎉 Daily Sign-In Bonus Claimed!",
@@ -52,11 +53,24 @@ export function DailySignInModal({ isOpen, onClose, pointsToAward, currentStreak
       
     } catch (error: any) {
       console.error('Error claiming daily sign-in:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to claim daily sign-in bonus",
-        variant: "destructive",
-      });
+      
+      // If already claimed or other error, just close the modal
+      if (error.message?.includes('already claimed') || error.message?.includes('400')) {
+        toast({
+          title: "Already Claimed",
+          description: "You've already claimed your daily bonus today!",
+          variant: "default",
+        });
+        handleClose();
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to claim daily sign-in bonus",
+          variant: "destructive",
+        });
+        // Close modal even on error to prevent it from being stuck
+        setTimeout(handleClose, 2000);
+      }
     } finally {
       setIsClaiming(false);
     }
@@ -70,8 +84,18 @@ export function DailySignInModal({ isOpen, onClose, pointsToAward, currentStreak
   const handleClose = () => {
     setClaimed(false);
     setShowConfetti(false);
+    setIsClaiming(false);
     onClose();
   };
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setClaimed(false);
+      setShowConfetti(false);
+      setIsClaiming(false);
+    }
+  }, [isOpen]);
 
   // Confetti component
   const Confetti = () => {
