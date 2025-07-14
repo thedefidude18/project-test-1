@@ -63,6 +63,7 @@ export interface IStorage {
   adjustUserBalance(userId: string, amount: number, reason: string): Promise<User>;
   setUserAdminStatus(userId: string, isAdmin: boolean, reason: string): Promise<User>;
   sendAdminMessage(userId: string, message: string, reason: string): Promise<any>;
+  checkDailyLogin(userId: string): Promise<any>;
 
   // Event operations
   getEvents(limit?: number): Promise<Event[]>;
@@ -1597,6 +1598,127 @@ export class DatabaseStorage implements IStorage {
     });
 
     return { success: true, message: 'Admin message sent successfully' };
+  }
+
+  async checkDailyLogin(userId: string): Promise<any> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Check if user has already logged in today
+    const todayLogin = await db
+      .select()
+      .from(dailyLogins)
+      .where(and(
+        eq(dailyLogins.userId, userId),
+        sql`DATE(${dailyLogins.date}) = ${today.toISOString().split('T')[0]}`
+      ))
+      .limit(1);
+
+    if (todayLogin.length > 0) {
+      return todayLogin[0]; // Already logged in today
+    }
+
+    // Get last login to determine streak
+    const lastLogin = await db
+      .select()
+      .from(dailyLogins)
+      .where(eq(dailyLogins.userId, userId))
+      .orderBy(sql`${dailyLogins.date} DESC`)
+      .limit(1);
+
+    let currentStreak = 1;
+    if (lastLogin.length > 0) {
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      const lastLoginDate = new Date(lastLogin[0].date);
+      lastLoginDate.setHours(0, 0, 0, 0);
+      
+      if (lastLoginDate.getTime() === yesterday.getTime()) {
+        currentStreak = lastLogin[0].streak + 1; // Continue streak
+      } else {
+        currentStreak = 1; // Reset streak
+      }
+    }
+
+    // Calculate points (base 50 + streak bonus, max 200 bonus)
+    const basePoints = 50;
+    const streakBonus = Math.min(currentStreak * 10, 200);
+    const pointsEarned = basePoints + streakBonus;
+
+    // Create today's login record
+    const [newLogin] = await db
+      .insert(dailyLogins)
+      .values({
+        userId,
+        date: today,
+        streak: currentStreak,
+        pointsEarned,
+        claimed: false
+      })
+      .returning();
+
+    // If first time user, also create welcome notification
+    const userCreatedToday = await db
+      .select()
+      .from(users)
+      .where(and(
+        eq(users.id, userId),
+        sql`DATE(${users.createdAt}) = ${today.toISOString().split('T')[0]}`
+      ))
+      .limit(1);
+
+    if (userCreatedToday.length > 0) {
+      // Create welcome notification for new users
+      await this.createNotification({
+        userId,
+        type: 'welcome',
+        title: '🎉 Welcome to BetChat!',
+        message: 'You received 1000 points for joining! Start betting and challenging friends.',
+        data: { points: 1000, type: 'welcome_bonus' }
+      });
+
+      // Check if user was referred
+      const user = userCreatedToday[0];
+      if (user.referredBy) {
+        // Find referrer and create referral notification
+        const referrer = await this.getUser(user.referredBy);
+        if (referrer) {
+          await this.createNotification({
+            userId: user.referredBy,
+            type: 'referral_reward',
+            title: '💰 Referral Bonus!',
+            message: `You earned 500 points for referring @${user.firstName || user.username || 'a new user'}!`,
+            data: { 
+              points: 500, 
+              referredUserId: userId,
+              referredUserName: user.firstName || user.username,
+              type: 'referral_bonus'
+            }
+          });
+
+          // Add referral points to referrer
+          await db
+            .update(users)
+            .set({ 
+              points: sql`${users.points} + 500`,
+              updatedAt: new Date()
+            })
+            .where(eq(users.id, user.referredBy));
+
+          // Create transaction for referrer
+          await this.createTransaction({
+            userId: user.referredBy,
+            type: 'referral_bonus',
+            amount: '500',
+            description: `Referral bonus for ${user.firstName || user.username || 'new user'}`,
+            status: 'completed'
+          });
+        }
+      }
+    }
+
+    return newLogin;
   }
 }
 

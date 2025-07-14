@@ -261,6 +261,7 @@ export const dailyLogins = pgTable("daily_logins", {
   date: timestamp("date").notNull(),
   streak: integer("streak").default(1),
   pointsEarned: integer("points_earned").default(50),
+  claimed: boolean("claimed").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -5,6 +5,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import Pusher from "pusher";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { db } from "./db";
 import { insertEventSchema, insertChallengeSchema, insertNotificationSchema } from "@shared/schema";
 import { and, eq } from "drizzle-orm";
 import {
@@ -21,6 +22,7 @@ import {
   walletBalances,
   walletTransactions,
   followers,
+  dailyLogins,
 } from "../shared/schema";
 import { sql } from "drizzle-orm";
 import crypto from "crypto";
@@ -55,6 +57,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
+      
+      // Check and create daily login record
+      await storage.checkDailyLogin(userId);
+      
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -1333,6 +1339,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending tip:", error);
       res.status(500).json({ message: "Failed to send tip" });
+    }
+  });
+
+  // Daily Sign-In Routes
+  app.get('/api/daily-signin/status', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Check if user has already signed in today
+      const todayLogin = await db
+        .select()
+        .from(dailyLogins)
+        .where(and(
+          eq(dailyLogins.userId, userId),
+          sql`DATE(${dailyLogins.date}) = ${today.toISOString().split('T')[0]}`
+        ))
+        .limit(1);
+
+      const hasSignedInToday = todayLogin.length > 0;
+      const hasClaimed = hasSignedInToday ? todayLogin[0].claimed : false;
+
+      // Get current streak
+      const latestLogin = await db
+        .select()
+        .from(dailyLogins)
+        .where(eq(dailyLogins.userId, userId))
+        .orderBy(sql`${dailyLogins.date} DESC`)
+        .limit(1);
+
+      let currentStreak = 1;
+      if (latestLogin.length > 0) {
+        currentStreak = latestLogin[0].streak;
+        
+        // If they haven't signed in today, reset streak if yesterday wasn't their last login
+        if (!hasSignedInToday) {
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          
+          const lastLoginDate = new Date(latestLogin[0].date);
+          lastLoginDate.setHours(0, 0, 0, 0);
+          
+          if (lastLoginDate.getTime() !== yesterday.getTime()) {
+            currentStreak = 1; // Reset streak
+          } else {
+            currentStreak = latestLogin[0].streak + 1; // Continue streak
+          }
+        }
+      }
+
+      // Calculate points to award (base 50 + streak bonus)
+      const basePoints = 50;
+      const streakBonus = Math.min(currentStreak * 10, 200); // Max 200 bonus
+      const pointsToAward = basePoints + streakBonus;
+
+      res.json({
+        hasSignedInToday,
+        hasClaimed,
+        currentStreak,
+        pointsToAward,
+        showModal: hasSignedInToday && !hasClaimed
+      });
+    } catch (error) {
+      console.error("Error checking daily sign-in status:", error);
+      res.status(500).json({ message: "Failed to check daily sign-in status" });
+    }
+  });
+
+  app.post('/api/daily-signin/claim', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Check if already claimed today
+      const todayLogin = await db
+        .select()
+        .from(dailyLogins)
+        .where(and(
+          eq(dailyLogins.userId, userId),
+          sql`DATE(${dailyLogins.date}) = ${today.toISOString().split('T')[0]}`
+        ))
+        .limit(1);
+
+      if (todayLogin.length === 0) {
+        return res.status(400).json({ message: "No sign-in record found for today" });
+      }
+
+      if (todayLogin[0].claimed) {
+        return res.status(400).json({ message: "Daily bonus already claimed" });
+      }
+
+      const pointsEarned = todayLogin[0].pointsEarned;
+
+      // Mark as claimed and award points
+      await db
+        .update(dailyLogins)
+        .set({ claimed: true })
+        .where(eq(dailyLogins.id, todayLogin[0].id));
+
+      // Add points to user balance
+      await db
+        .update(users)
+        .set({ 
+          points: sql`${users.points} + ${pointsEarned}`,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+
+      // Create transaction record
+      await storage.createTransaction({
+        userId,
+        type: 'daily_signin',
+        amount: pointsEarned.toString(),
+        description: `Daily sign-in bonus - Day ${todayLogin[0].streak}`,
+        status: 'completed'
+      });
+
+      res.json({ 
+        message: "Daily bonus claimed successfully",
+        pointsEarned,
+        streak: todayLogin[0].streak
+      });
+    } catch (error) {
+      console.error("Error claiming daily sign-in:", error);
+      res.status(500).json({ message: "Failed to claim daily sign-in bonus" });
     }
   });
 

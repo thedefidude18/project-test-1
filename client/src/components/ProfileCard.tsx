@@ -18,6 +18,7 @@ import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatBalance } from "@/utils/currencyUtils";
 import { getAvatarUrl } from "@/utils/avatarUtils";
+import { UserAvatar } from "@/components/UserAvatar";
 
 interface ProfileCardProps {
   userId: string;
@@ -326,15 +327,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
             <div className="text-center space-y-3">
               {/* Avatar and Basic Info */}
               <div className="flex flex-col items-center space-y-2">
-                <Avatar className="w-16 h-16">
-                  <AvatarImage 
-                    src={getAvatarUrl(profile.id || userId, profile.profileImageUrl, profile.username)} 
-                    alt={profile.firstName || profile.username || 'User'} 
-                  />
-                  <AvatarFallback className="text-lg bg-primary/10 text-primary">
-                    {(profile.firstName?.[0] || profile.username?.[0] || 'U').toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  userId={profile.id || userId}
+                  username={profile.username}
+                  size={64}
+                  className="w-16 h-16"
+                />
 
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">

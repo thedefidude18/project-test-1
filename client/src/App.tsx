@@ -26,12 +26,18 @@ import AdminDashboardOverview from "@/pages/AdminDashboardOverview";
 import AdminEventPayouts from "@/pages/AdminEventPayouts";
 import AdminChallengePayouts from "@/pages/AdminChallengePayouts";
 import AdminUsersManagement from "@/pages/AdminUsersManagement";
+import { DailySignInModal } from '@/components/DailySignInModal';
+import { useDailySignIn } from '@/hooks/useDailySignIn';
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
   
   // Initialize notifications for authenticated users
   const notifications = useNotifications();
+  
+  // Initialize daily sign-in for authenticated users
+  const dailySignIn = useDailySignIn();
+  const { signInStatus, showModal, setShowModal } = dailySignIn;
 
   return (
     <div className="min-h-screen transition-all duration-300 ease-in-out">
@@ -62,6 +68,16 @@ function Router() {
       )}
       <Route component={NotFound} />
     </Switch>
+    
+    {/* Daily Sign-In Modal */}
+    {isAuthenticated && signInStatus && (
+      <DailySignInModal 
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        pointsToAward={signInStatus.pointsToAward}
+        currentStreak={signInStatus.currentStreak}
+      />
+    )}
     </div>
   );
 }

@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { formatBalance } from "@/utils/currencyUtils";
 import { getAvatarUrl } from "@/utils/avatarUtils";
+import { UserAvatar } from "@/components/UserAvatar";
 
 interface MessageReaction {
   emoji: string;
@@ -610,16 +611,17 @@ export default function EventChatPage() {
             return (
               <div key={message.id} className={`flex space-x-2 ${isCurrentUser ? 'flex-row-reverse space-x-reverse' : ''} ${isConsecutive ? 'mt-1' : 'mt-3'}`}>
                 {!isCurrentUser && showAvatar && (
-                    <Avatar className="w-6 h-6 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
-                    onClick={() => setSelectedProfileUserId(message.user.id)}>
-                      <AvatarImage 
-                        src={getAvatarUrl(message.user.id, message.user.profileImageUrl, message.user.username)} 
-                        alt={message.user.firstName || message.user.username} 
+                    <div
+                      className="flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all rounded-full"
+                      onClick={() => setSelectedProfileUserId(message.user.id)}
+                    >
+                      <UserAvatar
+                        userId={message.user.id}
+                        username={message.user.username}
+                        size={24}
+                        className="w-6 h-6"
                       />
-                      <AvatarFallback className="text-xs">
-                        <img src={getAvatarUrl(message.user.id, message.user.profileImageUrl, message.user.username)} alt="Avatar" />
-                      </AvatarFallback>
-                    </Avatar>
+                    </div>
                   )}
 
                 <div className={`flex-1 max-w-[75%] ${isCurrentUser ? 'text-right' : ''} ${!showAvatar && !isCurrentUser ? 'ml-8' : ''}`}>
@@ -772,12 +774,12 @@ export default function EventChatPage() {
                   className="px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer flex items-center space-x-2"
                   onClick={() => handleMention(participant.user.username || participant.user.firstName)}
                 >
-                  <Avatar className="w-5 h-5">
-                    <AvatarImage src={participant.user.profileImageUrl} />
-                    <AvatarFallback className="text-xs">
-                      {(participant.user.firstName?.[0] || participant.user.username?.[0] || 'U').toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    userId={participant.user.id}
+                    username={participant.user.username}
+                    size={20}
+                    className="w-5 h-5"
+                  />
                   <span className="text-sm">{participant.user.firstName || participant.user.username}</span>
                 </div>
               ))}

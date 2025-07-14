@@ -6,6 +6,7 @@ import { MobileNavigation } from "@/components/MobileNavigation";
 import ProfileCard from "@/components/ProfileCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/UserAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -64,13 +65,7 @@ export default function Leaderboard() {
 
   if (!user) return null;
 
-    const getAvatarUrl = (userId: string, profileImageUrl?: string, username?: string) => {
-        if (profileImageUrl) {
-            return profileImageUrl;
-        }
-        const name = username || 'user';
-        return `https://api.dicebear.com/7.x/lorelei/svg?seed=${userId}`;
-    };
+
 
   // Apply search filter
   const filteredUsers = leaderboard.filter((user: any) => {
@@ -189,18 +184,17 @@ export default function Leaderboard() {
                             }`}>
                               {getRankIcon(rank)}
                             </div>
-                            <Avatar 
-                              className="w-12 h-12 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                            <div
+                              className="cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all rounded-full"
                               onClick={() => setSelectedProfileUserId(player.id)}
                             >
-                              <AvatarImage 
-                                src={getAvatarUrl(player.id, player.profileImageUrl, player.username)} 
-                                alt={player.firstName || player.username} 
+                              <UserAvatar
+                                userId={player.id}
+                                username={player.username}
+                                size={48}
+                                className="w-12 h-12"
                               />
-                              <AvatarFallback>
-                                <img src={getAvatarUrl(player.id, player.profileImageUrl, player.username)} alt="Avatar" />
-                              </AvatarFallback>
-                            </Avatar>
+                            </div>
                             <div>
                               <div className="flex items-center space-x-2">
                                 <h3 className={`font-semibold ${isCurrentUser ? 'text-primary' : 'text-slate-900 dark:text-slate-100'}`}>
