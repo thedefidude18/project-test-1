@@ -1736,6 +1736,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Temporary debug route to check admin status (remove after use)
+  app.get('/api/debug/admin-check', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      const allAdmins = await storage.getAdminUsers();
+      
+      res.json({
+        currentUser: {
+          id: userId,
+          isAdmin: user?.isAdmin || false,
+          username: user?.username,
+          firstName: user?.firstName
+        },
+        totalAdmins: allAdmins.length,
+        adminUsers: allAdmins.map(admin => ({
+          id: admin.id,
+          username: admin.username,
+          firstName: admin.firstName
+        }))
+      });
+    } catch (error) {
+      console.error("Error in admin debug check:", error);
+      res.status(500).json({ message: "Failed to check admin status" });
+    }
+  });
+
   // Admin settings routes
   app.get('/api/admin/settings', isAdmin, async (req: AuthenticatedRequest, res) => {
     try {
