@@ -44,7 +44,6 @@ import {
 import { db } from "./db";
 import { eq, desc, and, or, sql, count, sum, inArray } from "drizzle-orm";
 import { nanoid } from 'nanoid';
-import { messages } from '@shared/schema';
 
 export interface IStorage {
   // User operations - Required for Replit Auth
@@ -370,15 +369,12 @@ export class DatabaseStorage implements IStorage {
 
   async createGlobalChatMessage(messageData: any) {
     try {
-      const [newMessage] = await db.insert(messages).values({
-        id: messageData.id || nanoid(),
+      const [newMessage] = await db.insert(eventMessages).values({
         eventId: null, // Global chat messages don't belong to specific events
         userId: messageData.userId,
         message: messageData.message,
-        createdAt: new Date(messageData.createdAt || new Date()),
         replyToId: messageData.replyToId || null,
         mentions: messageData.mentions || null,
-        messageType: messageData.source || 'chat',
       }).returning();
 
       // Get user info for the message
@@ -403,13 +399,12 @@ export class DatabaseStorage implements IStorage {
     try {
       const messagesWithUsers = await db
         .select({
-          id: messages.id,
-          userId: messages.userId,
-          message: messages.message,
-          createdAt: messages.createdAt,
-          replyToId: messages.replyToId,
-          mentions: messages.mentions,
-          messageType: messages.messageType,
+          id: eventMessages.id,
+          userId: eventMessages.userId,
+          message: eventMessages.message,
+          createdAt: eventMessages.createdAt,
+          replyToId: eventMessages.replyToId,
+          mentions: eventMessages.mentions,
           user: {
             id: users.id,
             firstName: users.firstName,
@@ -418,10 +413,10 @@ export class DatabaseStorage implements IStorage {
             profileImageUrl: users.profileImageUrl,
           }
         })
-        .from(messages)
-        .leftJoin(users, eq(messages.userId, users.id))
-        .where(eq(messages.eventId, null)) // Global chat messages
-        .orderBy(sql`${messages.createdAt} DESC`)
+        .from(eventMessages)
+        .leftJoin(users, eq(eventMessages.userId, users.id))
+        .where(sql`${eventMessages.eventId} IS NULL`) // Global chat messages
+        .orderBy(sql`${eventMessages.createdAt} DESC`)
         .limit(limit);
 
       return messagesWithUsers;
