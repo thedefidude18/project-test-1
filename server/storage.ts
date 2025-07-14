@@ -173,6 +173,11 @@ export interface IStorage {
   giveUserPoints(userId: string, points: number): Promise<void>;
   updateEventCapacity(eventId: number, additionalSlots: number): Promise<void>;
   broadcastMessage(message: string, type: string): Promise<void>;
+  
+  // Missing admin functions
+  getAdminNotifications(limit: number): Promise<any[]>;
+  broadcastNotification(data: any): Promise<any>;
+  searchUsers(query: string, limit: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1997,6 +2002,35 @@ export class DatabaseStorage implements IStorage {
     }));
 
     await db.insert(notifications).values(notificationData);
+  }
+
+  // Missing admin functions
+  async getAdminNotifications(limit: number): Promise<any[]> {
+    return await db.select().from(notifications)
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit);
+  }
+
+  async broadcastNotification(data: any): Promise<any> {
+    // Get all users if no target specified
+    const targetUsers = data.targetUserIds || 
+      (await db.select({ id: users.id }).from(users)).map(u => u.id);
+    
+    const notificationData = targetUsers.map((userId: string) => ({
+      userId: userId,
+      type: data.type || 'admin_announcement',
+      title: data.title,
+      message: data.message,
+    }));
+
+    await db.insert(notifications).values(notificationData);
+    return { success: true, count: notificationData.length };
+  }
+
+  async searchUsers(query: string, limit: number): Promise<any[]> {
+    return await db.select().from(users)
+      .where(sql`${users.username} ILIKE ${`%${query}%`} OR ${users.firstName} ILIKE ${`%${query}%`}`)
+      .limit(limit);
   }
 }
 
