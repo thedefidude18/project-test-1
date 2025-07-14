@@ -231,3 +231,53 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return;
   }
 };
+
+// Admin authentication middleware
+export const isAdmin: RequestHandler = async (req, res, next) => {
+  const user = req.user as any;
+
+  if (!req.isAuthenticated() || !user.expires_at) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  if (now > user.expires_at) {
+    const refreshToken = user.refresh_token;
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const config = await getOidcConfig();
+      const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
+      updateUserSession(user, tokenResponse);
+    } catch (error) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+  }
+
+  try {
+    // Get user from database to check admin status
+    const { db } = await import("./db");
+    const { users } = await import("../shared/schema");
+    const { eq } = await import("drizzle-orm");
+    
+    const dbUser = await db.query.users.findFirst({
+      where: eq(users.id, user.claims.sub)
+    });
+
+    if (!dbUser) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    // Check if user is admin
+    if (!dbUser.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    return next();
+  } catch (error) {
+    console.error("Admin authentication error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

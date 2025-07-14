@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import Pusher from "pusher";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
 import { db } from "./db";
 import { insertEventSchema, insertChallengeSchema, insertNotificationSchema } from "@shared/schema";
 import { and, eq } from "drizzle-orm";
@@ -1706,13 +1706,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin statistics routes
-  app.get('/api/admin/stats', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/admin/stats', isAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const stats = await storage.getAdminStats();
       res.json(stats);
     } catch (error) {
       console.error("Error fetching admin stats:", error);
       res.status(500).json({ message: "Failed to fetch admin stats" });
+    }
+  });
+
+  // Admin settings routes
+  app.get('/api/admin/settings', isAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const settings = await storage.getPlatformSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching platform settings:", error);
+      res.status(500).json({ message: "Failed to fetch platform settings" });
+    }
+  });
+
+  app.patch('/api/admin/settings', isAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const updatedSettings = await storage.updatePlatformSettings(req.body);
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error("Error updating platform settings:", error);
+      res.status(500).json({ message: "Failed to update platform settings" });
     }
   });
 

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,13 +58,14 @@ export default function AdminSettings() {
   const { data: platformSettings, isLoading } = useQuery({
     queryKey: ["/api/admin/settings"],
     retry: false,
-    select: (data) => {
-      if (data) {
-        setSettings(data);
-      }
-      return data;
-    }
   });
+
+  // Initialize settings when data is loaded
+  useEffect(() => {
+    if (platformSettings) {
+      setSettings(platformSettings);
+    }
+  }, [platformSettings]);
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (updatedSettings: Partial<PlatformSettings>) => {

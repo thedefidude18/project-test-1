@@ -394,6 +394,38 @@ export const insertEventJoinRequestSchema = createInsertSchema(eventJoinRequests
   respondedAt: true,
 });
 
+// Platform settings table
+export const platformSettings = pgTable("platform_settings", {
+  id: serial("id").primaryKey(),
+  maintenanceMode: boolean("maintenance_mode").default(false),
+  registrationEnabled: boolean("registration_enabled").default(true),
+  minBetAmount: decimal("min_bet_amount", { precision: 10, scale: 2 }).default("100.00"),
+  maxBetAmount: decimal("max_bet_amount", { precision: 10, scale: 2 }).default("100000.00"),
+  platformFeePercentage: decimal("platform_fee_percentage", { precision: 3, scale: 1 }).default("5.0"),
+  creatorFeePercentage: decimal("creator_fee_percentage", { precision: 3, scale: 1 }).default("3.0"),
+  withdrawalEnabled: boolean("withdrawal_enabled").default(true),
+  depositEnabled: boolean("deposit_enabled").default(true),
+  maxWithdrawalDaily: decimal("max_withdrawal_daily", { precision: 10, scale: 2 }).default("50000.00"),
+  maxDepositDaily: decimal("max_deposit_daily", { precision: 10, scale: 2 }).default("100000.00"),
+  challengeCooldown: integer("challenge_cooldown").default(300), // seconds
+  eventCreationEnabled: boolean("event_creation_enabled").default(true),
+  chatEnabled: boolean("chat_enabled").default(true),
+  maxChatLength: integer("max_chat_length").default(500),
+  autoModeration: boolean("auto_moderation").default(true),
+  welcomeMessage: text("welcome_message").default("Welcome to BetChat! Start creating events and challenges."),
+  supportEmail: varchar("support_email").default("support@betchat.com"),
+  termsUrl: varchar("terms_url").default("/terms"),
+  privacyUrl: varchar("privacy_url").default("/privacy"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPlatformSettingsSchema = createInsertSchema(platformSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -414,3 +446,5 @@ export type EventJoinRequest = typeof eventJoinRequests.$inferSelect;
 export type InsertEventJoinRequest = typeof eventJoinRequests.$inferInsert;
 export type MessageReaction = typeof messageReactions.$inferSelect;
 export type InsertMessageReaction = typeof messageReactions.$inferInsert;
+export type PlatformSettings = typeof platformSettings.$inferSelect;
+export type InsertPlatformSettings = z.infer<typeof insertPlatformSettingsSchema>;

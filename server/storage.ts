@@ -21,6 +21,7 @@ import {
   eventTyping,
   eventActivity,
   escrow,
+  platformSettings,
   type User,
   type UpsertUser,
   type Event,
@@ -40,6 +41,8 @@ import {
   type InsertEventJoinRequest,
   type MessageReaction,
   type InsertMessageReaction,
+  type PlatformSettings,
+  type InsertPlatformSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, sql, count, sum, inArray } from "drizzle-orm";
@@ -160,6 +163,10 @@ export interface IStorage {
 
   // Admin Functions
   getAdminStats(): Promise<any>;
+
+  // Platform Settings
+  getPlatformSettings(): Promise<PlatformSettings>;
+  updatePlatformSettings(settings: Partial<PlatformSettings>): Promise<PlatformSettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1885,6 +1892,34 @@ export class DatabaseStorage implements IStorage {
       totalRevenue: totalRevenue,
       totalNotifications: 0, // TODO: Implement notifications count
     };
+  }
+
+  // Platform Settings
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    const [settings] = await db.select().from(platformSettings).limit(1);
+    
+    if (!settings) {
+      // Create default settings if none exist
+      const [defaultSettings] = await db.insert(platformSettings).values({}).returning();
+      return defaultSettings;
+    }
+    
+    return settings;
+  }
+
+  async updatePlatformSettings(settingsUpdate: Partial<PlatformSettings>): Promise<PlatformSettings> {
+    const existingSettings = await this.getPlatformSettings();
+    
+    const [updatedSettings] = await db
+      .update(platformSettings)
+      .set({
+        ...settingsUpdate,
+        updatedAt: new Date(),
+      })
+      .where(eq(platformSettings.id, existingSettings.id))
+      .returning();
+    
+    return updatedSettings;
   }
 }
 
