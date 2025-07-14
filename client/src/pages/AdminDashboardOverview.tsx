@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
@@ -248,8 +247,6 @@ export default function AdminDashboardOverview() {
           </Card>
         </div>
 
-          </div>
-
         {/* Action Required Section */}
         {(eventsNeedingAction.length > 0 || challengesNeedingAction.length > 0) && (
           <Card className="bg-red-900/20 border-red-800">
@@ -400,7 +397,7 @@ export default function AdminDashboardOverview() {
                     className="pl-10 bg-slate-800 border-slate-700"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-slate-800 p-3 rounded-lg text-center">
                     <p className="text-slate-400 text-sm">Online Users</p>
