@@ -1371,6 +1371,19 @@ export class DatabaseStorage implements IStorage {
         eq(friends.status, 'accepted')
       ));
 
+    // Check if there's an active challenge between users
+    const [challengeRecord] = await db
+      .select()
+      .from(challenges)
+      .where(and(
+        or(
+          and(eq(challenges.challenger, currentUserId), eq(challenges.challenged, userId)),
+          and(eq(challenges.challenger, userId), eq(challenges.challenged, currentUserId))
+        ),
+        inArray(challenges.status, ['pending', 'active'])
+      ))
+      .limit(1);
+
     return {
       ...user,
       stats: {
@@ -1381,6 +1394,9 @@ export class DatabaseStorage implements IStorage {
       isFollowing: !!followRecord,
       followerCount: followerCount?.count || 0,
       followingCount: followingCount?.count || 0,
+      hasActiveChallenge: !!challengeRecord,
+      challengeStatus: challengeRecord?.status || null,
+      isChallengedByMe: challengeRecord?.challenger === currentUserId,
     };
   }
 

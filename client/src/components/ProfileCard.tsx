@@ -38,6 +38,9 @@ interface UserProfile {
   isFollowing?: boolean;
   followerCount?: number;
   followingCount?: number;
+  hasActiveChallenge?: boolean;
+  challengeStatus?: string | null;
+  isChallengedByMe?: boolean;
   stats?: {
     wins: number;
     activeChallenges: number;
@@ -424,12 +427,28 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ userId, onClose }) => {
                   </Button>
 
                   <Button
-                    onClick={() => setShowChallengeModal(true)}
-                    className="bg-red-600 hover:bg-red-700 text-white text-xs h-8"
+                    onClick={() => {
+                      if (profile.hasActiveChallenge) {
+                        // Navigate to challenges page to view existing challenge
+                        window.location.href = '/challenges';
+                      } else {
+                        setShowChallengeModal(true);
+                      }
+                    }}
+                    variant={profile.hasActiveChallenge ? "outline" : "default"}
+                    className={profile.hasActiveChallenge 
+                      ? "border-orange-500 text-orange-600 hover:bg-orange-50 text-xs h-8" 
+                      : "bg-red-600 hover:bg-red-700 text-white text-xs h-8"
+                    }
                     size="sm"
                   >
                     <Swords className="w-3 h-3 mr-1" />
-                    Challenge
+                    {profile.hasActiveChallenge 
+                      ? (profile.challengeStatus === 'pending' 
+                          ? (profile.isChallengedByMe ? 'Pending' : 'Respond') 
+                          : 'Active')
+                      : 'Challenge'
+                    }
                   </Button>
 
                   <Button
