@@ -22,7 +22,7 @@ export function UserAvatar({ userId, username, size = 40, className = "" }: User
   });
 
   const svgString = avatar.toString();
-  const dataUri = `data:image/svg+xml;base64,${btoa(svgString)}`;
+  const dataUri = `data:image/svg+xml;base64,${Buffer.from(svgString, 'utf8').toString('base64')}`;
 
   return (
     <img
