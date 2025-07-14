@@ -1703,6 +1703,54 @@ export class DatabaseStorage implements IStorage {
 
     return newLogin;
   }
+
+  // Get user created events
+  async getUserCreatedEvents(userId: string): Promise<any[]> {
+    const createdEvents = await db
+      .select({
+        id: events.id,
+        title: events.title,
+        description: events.description,
+        category: events.category,
+        eventPool: events.eventPool,
+        status: events.status,
+        endDate: events.endDate,
+        createdAt: events.createdAt,
+        participantCount: count(eventParticipants.id),
+      })
+      .from(events)
+      .leftJoin(eventParticipants, eq(eventParticipants.eventId, events.id))
+      .where(eq(events.creatorId, userId))
+      .groupBy(events.id)
+      .orderBy(desc(events.createdAt));
+
+    return createdEvents;
+  }
+
+  // Get user joined events
+  async getUserJoinedEvents(userId: string): Promise<any[]> {
+    const joinedEvents = await db
+      .select({
+        id: events.id,
+        title: events.title,
+        description: events.description,
+        category: events.category,
+        eventPool: events.eventPool,
+        status: events.status,
+        endDate: events.endDate,
+        createdAt: events.createdAt,
+        participantAmount: eventParticipants.amount,
+        participantStatus: eventParticipants.status,
+        prediction: eventParticipants.prediction,
+        joinedAt: eventParticipants.joinedAt,
+      })
+      .from(eventParticipants)
+      .innerJoin(events, eq(events.id, eventParticipants.eventId))
+      .where(eq(eventParticipants.userId, userId))
+      .orderBy(desc(eventParticipants.joinedAt));
+
+    return joinedEvents;
+  }
 }
 
 export const storage = new DatabaseStorage();

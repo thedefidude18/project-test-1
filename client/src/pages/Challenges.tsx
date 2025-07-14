@@ -101,7 +101,11 @@ export default function Challenges() {
 
   const createChallengeMutation = useMutation({
     mutationFn: async (data: z.infer<typeof createChallengeSchema>) => {
-      await apiRequest("POST", "/api/challenges", data);
+      const challengeData = {
+        ...data,
+        amount: parseFloat(data.amount)
+      };
+      await apiRequest("POST", "/api/challenges", challengeData);
     },
     onSuccess: () => {
       toast({
