@@ -91,46 +91,7 @@ export function TrophyCharacter({ className, animate = true }: CharacterProps) {
   );
 }
 
-export function ChatBubbleCharacter({ className, animate = true }: CharacterProps) {
-  return (
-    <motion.div
-      className={cn("inline-block", className)}
-      animate={animate ? {
-        scale: [1, 1.05, 1],
-        rotate: [0, 2, -2, 0]
-      } : {}}
-      transition={{
-        duration: 1.8,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }}
-    >
-      <svg width="80" height="80" viewBox="0 0 80 80">
-        <defs>
-          <linearGradient id="chatGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="hsl(var(--primary))" />
-            <stop offset="100%" stopColor="hsl(var(--primary) / 0.8)" />
-          </linearGradient>
-        </defs>
-        
-        {/* Chat bubble */}
-        <rect x="15" y="25" width="45" height="30" rx="15" fill="url(#chatGradient)" />
-        <path d="M 25 55 L 20 65 L 35 55" fill="url(#chatGradient)" />
-        
-        {/* Chat dots */}
-        <circle cx="30" cy="40" r="2.5" fill="white" />
-        <circle cx="40" cy="40" r="2.5" fill="white" />
-        <circle cx="50" cy="40" r="2.5" fill="white" />
-        
-        {/* Character face */}
-        <circle cx="40" cy="15" r="8" fill="hsl(var(--primary))" />
-        <circle cx="37" cy="13" r="1.5" fill="white" />
-        <circle cx="43" cy="13" r="1.5" fill="white" />
-        <path d="M 36 17 Q 40 19 44 17" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      </svg>
-    </motion.div>
-  );
-}
+
 
 export function RocketCharacter({ className, animate = true }: CharacterProps) {
   return (
