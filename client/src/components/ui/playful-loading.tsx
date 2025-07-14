@@ -14,70 +14,28 @@ interface PlayfulLoadingProps {
 
 const loadingConfigs = {
   betting: {
-    icon: "🎲",
     defaultTitle: "Placing Your Bet",
-    defaultDescription: "Rolling the dice of fortune...",
-    messages: [
-      "Calculating odds...",
-      "Shuffling the deck...",
-      "Reading the crystal ball...",
-      "Consulting the betting spirits..."
-    ]
+    defaultDescription: "Processing your bet...",
   },
   wallet: {
-    icon: "💰",
     defaultTitle: "Processing Payment",
-    defaultDescription: "Counting your coins...",
-    messages: [
-      "Securing your funds...",
-      "Updating your balance...",
-      "Processing transaction...",
-      "Organizing your wallet..."
-    ]
+    defaultDescription: "Updating your balance...",
   },
   trophy: {
-    icon: "🏆",
     defaultTitle: "Calculating Results",
-    defaultDescription: "Preparing your victory...",
-    messages: [
-      "Tallying scores...",
-      "Polishing trophies...",
-      "Preparing celebration...",
-      "Checking leaderboards..."
-    ]
+    defaultDescription: "Processing results...",
   },
   chat: {
-    icon: "💬",
     defaultTitle: "Loading Messages",
-    defaultDescription: "Gathering conversations...",
-    messages: [
-      "Collecting messages...",
-      "Synchronizing chat...",
-      "Loading conversations...",
-      "Preparing your inbox..."
-    ]
+    defaultDescription: "Loading conversations...",
   },
   rocket: {
-    icon: "🚀",
     defaultTitle: "Launching",
-    defaultDescription: "Preparing for takeoff...",
-    messages: [
-      "Fueling rockets...",
-      "Checking systems...",
-      "Preparing launch...",
-      "Countdown initiated..."
-    ]
+    defaultDescription: "Preparing system...",
   },
   general: {
-    icon: "⚡",
     defaultTitle: "Loading",
     defaultDescription: "Getting things ready...",
-    messages: [
-      "Loading data...",
-      "Preparing content...",
-      "Almost there...",
-      "Just a moment..."
-    ]
   }
 };
 
@@ -96,21 +54,6 @@ export function PlayfulLoading({
       exit={{ opacity: 0, y: -20 }}
       className={cn("flex flex-col items-center justify-center p-8", className)}
     >
-      <motion.div
-        className="text-6xl mb-4"
-        animate={{
-          scale: [1, 1.2, 1],
-          rotate: [0, 5, -5, 0]
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      >
-        {config.icon}
-      </motion.div>
-
       <LoadingSpinner className="mb-4" />
 
       <h3 className="text-lg font-semibold mb-2">
@@ -129,8 +72,6 @@ export function PlayfulLoadingOverlay({
   title,
   description
 }: PlayfulLoadingProps) {
-  const config = loadingConfigs[type];
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
