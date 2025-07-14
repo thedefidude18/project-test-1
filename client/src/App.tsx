@@ -46,6 +46,8 @@ function Router() {
   return (
     <div className="min-h-screen transition-all duration-300 ease-in-out">
       <Switch>
+      {/* Admin Login Route - Always Available */}
+      <Route path="/admin/login" component={AdminLogin} />
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
@@ -64,8 +66,6 @@ function Router() {
           <Route path="/referrals" component={ReferralPage} />
           <Route path="/history" component={History} />
           <Route path="/settings" component={Settings} />
-          {/* Admin Login Route - Always Available */}
-          <Route path="/admin/login" component={AdminLogin} />
           <Route path="/admin" component={AdminDashboardOverview} />
           <Route path="/admin/payouts" component={AdminPayouts} />
           <Route path="/admin/events" component={AdminEventPayouts} />

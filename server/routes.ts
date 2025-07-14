@@ -2139,10 +2139,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Username and password are required' });
       }
 
-      // Find user by username
-      const user = await storage.getUserByUsername(username);
+      // Find user by username or email
+      const user = await storage.getUserByUsernameOrEmail(username);
       if (!user) {
-        console.log(`Failed admin login attempt - user not found or not admin: ${username}`);
+        console.log(`Failed admin login attempt - user not found: ${username}`);
         return res.status(401).json({ message: 'Invalid admin credentials' });
       }
 
