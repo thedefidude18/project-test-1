@@ -26,6 +26,7 @@ import {
 } from "../shared/schema";
 import { sql } from "drizzle-orm";
 import crypto from "crypto";
+import { createTelegramSync, getTelegramSync } from "./telegramSync";
 
 // Initialize Pusher
 const pusher = new Pusher({
@@ -35,6 +36,15 @@ const pusher = new Pusher({
   cluster: "mt1",
   useTLS: true,
 });
+
+// Initialize Telegram sync service
+const telegramSync = createTelegramSync(pusher);
+if (telegramSync) {
+  telegramSync.initialize().catch(console.error);
+  console.log("🚀 Telegram sync service initialized");
+} else {
+  console.log("⚠️ Telegram sync service not available");
+}
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -1187,6 +1197,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         type: 'withdrawal',
         title: '📤 Withdrawal Requested',
+
+  // Global chat routes
+  app.get('/api/chat/messages', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const messages = await storage.getGlobalChatMessages(50);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching global chat messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post('/api/chat/messages', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { message } = req.body;
+
+      if (!message?.trim()) {
+        return res.status(400).json({ message: "Message content is required" });
+      }
+
+      // Get user info
+      const user = await storage.getUser(userId);
+      
+      // Create message in BetChat
+      const newMessage = await storage.createGlobalChatMessage({
+        userId,
+        user: {
+          id: user?.id,
+          firstName: user?.firstName,
+          lastName: user?.lastName,
+          username: user?.username,
+          profileImageUrl: user?.profileImageUrl,
+        },
+        message: message.trim(),
+        source: 'betchat'
+      });
+
+      // Broadcast to BetChat users via Pusher
+      await pusher.trigger('global-chat', 'new-message', {
+        type: 'chat_message',
+        message: newMessage,
+        source: 'betchat'
+      });
+
+      // Forward to Telegram if sync is available
+      const telegramSync = getTelegramSync();
+      if (telegramSync && telegramSync.isReady()) {
+        const senderName = user?.firstName || user?.username || 'BetChat User';
+        await telegramSync.sendMessageToTelegram(message.trim(), senderName);
+      }
+
+      res.json(newMessage);
+    } catch (error) {
+      console.error("Error creating global chat message:", error);
+      res.status(500).json({ message: "Failed to create message" });
+    }
+  });
+
+  // Telegram sync status route
+  app.get('/api/telegram/status', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const telegramSync = getTelegramSync();
+      
+      if (!telegramSync) {
+        return res.json({ 
+          enabled: false, 
+          connected: false, 
+          message: "Telegram sync not configured" 
+        });
+      }
+
+      const isReady = telegramSync.isReady();
+      const groupInfo = isReady ? await telegramSync.getGroupInfo() : null;
+
+      res.json({
+        enabled: true,
+        connected: isReady,
+        groupInfo,
+        message: isReady ? "Connected and syncing" : "Connecting..."
+      });
+    } catch (error) {
+      console.error("Error getting Telegram status:", error);
+      res.status(500).json({ message: "Failed to get Telegram status" });
+    }
+  });
+
+
         message: `Your withdrawal of ₦${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is being processed.`,
         data: { amount, method },
       });

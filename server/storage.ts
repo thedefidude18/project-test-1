@@ -43,6 +43,8 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, sql, count, sum, inArray } from "drizzle-orm";
+import { nanoid } from 'nanoid';
+import { messages } from '@shared/schema';
 
 export interface IStorage {
   // User operations - Required for Replit Auth
@@ -147,6 +149,10 @@ export interface IStorage {
 
   // Get all users
   getAllUsers(): Promise<User[]>;
+
+  // Global Chat
+  createGlobalChatMessage(messageData: any): Promise<any>;
+  getGlobalChatMessages(limit?: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -360,6 +366,69 @@ export class DatabaseStorage implements IStorage {
         replyTo,
       };
     });
+  }
+
+  async createGlobalChatMessage(messageData: any) {
+    try {
+      const [newMessage] = await db.insert(messages).values({
+        id: messageData.id || nanoid(),
+        eventId: null, // Global chat messages don't belong to specific events
+        userId: messageData.userId,
+        message: messageData.message,
+        createdAt: new Date(messageData.createdAt || new Date()),
+        replyToId: messageData.replyToId || null,
+        mentions: messageData.mentions || null,
+        messageType: messageData.source || 'chat',
+      }).returning();
+
+      // Get user info for the message
+      const user = messageData.user || await this.getUser(messageData.userId);
+
+      return {
+        ...newMessage,
+        user: user || {
+          id: messageData.userId,
+          firstName: 'Unknown User',
+          username: messageData.userId,
+          profileImageUrl: null,
+        }
+      };
+    } catch (error) {
+      console.error("Error creating global chat message:", error);
+      throw error;
+    }
+  }
+
+  async getGlobalChatMessages(limit = 50) {
+    try {
+      const messagesWithUsers = await db
+        .select({
+          id: messages.id,
+          userId: messages.userId,
+          message: messages.message,
+          createdAt: messages.createdAt,
+          replyToId: messages.replyToId,
+          mentions: messages.mentions,
+          messageType: messages.messageType,
+          user: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            username: users.username,
+            profileImageUrl: users.profileImageUrl,
+          }
+        })
+        .from(messages)
+        .leftJoin(users, eq(messages.userId, users.id))
+        .where(eq(messages.eventId, null)) // Global chat messages
+        .orderBy(sql`${messages.createdAt} DESC`)
+        .limit(limit);
+
+      return messagesWithUsers;
+    } catch (error) {
+      console.error("Error fetching global chat messages:", error);
+      throw error;
+    }
   }
 
   async createEventMessage(eventId: number, userId: string, message: string, replyToId?: string, mentions?: string[]): Promise<EventMessage> {
@@ -1289,7 +1358,7 @@ export class DatabaseStorage implements IStorage {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
   }
 
-  
+
   // Get user profile with stats
   async getAllUsers() {
     const usersResult = await db
@@ -1614,10 +1683,10 @@ export class DatabaseStorage implements IStorage {
     if (lastLogin.length > 0) {
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
-      
+
       const lastLoginDate = new Date(lastLogin[0].date);
       lastLoginDate.setHours(0, 0, 0, 0);
-      
+
       if (lastLoginDate.getTime() === yesterday.getTime()) {
         currentStreak = lastLogin[0].streak + 1; // Continue streak
       } else {

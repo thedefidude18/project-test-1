@@ -6,6 +6,9 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { formatDistanceToNow } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ChatMessage {
   id: string;
@@ -16,9 +19,11 @@ interface ChatMessage {
     lastName?: string;
     username?: string;
     profileImageUrl?: string;
+    isTelegramUser?: boolean;
   };
   message: string;
   createdAt: string;
+  source?: 'betchat' | 'telegram';
 }
 
 export function LiveChat() {
@@ -26,12 +31,39 @@ export function LiveChat() {
   const [newMessage, setNewMessage] = useState("");
   const [onlineCount, setOnlineCount] = useState(234);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [telegramStatus, setTelegramStatus] = useState({ enabled: false, connected: false });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+
+  // Fetch initial messages
+  const { data: initialMessages } = useQuery({
+    queryKey: ['global-chat-messages'],
+    queryFn: () => apiRequest('/api/chat/messages'),
+  });
+
+  // Fetch Telegram status
+  const { data: telegramStatusData } = useQuery({
+    queryKey: ['telegram-status'],
+    queryFn: () => apiRequest('/api/telegram/status'),
+    refetchInterval: 30000, // Check every 30 seconds
+  });
+
+  useEffect(() => {
+    if (initialMessages) {
+      setMessages(initialMessages.reverse()); // Reverse to show newest at bottom
+    }
+  }, [initialMessages]);
+
+  useEffect(() => {
+    if (telegramStatusData) {
+      setTelegramStatus(telegramStatusData);
+    }
+  }, [telegramStatusData]);
   
-  const { sendMessage, isConnected } = useWebSocket({
+  const { sendMessage: sendWebSocketMessage, isConnected } = useWebSocket({
     onMessage: (data) => {
       if (data.type === 'chat_message') {
-        setMessages(prev => [data.message, ...prev].slice(0, 50));
+        setMessages(prev => [...prev, data.message].slice(-50)); // Keep last 50 messages
       } else if (data.type === 'user_typing') {
         setTypingUsers(prev => [...prev.filter(u => u !== data.userId), data.userId]);
         setTimeout(() => {
@@ -40,7 +72,8 @@ export function LiveChat() {
       } else if (data.type === 'online_count') {
         setOnlineCount(data.count);
       }
-    }
+    },
+    channel: 'global-chat'
   });
 
   const scrollToBottom = () => {
@@ -51,26 +84,20 @@ export function LiveChat() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !isConnected) return;
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !user) return;
 
-    const messageData = {
-      type: 'chat_message',
-      message: {
-        id: Date.now().toString(),
-        userId: 'current_user',
-        user: {
-          id: 'current_user',
-          firstName: 'You',
-          username: 'you',
-        },
-        message: newMessage,
-        createdAt: new Date().toISOString(),
-      }
-    };
-
-    sendMessage(messageData);
-    setNewMessage("");
+    try {
+      // Send message via API (which handles both BetChat and Telegram sync)
+      await apiRequest('/api/chat/messages', {
+        method: 'POST',
+        body: { message: newMessage.trim() }
+      });
+      
+      setNewMessage("");
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -89,7 +116,15 @@ export function LiveChat() {
     <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 theme-transition">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Live Chat 💬</CardTitle>
+          <div className="flex items-center space-x-2">
+            <CardTitle className="text-lg">Live Chat 💬</CardTitle>
+            {telegramStatus.enabled && (
+              <Badge variant={telegramStatus.connected ? "default" : "secondary"} className="text-xs">
+                <i className="fab fa-telegram-plane mr-1"></i>
+                {telegramStatus.connected ? "Synced" : "Connecting"}
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
             <span className="text-sm text-slate-600 dark:text-slate-400">
@@ -114,8 +149,8 @@ export function LiveChat() {
                     src={message.user.profileImageUrl || undefined} 
                     alt={message.user.firstName || message.user.username || 'User'} 
                   />
-                  <AvatarFallback className="text-xs">
-                    {(message.user.firstName?.[0] || message.user.username?.[0] || 'U').toUpperCase()}
+                  <AvatarFallback className={`text-xs ${message.user.isTelegramUser ? 'bg-blue-100 text-blue-600' : ''}`}>
+                    {message.user.isTelegramUser ? '📱' : (message.user.firstName?.[0] || message.user.username?.[0] || 'U').toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
@@ -123,6 +158,12 @@ export function LiveChat() {
                     <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
                       {message.user.firstName || message.user.username || 'Anonymous'}
                     </span>
+                    {message.source === 'telegram' && (
+                      <Badge variant="outline" className="text-xs">
+                        <i className="fab fa-telegram-plane mr-1"></i>
+                        Telegram
+                      </Badge>
+                    )}
                     <span className="text-xs text-slate-500 dark:text-slate-400">
                       {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                     </span>
