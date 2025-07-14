@@ -3,17 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { ChallengeIntentCard } from "@/components/ChallengeIntentCard";
 import { 
   Share2, 
   Copy, 
   MessageCircle, 
   Send,
   ExternalLink,
-  Check
+  Check,
+  Eye,
+  Smartphone,
+  Monitor
 } from "lucide-react";
 import { 
-  SiTwitter, 
+  SiX, 
   SiFacebook, 
   SiWhatsapp, 
   SiTelegram, 
@@ -153,7 +158,7 @@ export function SocialMediaShare({ challenge, trigger }: SocialMediaShareProps) 
     { 
       name: 'Twitter', 
       key: 'twitter', 
-      icon: SiTwitter, 
+      icon: SiX, 
       color: 'text-blue-400 hover:text-blue-300',
       bgColor: 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
     },
@@ -213,26 +218,51 @@ export function SocialMediaShare({ challenge, trigger }: SocialMediaShareProps) 
         </DialogHeader>
         
         <div className="space-y-6">
-          {/* Challenge Preview */}
-          <Card className="bg-slate-50 dark:bg-slate-900">
-            <CardContent className="p-4">
-              <div className="space-y-2">
-                <h3 className="font-semibold text-lg">{challenge.title}</h3>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>{getChallengerName()}</span>
-                  <span>vs</span>
-                  <span>{getChallengedName()}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">₦{challenge.amount}</Badge>
-                  <Badge variant="outline">{challenge.category}</Badge>
-                  <Badge variant={challenge.status === 'active' ? 'default' : 'secondary'}>
-                    {challenge.status}
-                  </Badge>
-                </div>
+          {/* Challenge Preview with Different Formats */}
+          <Tabs defaultValue="social" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="social" className="flex items-center gap-2">
+                <Smartphone className="w-4 h-4" />
+                Social
+              </TabsTrigger>
+              <TabsTrigger value="compact" className="flex items-center gap-2">
+                <Monitor className="w-4 h-4" />
+                Compact
+              </TabsTrigger>
+              <TabsTrigger value="full" className="flex items-center gap-2">
+                <Eye className="w-4 h-4" />
+                Full
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="social" className="mt-4">
+              <div className="flex justify-center">
+                <ChallengeIntentCard 
+                  challenge={challenge} 
+                  variant="social" 
+                  showActions={false}
+                />
               </div>
-            </CardContent>
-          </Card>
+            </TabsContent>
+            
+            <TabsContent value="compact" className="mt-4">
+              <div className="flex justify-center">
+                <ChallengeIntentCard 
+                  challenge={challenge} 
+                  variant="compact" 
+                  showActions={false}
+                />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="full" className="mt-4">
+              <ChallengeIntentCard 
+                challenge={challenge} 
+                variant="default" 
+                showActions={false}
+              />
+            </TabsContent>
+          </Tabs>
 
           {/* Copy Link */}
           <div className="space-y-2">

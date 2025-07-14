@@ -28,6 +28,7 @@ import AdminPayouts from "./pages/AdminPayouts";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminNotifications from "./pages/AdminNotifications";
 import AdminSettings from "./pages/AdminSettings";
+import ChallengeDetail from "./pages/ChallengeDetail";
 import { DailySignInModal } from '@/components/DailySignInModal';
 import { useDailySignIn } from '@/hooks/useDailySignIn';
 
@@ -52,6 +53,7 @@ function Router() {
           <Route path="/events" component={Events} />
           <Route path="/events/:id/chat" component={EventChatPage} />
           <Route path="/challenges" component={Challenges} />
+          <Route path="/challenges/:id" component={ChallengeDetail} />
           <Route path="/friends" component={Friends} />
           <Route path="/wallet" component={WalletPage} />
           <Route path="/leaderboard" component={Leaderboard} />

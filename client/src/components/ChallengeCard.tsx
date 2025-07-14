@@ -7,7 +7,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { MessageCircle, Check, X, Eye, Trophy } from "lucide-react";
+import { SocialMediaShare } from "@/components/SocialMediaShare";
+import { MessageCircle, Check, X, Eye, Trophy, Share2 } from "lucide-react";
 
 interface ChallengeCardProps {
   challenge: {
@@ -203,6 +204,17 @@ export function ChallengeCard({ challenge, onChatClick }: ChallengeCardProps) {
                 View Results
               </Button>
             )}
+            
+            {/* Social Media Share - Available for all challenge statuses */}
+            <SocialMediaShare
+              challenge={challenge}
+              trigger={
+                <Button size="sm" variant="outline" className="gap-2">
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </Button>
+              }
+            />
           </div>
         </div>
       </CardContent>
