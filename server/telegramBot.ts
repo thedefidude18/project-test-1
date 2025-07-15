@@ -5,14 +5,6 @@ interface TelegramBotConfig {
   channelId: string;
 }
 
-interface TelegramChannel {
-  id: string;
-  name: string;
-  type: 'channel' | 'group' | 'supergroup';
-  username?: string;
-  memberCount?: number;
-}
-
 interface EventBroadcast {
   id: string | number;
   title: string;
@@ -58,7 +50,6 @@ export class TelegramBotService {
   private token: string;
   private channelId: string;
   private baseUrl: string;
-  private availableChannels: TelegramChannel[] = [];
 
   constructor(config: TelegramBotConfig) {
     this.token = config.token;
@@ -166,11 +157,10 @@ ${timeInfo}
   }
 
   // Send message to Telegram channel
-  private async sendToChannel(message: string, channelId?: string): Promise<boolean> {
+  private async sendToChannel(message: string): Promise<boolean> {
     try {
-      const targetChannelId = channelId || this.channelId;
       const response = await axios.post(`${this.baseUrl}/sendMessage`, {
-        chat_id: targetChannelId,
+        chat_id: this.channelId,
         text: message,
         parse_mode: 'Markdown',
         disable_web_page_preview: false,
@@ -190,10 +180,10 @@ ${timeInfo}
   }
 
   // Broadcast new event
-  async broadcastEvent(event: EventBroadcast, channelId?: string): Promise<boolean> {
+  async broadcastEvent(event: EventBroadcast): Promise<boolean> {
     try {
       const message = this.formatEventMessage(event);
-      return await this.sendToChannel(message, channelId);
+      return await this.sendToChannel(message);
     } catch (error) {
       console.error('❌ Error broadcasting event:', error);
       return false;
@@ -201,10 +191,10 @@ ${timeInfo}
   }
 
   // Broadcast new challenge
-  async broadcastChallenge(challenge: ChallengeBroadcast, channelId?: string): Promise<boolean> {
+  async broadcastChallenge(challenge: ChallengeBroadcast): Promise<boolean> {
     try {
       const message = this.formatChallengeMessage(challenge);
-      return await this.sendToChannel(message, channelId);
+      return await this.sendToChannel(message);
     } catch (error) {
       console.error('❌ Error broadcasting challenge:', error);
       return false;
@@ -240,64 +230,7 @@ ${timeInfo}
     }
   }
 
-  // Get info for a specific channel
-  async getSpecificChannelInfo(channelId: string): Promise<TelegramChannel | null> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/getChat`, {
-        params: { chat_id: channelId }
-      });
-      
-      if (response.data.ok) {
-        const chat = response.data.result;
-        return {
-          id: chat.id.toString(),
-          name: chat.title || chat.first_name || 'Unknown',
-          type: chat.type,
-          username: chat.username,
-          memberCount: chat.members_count
-        };
-      } else {
-        console.error('❌ Failed to get channel info:', response.data);
-        return null;
-      }
-    } catch (error) {
-      console.error('❌ Error getting channel info:', error);
-      return null;
-    }
-  }
 
-  // Get available channels (predefined list for now)
-  async getAvailableChannels(): Promise<TelegramChannel[]> {
-    // For now, we'll use a predefined list of channels that the bot has access to
-    // In a full implementation, you would get this from bot updates or admin settings
-    const predefinedChannels = [
-      process.env.TELEGRAM_CHANNEL_ID,
-      process.env.TELEGRAM_GROUP_ID,
-      process.env.TELEGRAM_BACKUP_CHANNEL_ID
-    ].filter(Boolean);
-
-    const channels: TelegramChannel[] = [];
-    
-    for (const channelId of predefinedChannels) {
-      if (channelId) {
-        const channelInfo = await this.getSpecificChannelInfo(channelId);
-        if (channelInfo) {
-          channels.push(channelInfo);
-        }
-      }
-    }
-
-    // Always include the default channel
-    if (this.channelId && !channels.find(c => c.id === this.channelId)) {
-      const defaultChannel = await this.getSpecificChannelInfo(this.channelId);
-      if (defaultChannel) {
-        channels.unshift(defaultChannel); // Add to beginning as default
-      }
-    }
-
-    this.availableChannels = channels;
-    return channels;
-  }
 }
 
 // Singleton instance
