@@ -164,7 +164,7 @@ export default function Friends() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-          <div>
+          <div className="hidden md:block">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
               Friends 👥
             </h1>
@@ -348,8 +348,7 @@ export default function Friends() {
                         <div className="flex items-center space-x-3">
                           <Avatar className="w-12 h-12">
                             <AvatarImage 
-                              src={requesterUser.profileImageUrl || undefined} 
-                              alt={requesterUser.firstName || requesterUser.username} 
+                              src={requesterUser.profileImageUrl || undefined}                               alt={requesterUser.firstName || requesterUser.username} 
                             />
                             <AvatarFallback>
                               {(requesterUser.firstName?.[0] || requesterUser.username?.[0] || 'F').toUpperCase()}

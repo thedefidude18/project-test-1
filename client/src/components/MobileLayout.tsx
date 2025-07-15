@@ -99,14 +99,17 @@ export function MobileSectionHeader({
       "mb-2 md:mb-6", // Even less margin on mobile for compactness
       className
     )}>
-      <div className="hidden md:block"> {/* Hide title on mobile for app-like feel */}
+      <div className="hidden md:block"> {/* Hide title completely on mobile for app-like feel */}
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h1>
         {subtitle && (
           <p className="text-sm text-slate-600 dark:text-slate-400">{subtitle}</p>
         )}
       </div>
       {action && (
-        <div className="ml-auto md:ml-0">
+        <div className={cn(
+          "w-full md:w-auto", // Full width on mobile for action buttons
+          action ? "block" : "hidden md:block"
+        )}>
           {action}
         </div>
       )}

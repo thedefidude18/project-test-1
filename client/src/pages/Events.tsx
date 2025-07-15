@@ -177,7 +177,7 @@ export default function Events() {
               ℹ️ Show rewards guide
             </Button>
           </div>
-          
+
           {/* Mobile compact header */}
           <div className="flex md:hidden w-full justify-between items-center">
             <Button

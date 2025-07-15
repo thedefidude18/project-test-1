@@ -167,7 +167,7 @@ export default function Challenges() {
   const onSubmit = (data: z.infer<typeof createChallengeSchema>) => {
     const amount = parseFloat(data.amount);
     const currentBalance = typeof balance === 'object' ? balance.balance : balance;
-    
+
     if (amount > currentBalance) {
       toast({
         title: "Insufficient Balance",
@@ -211,11 +211,11 @@ export default function Challenges() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-          <div>
+          <div className="hidden md:block">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
               Challenges ⚔️
             </h1>
@@ -223,7 +223,7 @@ export default function Challenges() {
               Challenge friends and prove your skills
             </p>
           </div>
-          
+
           <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
             setIsCreateDialogOpen(open);
             if (!open) {
@@ -277,7 +277,7 @@ export default function Challenges() {
                       )}
                     />
                   )}
-                  
+
                   {preSelectedUser && (
                     <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
@@ -293,7 +293,7 @@ export default function Challenges() {
                       </div>
                     </div>
                   )}
-                  
+
                   <FormField
                     control={form.control}
                     name="title"
@@ -307,7 +307,7 @@ export default function Challenges() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="description"
@@ -321,7 +321,7 @@ export default function Challenges() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="category"
@@ -349,7 +349,7 @@ export default function Challenges() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="amount"
@@ -363,7 +363,7 @@ export default function Challenges() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="dueDate"
@@ -381,7 +381,7 @@ export default function Challenges() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="flex space-x-2 pt-4">
                     <Button
                       type="button"
@@ -508,7 +508,7 @@ export default function Challenges() {
                 className="bg-slate-50 dark:bg-slate-700"
               />
             </div>
-            
+
             {usersLoading ? (
               <div className="text-center py-12">
                 <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -549,7 +549,7 @@ export default function Challenges() {
                     const lastName = (u.lastName || '').toLowerCase();
                     const username = (u.username || '').toLowerCase();
                     const fullName = `${firstName} ${lastName}`.trim();
-                    
+
                     return firstName.includes(searchLower) ||
                            lastName.includes(searchLower) ||
                            username.includes(searchLower) ||
@@ -595,7 +595,7 @@ export default function Challenges() {
                               </p>
                             </div>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <div className="flex items-center justify-between text-sm">
                               <div className="flex items-center space-x-4">
@@ -609,7 +609,7 @@ export default function Challenges() {
                                 </span>
                               </div>
                             </div>
-                            
+
                             <div className="flex space-x-2">
                               <Button
                                 size="sm"
