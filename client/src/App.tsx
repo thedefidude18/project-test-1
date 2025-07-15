@@ -88,6 +88,7 @@ function Router() {
           <Route path="/events" component={Events} />
           <Route path="/events/create" component={EventCreate} />
           <Route path="/event/:id" component={EventChatPage} />
+          <Route path="/events/:id/chat" component={EventChatPage} />
           <Route path="/challenges" component={Challenges} />
           <Route path="/challenges/:id" component={ChallengeDetail} />
           <Route path="/friends" component={Friends} />

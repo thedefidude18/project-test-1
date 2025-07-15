@@ -180,10 +180,10 @@ export default function Notifications() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
       
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
-        <div className="flex justify-between items-start mb-8">
-          <div>
+        <div className="flex justify-between items-start mb-4 sm:mb-8">
+          <div className="hidden sm:block">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
               Notifications 🔔
             </h1>
@@ -217,34 +217,34 @@ export default function Notifications() {
           </div>
         </div>
 
-        {/* Notifications Tabs */}
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="all">
+        {/* Notifications Tabs - More compact on mobile */}
+        <Tabs defaultValue="all" className="space-y-3 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-3 h-9 sm:h-10">
+            <TabsTrigger value="all" className="text-xs sm:text-sm">
               All ({Array.isArray(notifications) ? notifications.length : 0})
             </TabsTrigger>
-            <TabsTrigger value="unread">
+            <TabsTrigger value="unread" className="text-xs sm:text-sm">
               Unread ({unreadNotifications.length})
             </TabsTrigger>
-            <TabsTrigger value="read">
+            <TabsTrigger value="read" className="text-xs sm:text-sm">
               Read ({readNotifications.length})
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all" className="space-y-4">
+          <TabsContent value="all" className="space-y-2 sm:space-y-4">
             {isLoading ? (
-              <div className="text-center py-12">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-slate-600 dark:text-slate-400">Loading notifications...</p>
+              <div className="text-center py-6 sm:py-12">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2 sm:mb-4"></div>
+                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">Loading notifications...</p>
               </div>
             ) : !Array.isArray(notifications) || notifications.length === 0 ? (
               <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                <CardContent className="text-center py-12">
-                  <i className="fas fa-bell-slash text-4xl text-slate-400 mb-4"></i>
-                  <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                <CardContent className="text-center py-6 sm:py-12">
+                  <i className="fas fa-bell-slash text-2xl sm:text-4xl text-slate-400 mb-2 sm:mb-4"></i>
+                  <h3 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100 mb-1 sm:mb-2">
                     No notifications yet
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-400">
+                  <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
                     We'll notify you when something interesting happens!
                   </p>
                 </CardContent>
@@ -257,35 +257,36 @@ export default function Notifications() {
                     !notification.read ? 'ring-2 ring-primary/20' : ''
                   }`}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-start space-x-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getNotificationColor(notification.type)}`}>
-                        <i className={`${getNotificationIcon(notification.type)} text-sm`}></i>
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${getNotificationColor(notification.type)}`}>
+                        <i className={`${getNotificationIcon(notification.type)} text-xs sm:text-sm`}></i>
                       </div>
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                            <h3 className="font-semibold text-sm sm:text-base text-slate-900 dark:text-slate-100">
                               {notification.title}
                             </h3>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
                               {notification.message}
                             </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
+                            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1 sm:mt-2">
                               {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                             </p>
                           </div>
                           
-                          <div className="flex items-center space-x-2 ml-4">
+                          <div className="flex items-center space-x-1 sm:space-x-2 ml-2 sm:ml-4">
                             {!notification.read && (
                               <>
-                                <Badge className="bg-primary text-white">New</Badge>
+                                <Badge className="bg-primary text-white text-xs">New</Badge>
                                 <Button
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => handleMarkAsRead(notification.id)}
                                   disabled={markAsReadMutation.isPending}
+                                  className="h-6 w-6 sm:h-8 sm:w-8 p-0"
                                 >
                                   <i className="fas fa-check text-xs"></i>
                                 </Button>

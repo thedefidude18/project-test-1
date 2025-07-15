@@ -281,24 +281,24 @@ export default function WalletPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {/* Header - More compact on mobile */}
+        <div className="mb-4 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-1 sm:mb-2">
             Wallet 💰
           </h1>
-          <p className="text-slate-600 dark:text-slate-400">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
             Manage your funds and view transaction history
           </p>
         </div>
 
-        {/* Balance Card */}
-        <Card className="bg-gradient-to-br from-primary to-secondary text-white mb-8">
-          <CardContent className="p-8">
+        {/* Balance Card - More compact on mobile */}
+        <Card className="bg-gradient-to-br from-primary to-secondary text-white mb-4 sm:mb-8">
+          <CardContent className="p-4 sm:p-8">
             <div className="text-center">
-              <p className="text-primary-100 mb-2">Current Balance</p>
-              <h2 className="text-4xl font-bold mb-6">{formatBalance(currentBalance)}</h2>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <p className="text-primary-100 mb-1 sm:mb-2 text-sm sm:text-base">Current Balance</p>
+              <h2 className="text-2xl sm:text-4xl font-bold mb-4 sm:mb-6">{formatBalance(currentBalance)}</h2>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center">
                 <Dialog open={isDepositDialogOpen} onOpenChange={setIsDepositDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-white text-primary hover:bg-primary-50">
@@ -409,57 +409,57 @@ export default function WalletPage() {
           </CardContent>
         </Card>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Quick Stats - More compact on mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-8">
           <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Total Deposited</p>
-                  <p className="text-2xl font-bold text-emerald-600">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Total Deposited</p>
+                  <p className="text-lg sm:text-2xl font-bold text-emerald-600">
                     {formatBalance(transactions
                       .filter((t: any) => t.type === 'deposit')
                       .reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0))}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center">
-                  <i className="fas fa-arrow-down text-emerald-600 dark:text-emerald-400"></i>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center">
+                  <i className="fas fa-arrow-down text-emerald-600 dark:text-emerald-400 text-sm sm:text-base"></i>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Total Won</p>
-                  <p className="text-2xl font-bold text-amber-600">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Total Won</p>
+                  <p className="text-lg sm:text-2xl font-bold text-amber-600">
                     {formatBalance(transactions
                       .filter((t: any) => t.type === 'win')
                       .reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0))}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900 rounded-lg flex items-center justify-center">
-                  <i className="fas fa-trophy text-amber-600 dark:text-amber-400"></i>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-100 dark:bg-amber-900 rounded-lg flex items-center justify-center">
+                  <i className="fas fa-trophy text-amber-600 dark:text-amber-400 text-sm sm:text-base"></i>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Total Spent</p>
-                  <p className="text-2xl font-bold text-red-600">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Total Spent</p>
+                  <p className="text-lg sm:text-2xl font-bold text-red-600">
                     {formatBalance(transactions
                       .filter((t: any) => ['bet', 'challenge', 'withdrawal'].includes(t.type))
                       .reduce((sum: number, t: any) => sum + Math.abs(parseFloat(t.amount)), 0))}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
-                  <i className="fas fa-arrow-up text-red-600 dark:text-red-400"></i>
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
+                  <i className="fas fa-arrow-up text-red-600 dark:text-red-400 text-sm sm:text-base"></i>
                 </div>
               </div>
             </CardContent>
@@ -473,49 +473,49 @@ export default function WalletPage() {
           </div>
         )}
 
-        {/* Transactions */}
+        {/* Transactions - More compact on mobile */}
         <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-          <CardHeader>
-            <CardTitle>Transaction History</CardTitle>
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="text-lg sm:text-xl">Transaction History</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {isLoading ? (
               <PlayfulLoading 
                 type="wallet" 
                 title="Loading Transactions" 
                 description="Organizing your financial history..."
-                className="py-8"
+                className="py-4 sm:py-8"
               />
             ) : transactions.length === 0 ? (
-              <div className="text-center py-12">
-                <i className="fas fa-receipt text-4xl text-slate-400 mb-4"></i>
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+              <div className="text-center py-6 sm:py-12">
+                <i className="fas fa-receipt text-2xl sm:text-4xl text-slate-400 mb-2 sm:mb-4"></i>
+                <h3 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100 mb-1 sm:mb-2">
                   No transactions yet
                 </h3>
-                <p className="text-slate-600 dark:text-slate-400">
+                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
                   Your transaction history will appear here once you start using your wallet.
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-2 sm:space-y-4">
                 {transactions.map((transaction: any) => (
                   <div
                     key={transaction.id}
-                    className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
+                    className="flex items-center justify-between p-3 sm:p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
                   >
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    <div className="flex items-center space-x-3 sm:space-x-4">
+                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
                         transaction.type === 'deposit' || transaction.type === 'win' || transaction.type === 'referral'
                           ? 'bg-emerald-100 dark:bg-emerald-900'
                           : 'bg-red-100 dark:bg-red-900'
                       }`}>
-                        <i className={`${getTransactionIcon(transaction.type)} ${getTransactionColor(transaction.type)}`}></i>
+                        <i className={`${getTransactionIcon(transaction.type)} ${getTransactionColor(transaction.type)} text-sm sm:text-base`}></i>
                       </div>
                       <div>
-                        <h4 className="font-medium text-slate-900 dark:text-slate-100 capitalize">
+                        <h4 className="font-medium text-sm sm:text-base text-slate-900 dark:text-slate-100 capitalize">
                           {transaction.type}
                         </h4>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                           {transaction.description || `${transaction.type} transaction`}
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-500">
@@ -524,17 +524,17 @@ export default function WalletPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`text-lg font-semibold ${getTransactionColor(transaction.type)}`}>
+                      <p className={`text-sm sm:text-lg font-semibold ${getTransactionColor(transaction.type)}`}>
                         {getTransactionPrefix(transaction.type)}{formatBalance(Math.abs(parseFloat(transaction.amount)))}
                       </p>
                       <Badge
-                        className={
+                        className={`text-xs ${
                           transaction.status === 'completed'
                             ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
                             : transaction.status === 'pending'
                             ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
                             : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
-                        }
+                        }`}
                       >
                         {transaction.status}
                       </Badge>

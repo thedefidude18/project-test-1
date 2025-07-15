@@ -134,49 +134,53 @@ export default function ProfileSettings() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {/* Header - More compact on mobile */}
+        <div className="flex items-center justify-between mb-4 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-1 sm:mb-2">
               Profile Settings ⚙️
             </h1>
-            <p className="text-slate-600 dark:text-slate-400">
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
               Manage your account settings and preferences
             </p>
           </div>
           <Button
             variant="outline"
+            size="sm"
             onClick={() => window.location.href = '/profile'}
+            className="sm:size-default"
           >
-            <i className="fas fa-arrow-left mr-2"></i>
-            Back to Profile
+            <i className="fas fa-arrow-left mr-1 sm:mr-2"></i>
+            <span className="hidden sm:inline">Back to Profile</span>
+            <span className="sm:hidden">Back</span>
           </Button>
         </div>
 
-        <div className="space-y-8">
-          {/* Profile Information */}
+        <div className="space-y-4 sm:space-y-8">
+          {/* Profile Information - More compact on mobile */}
           <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="text-lg sm:text-xl">Profile Information</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-6 mb-6">
-                <Avatar className="w-20 h-20">
+            <CardContent className="pt-0">
+              <div className="flex items-center space-x-4 sm:space-x-6 mb-4 sm:mb-6">
+                <Avatar className="w-16 h-16 sm:w-20 sm:h-20">
                   <AvatarImage 
                     src={user.profileImageUrl || undefined} 
                     alt={user.firstName || user.username || 'User'} 
                   />
-                  <AvatarFallback className="text-lg">
+                  <AvatarFallback className="text-base sm:text-lg">
                     {(user.firstName?.[0] || user.username?.[0] || 'U').toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <Button variant="outline" size="sm">
-                    <i className="fas fa-camera mr-2"></i>
-                    Change Photo
+                    <i className="fas fa-camera mr-1 sm:mr-2"></i>
+                    <span className="hidden sm:inline">Change Photo</span>
+                    <span className="sm:hidden">Change</span>
                   </Button>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
                     JPG, PNG or GIF. Max size 2MB.
                   </p>
                 </div>
