@@ -58,14 +58,49 @@ export class TelegramBotService {
   }
 
   // Test bot connection
-  async testConnection(): Promise<boolean> {
+  async testConnection(): Promise<{ connected: boolean; botInfo?: any; channelInfo?: any; error?: string }> {
     try {
-      const response = await axios.get(`${this.baseUrl}/getMe`);
-      console.log('🤖 Telegram bot connected:', response.data.result.username);
-      return true;
+      // Test bot connection
+      const botResponse = await axios.get(`${this.baseUrl}/getMe`);
+      const botInfo = botResponse.data.result;
+      console.log('🤖 Telegram bot connected:', botInfo.username);
+      
+      // Test channel connection
+      try {
+        const channelResponse = await axios.get(`${this.baseUrl}/getChat`, {
+          params: { chat_id: this.channelId }
+        });
+        
+        if (channelResponse.data.ok) {
+          const channelInfo = channelResponse.data.result;
+          console.log('📢 Channel found:', channelInfo.title || channelInfo.first_name);
+          return { 
+            connected: true, 
+            botInfo, 
+            channelInfo 
+          };
+        } else {
+          console.error('❌ Channel not accessible:', channelResponse.data);
+          return { 
+            connected: false, 
+            botInfo, 
+            error: `Channel error: ${channelResponse.data.description}` 
+          };
+        }
+      } catch (channelError) {
+        console.error('❌ Channel connection failed:', channelError);
+        return { 
+          connected: false, 
+          botInfo, 
+          error: `Channel connection failed: ${axios.isAxiosError(channelError) ? channelError.response?.data?.description : 'Unknown error'}` 
+        };
+      }
     } catch (error) {
       console.error('❌ Telegram bot connection failed:', error);
-      return false;
+      return { 
+        connected: false, 
+        error: `Bot connection failed: ${axios.isAxiosError(error) ? error.response?.data?.description : 'Unknown error'}` 
+      };
     }
   }
 
@@ -159,6 +194,8 @@ ${timeInfo}
   // Send message to Telegram channel
   private async sendToChannel(message: string): Promise<boolean> {
     try {
+      console.log(`🔍 Attempting to send message to channel: ${this.channelId}`);
+      
       const response = await axios.post(`${this.baseUrl}/sendMessage`, {
         chat_id: this.channelId,
         text: message,
@@ -170,11 +207,25 @@ ${timeInfo}
         console.log('📤 Message sent to Telegram channel successfully');
         return true;
       } else {
-        console.error('❌ Failed to send to Telegram:', response.data);
+        console.error('❌ Failed to send to Telegram:');
+        console.error('Channel ID:', this.channelId);
+        console.error('Error:', response.data);
+        
+        if (response.data.error_code === 400 && response.data.description?.includes('chat not found')) {
+          console.error('🚨 TELEGRAM SETUP ISSUE:');
+          console.error('   1. Check if TELEGRAM_CHANNEL_ID is correct');
+          console.error('   2. Ensure bot is added to the channel as admin');
+          console.error('   3. Channel ID should start with -100 for channels or @ for usernames');
+        }
+        
         return false;
       }
     } catch (error) {
       console.error('❌ Error sending to Telegram channel:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Response status:', error.response?.status);
+        console.error('Response data:', error.response?.data);
+      }
       return false;
     }
   }

@@ -4,7 +4,6 @@ import { setupVite, serveStatic, log } from "./vite";
 import "./eventScheduler"; // Start event lifecycle management
 import { addAuthTestRoutes } from "./authTest";
 import { createTelegramBot } from "./telegramBot";
-import { createTelegramBot } from "./telegramBot";
 
 const app = express();
 
@@ -47,7 +46,26 @@ app.use((req, res, next) => {
   // Initialize Telegram bot
   const telegramBot = createTelegramBot();
   if (telegramBot) {
-    await telegramBot.testConnection();
+    console.log('🔧 Testing Telegram bot configuration...');
+    const connectionTest = await telegramBot.testConnection();
+    
+    if (connectionTest.connected) {
+      console.log('✅ Telegram bot ready for broadcasting');
+      console.log(`   Bot: ${connectionTest.botInfo?.username}`);
+      console.log(`   Channel: ${connectionTest.channelInfo?.title || connectionTest.channelInfo?.first_name}`);
+    } else {
+      console.log('❌ Telegram bot configuration error:');
+      console.log(`   ${connectionTest.error}`);
+      console.log('');
+      console.log('📋 TELEGRAM SETUP INSTRUCTIONS:');
+      console.log('   1. Create a bot with @BotFather on Telegram');
+      console.log('   2. Add the bot to your channel/group as admin');
+      console.log('   3. Get the correct channel ID:');
+      console.log('      - For channels: starts with -100');
+      console.log('      - For groups: positive number');
+      console.log('      - Or use @username format');
+      console.log('   4. Update TELEGRAM_CHANNEL_ID secret');
+    }
   }
 
   const server = await registerRoutes(app);
