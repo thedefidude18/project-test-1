@@ -49,6 +49,13 @@ export function MobileNavigation() {
       isActive: location.startsWith("/profile"),
       tourId: "profile"
     },
+    { 
+      path: "/profile/settings", 
+      icon: "fas fa-cog", 
+      label: "Settings",
+      isActive: location.startsWith("/profile/settings"),
+      tourId: "settings"
+    },
   ];
 
   const handleNavigation = (path: string) => {
@@ -94,31 +101,6 @@ export function MobileNavigation() {
             )}
           </button>
         ))}
-         <button
-            onClick={() => navigateTo('/wallet')}
-            data-tour="wallet"
-            className={cn(
-              "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 ease-in-out min-w-[60px]",
-              "hover:bg-accent/50 active:scale-95",
-              location.startsWith('/wallet')
-                ? "text-primary bg-primary/10 scale-105" 
-                : "text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
-            )}
-          >
-            <i className={cn(
-              "fas fa-wallet text-lg mb-1 transition-transform duration-200",
-              location.startsWith('/wallet') && "scale-110"
-            )}></i>
-            <span className={cn(
-              "text-xs font-medium transition-all duration-200 truncate max-w-[50px]",
-              location.startsWith('/wallet') && "font-semibold"
-            )}>
-              {formatBalance(typeof balance === 'object' ? (balance.balance || 0) : (balance || 0))}
-            </span>
-            {location.startsWith('/wallet') && (
-              <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-primary rounded-full" />
-            )}
-          </button>
       </div>
     </div>
   );
