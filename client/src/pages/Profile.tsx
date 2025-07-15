@@ -110,7 +110,7 @@ export default function Profile() {
               {(user.firstName?.[0] || user.username?.[0] || 'U').toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          
+
           <div className="flex-1">
             <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
               {user.firstName || user.username}
@@ -320,11 +320,11 @@ export default function Profile() {
                   </div>
                 )}
               </CardContent>
-            </Card>
+            </MobileCard>
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-6">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <MobileCard className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
               </CardHeader>
@@ -389,7 +389,7 @@ export default function Profile() {
                   </div>
                 )}
               </CardContent>
-            </Card>
+            </MobileCard>
           </TabsContent>
 
           <TabsContent value="stats" className="space-y-6">
