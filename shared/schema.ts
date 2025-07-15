@@ -62,6 +62,7 @@ export const events = pgTable("events", {
   yesPool: decimal("yes_pool", { precision: 10, scale: 2 }).default("0.00"), // For display purposes
   noPool: decimal("no_pool", { precision: 10, scale: 2 }).default("0.00"), // For display purposes
   entryFee: decimal("entry_fee", { precision: 10, scale: 2 }).notNull(),
+  bettingModel: varchar("betting_model").default("fixed"), // "fixed" or "custom"
   endDate: timestamp("end_date").notNull(),
   result: boolean("result"), // true for yes, false for no, null for pending
   adminResult: boolean("admin_result"), // Admin's final decision on event outcome

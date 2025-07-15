@@ -156,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get creator info for Telegram broadcast
       const creator = await storage.getUser(userId);
-      
+
       // Broadcast to Telegram channel
       const telegramBot = getTelegramBot();
       if (telegramBot && creator) {
@@ -338,7 +338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const user = await storage.getUser(userId);
           const event = await storage.getEventById(eventId);
           const senderName = user?.firstName || user?.username || 'BetChat User';
-          
+
           await telegramSync.sendMessageToTelegram(
             message, 
             senderName, 
@@ -355,9 +355,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const user = await storage.getUser(userId);
             const event = await storage.getEventById(eventId);
             const senderName = user?.firstName || user?.username || 'BetChat User';
-            
+
             const formattedMessage = `🎯 ${event?.title || 'Event Chat'}\n👤 ${senderName}: ${message}`;
-            
+
             await telegramBot.sendCustomMessage(formattedMessage);
             console.log(`📤 BetChat → Telegram Bot: ${senderName}: ${message} [Event: ${event?.title || 'Event Chat'}]`);
           } catch (telegramError) {
@@ -1415,7 +1415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         connected: false, 
         message: "Telegram sync not configured" 
       };
-      
+
       let botStatus = { 
         enabled: false, 
         connected: false, 
@@ -1432,7 +1432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: isReady ? "Connected and syncing" : "Connecting..."
         };
       }
-      
+
       if (telegramBot) {
         const connection = await telegramBot.testConnection();
         const channelInfo = connection ? await telegramBot.getChannelInfo() : null;
@@ -1458,14 +1458,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/telegram/test-broadcast', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const telegramBot = getTelegramBot();
-      
+
       if (!telegramBot) {
         return res.status(400).json({ message: "Telegram bot not configured" });
       }
-      
+
       const message = req.body.message || "🧪 Test message from BetChat";
       const success = await telegramBot.sendCustomMessage(message);
-      
+
       res.json({ 
         success, 
         message: success ? "Message sent successfully" : "Failed to send message - Make sure bot is added to your channel as admin" 
@@ -1480,21 +1480,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/telegram/broadcast-existing', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const telegramBot = getTelegramBot();
-      
+
       if (!telegramBot) {
         return res.status(400).json({ message: "Telegram bot not configured" });
       }
-      
+
       // Get all existing events
       const existingEvents = await storage.getEvents();
       let successCount = 0;
       let totalCount = existingEvents.length;
-      
+
       for (const event of existingEvents) {
         try {
           // Get creator info
           const creator = await storage.getUser(event.creatorId);
-          
+
           const success = await telegramBot.broadcastEvent({
             id: event.id,
             title: event.title,
@@ -1509,18 +1509,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             max_participants: event.maxParticipants,
             category: event.category,
           });
-          
+
           if (success) {
             successCount++;
           }
-          
+
           // Add small delay to avoid rate limiting
           await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (error) {
           console.error(`Failed to broadcast event ${event.id}:`, error);
         }
       }
-      
+
       res.json({ 
         success: successCount > 0, 
         message: `Broadcasted ${successCount} out of ${totalCount} existing events`,
@@ -2127,7 +2127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const challengerUser = await storage.getUser(existingChallenge.challenger);
         const challengedUser = await storage.getUser(existingChallenge.challenged);
-        
+
         const telegramBot = getTelegramBot();
         if (telegramBot && challengerUser && challengedUser) {
           // Determine winner and loser for Telegram broadcast
@@ -2479,14 +2479,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { subscription } = req.body;
-      
+
       if (!subscription) {
         return res.status(400).json({ message: 'Subscription data is required' });
       }
 
       // Store subscription in database
       await storage.savePushSubscription(userId, subscription);
-      
+
       res.json({ message: 'Push subscription saved successfully' });
     } catch (error) {
       console.error('Error saving push subscription:', error);
@@ -2498,14 +2498,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/push/send', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const { userId, title, body, data } = req.body;
-      
+
       if (!userId || !title || !body) {
         return res.status(400).json({ message: 'User ID, title, and body are required' });
       }
 
       // Send push notification
       await sendPushNotification(userId, { title, body, data });
-      
+
       res.json({ message: 'Push notification sent successfully' });
     } catch (error) {
       console.error('Error sending push notification:', error);
@@ -2517,7 +2517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   async function sendPushNotification(userId: string, payload: { title: string; body: string; data?: any }) {
     try {
       const subscriptions = await storage.getPushSubscriptions(userId);
-      
+
       if (subscriptions.length === 0) {
         console.log(`No push subscriptions found for user ${userId}`);
         return;
@@ -2552,7 +2552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   async function sendEventPushNotifications(eventId: number, payload: { title: string; body: string; data?: any }) {
     try {
       const participants = await storage.getEventParticipants(eventId);
-      
+
       for (const participant of participants) {
         await sendPushNotification(participant.userId, payload);
       }
@@ -2562,28 +2562,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   const httpServer = createServer(app);
-  
+
   // WebSocket server for real-time messaging
   const wss = new WebSocketServer({ 
     server: httpServer,
     path: '/ws' 
   });
-  
+
   // Store connected clients
   const clients = new Map<string, WebSocket>();
-  
+
   wss.on('connection', (ws, req) => {
     console.log('New WebSocket connection');
-    
+
     ws.on('message', async (message) => {
       try {
         const data = JSON.parse(message.toString());
-        
+
         switch (data.type) {
           case 'user_join':
             // Store user connection
             clients.set(data.userId, ws);
-            
+
             // Broadcast join notification to event participants
             if (data.eventId) {
               await broadcastEventSystemMessage(data.eventId, 'user_join', {
@@ -2593,11 +2593,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             }
             break;
-            
+
           case 'user_leave':
             // Remove user connection
             clients.delete(data.userId);
-            
+
             // Broadcast leave notification to event participants
             if (data.eventId) {
               await broadcastEventSystemMessage(data.eventId, 'user_leave', {
@@ -2607,7 +2607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             }
             break;
-            
+
           case 'user_typing':
             // Broadcast typing indicator to other participants (exclude sender)
             if (data.eventId && data.userId) {
@@ -2620,7 +2620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             }
             break;
-            
+
           case 'event_message':
             // Broadcast new message
             await broadcastToEventParticipants(data.eventId, {
@@ -2629,7 +2629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               messageId: data.messageId
             });
             break;
-            
+
           case 'message_reaction':
             // Broadcast reaction update
             await broadcastToEventParticipants(data.eventId, {
@@ -2639,7 +2639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId: data.userId
             });
             break;
-            
+
           case 'event_started':
             // Broadcast event start notification
             await broadcastEventSystemMessage(data.eventId, 'event_started', {
@@ -2648,7 +2648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               endTime: data.endTime
             });
             break;
-            
+
           case 'event_ended':
             // Broadcast event end notification
             await broadcastEventSystemMessage(data.eventId, 'event_ended', {
@@ -2657,7 +2657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               result: data.result
             });
             break;
-            
+
           default:
             console.log('Unknown WebSocket message type:', data.type);
         }
@@ -2665,33 +2665,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Error handling WebSocket message:', error);
       }
     });
-    
+
     ws.on('close', () => {
       // Remove from clients map when connection closes
       for (const [userId, client] of clients.entries()) {
-        if (client === ws) {
-          clients.delete(userId);
+        if (client === ws) {          clients.delete(userId);
           break;
         }
       }
     });
-    
+
     ws.on('error', (error) => {
       console.error('WebSocket error:', error);
     });
   });
-  
+
   // Helper function to broadcast to all event participants
   async function broadcastToEventParticipants(eventId: number, message: any) {
     try {
       const participants = await storage.getEventParticipants(eventId);
-      
+
       for (const participant of participants) {
         // Skip sending typing indicator to the sender themselves
         if (message.type === 'user_typing' && message.userId === participant.userId) {
           continue;
         }
-        
+
         const client = clients.get(participant.userId);
         if (client && client.readyState === WebSocket.OPEN) {
           try {
@@ -2708,7 +2707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               const event = await storage.getEventById(eventId);
               const sender = message.user?.firstName || message.user?.username || 'Someone';
-              
+
               await sendPushNotification(participant.userId, {
                 title: `💬 New message in ${event?.title}`,
                 body: `${sender}: ${message.message}`,
@@ -2729,13 +2728,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error broadcasting to event participants:', error);
     }
   }
-  
+
   // Helper function to broadcast system messages
   async function broadcastEventSystemMessage(eventId: number, type: string, data: any) {
     try {
       // Create system message based on type
       let systemMessage;
-      
+
       switch (type) {
         case 'user_join':
           systemMessage = {
@@ -2747,7 +2746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             systemType: 'user_join'
           };
           break;
-          
+
         case 'user_leave':
           systemMessage = {
             id: `system_${Date.now()}`,
@@ -2758,13 +2757,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             systemType: 'user_leave'
           };
           break;
-          
+
         case 'event_started':
           const endTime = new Date(data.endTime);
           const timeLeft = Math.max(0, endTime.getTime() - Date.now());
           const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
           const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-          
+
           systemMessage = {
             id: `system_${Date.now()}`,
             type: 'system',
@@ -2774,7 +2773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             systemType: 'event_started'
           };
           break;
-          
+
         case 'event_ended':
           systemMessage = {
             id: `system_${Date.now()}`,
@@ -2785,18 +2784,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             systemType: 'event_ended'
           };
           break;
-          
+
         default:
           return;
       }
-      
+
       // Broadcast via WebSocket
       await broadcastToEventParticipants(eventId, {
         type: 'system_message',
         eventId: eventId,
         message: systemMessage
       });
-      
+
       // Also broadcast via Pusher for fallback
       await pusher.trigger(`event-${eventId}`, 'system-message', systemMessage);
 
@@ -2804,10 +2803,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (['user_join', 'user_leave', 'event_started', 'event_ended'].includes(type)) {
         const event = await storage.getEventById(eventId);
         const participants = await storage.getEventParticipants(eventId);
-        
+
         let notificationTitle = '';
         let notificationBody = '';
-        
+
         switch (type) {
           case 'event_started':
             notificationTitle = `🚀 Event Started`;
@@ -2830,7 +2829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const participant of participants) {
           // Don't send notification to the user who triggered the event
           if (data.userId && data.userId === participant.userId) continue;
-          
+
           await sendPushNotification(participant.userId, {
             title: notificationTitle,
             body: notificationBody,
@@ -2843,11 +2842,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
-      
+
     } catch (error) {
       console.error('Error broadcasting system message:', error);
     }
   }
-  
+
   return httpServer;
 }

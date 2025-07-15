@@ -302,9 +302,10 @@ export default function EventChatPage() {
 
   const joinEventMutation = useMutation({
     mutationFn: async () => {
+      const bettingAmount = event.bettingModel === "custom" ? parseFloat(betAmount) : parseFloat(event.entryFee);
       await apiRequest("POST", `/api/events/${eventId}/join`, {
         prediction,
-        amount: parseFloat(event.entryFee),
+        amount: bettingAmount,
       });
     },
     onSuccess: () => {
@@ -1035,13 +1036,33 @@ export default function EventChatPage() {
 
             <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
               <div className="text-center">
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Fixed Entry Amount</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                  ₦{parseFloat(event.entryFee).toLocaleString()}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Set by event creator
-                </p>
+                {event.bettingModel === "fixed" ? (
+                  <>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Fixed Entry Amount</p>
+                    <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                      ₦{parseFloat(event.entryFee).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Set by event creator
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Custom Betting Amount</p>
+                    <Input
+                      type="number"
+                      placeholder={`Minimum: ₦${parseFloat(event.entryFee).toLocaleString()}`}
+                      value={betAmount}
+                      onChange={(e) => setBetAmount(e.target.value)}
+                      className="mb-2"
+                      min={event.entryFee}
+                      step="1"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      Enter your preferred betting amount
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
@@ -1055,10 +1076,10 @@ export default function EventChatPage() {
               </Button>
               <Button
                 onClick={handlePlaceBet}
-                disabled={prediction === null || joinEventMutation.isPending}
+                disabled={prediction === null || joinEventMutation.isPending || (event.bettingModel === "custom" && (!betAmount || parseFloat(betAmount) < parseFloat(event.entryFee)))}
                 className="flex-1 bg-primary text-white hover:bg-primary/90"
               >
-                {joinEventMutation.isPending ? "Placing..." : `Place Bet (₦${parseFloat(event.entryFee).toLocaleString()})`}
+                {joinEventMutation.isPending ? "Placing..." : `Place Bet (₦${event.bettingModel === "custom" ? (betAmount ? parseFloat(betAmount).toLocaleString() : "0") : parseFloat(event.entryFee).toLocaleString()})`}
               </Button>
             </div>
           </div>
