@@ -526,7 +526,7 @@ export default function EventChatPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col md:bg-slate-50 md:dark:bg-slate-900">
       {/* Header with Event Info and Back Button */}
-      <div className="bg-gradient-to-r from-primary to-secondary text-white sticky top-0 z-50 rounded-b-xl md:rounded-none">
+      <div className="bg-[#7440ff] text-white sticky top-0 z-50 rounded-b-xl md:rounded-none">
         <div className="px-3 md:px-4 py-2 md:py-3">
           <div className="flex items-center justify-between mb-2 md:mb-3">
             <div className="flex items-center space-x-2 md:space-x-3">

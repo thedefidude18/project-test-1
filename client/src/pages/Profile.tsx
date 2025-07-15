@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
+import MobileLayout, { MobileCard } from "@/components/MobileLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -94,11 +95,78 @@ export default function Profile() {
   const recentTransactions = transactions.slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
+    <MobileLayout>
       <Navigation />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Profile Header */}
+      {/* Mobile Profile Header */}
+      <MobileCard className="mb-3 md:hidden">
+        <div className="flex items-center space-x-3 mb-3">
+          <Avatar className="w-16 h-16">
+            <AvatarImage 
+              src={getAvatarUrl(user.id, user.profileImageUrl, user.firstName || user.username)} 
+              alt={user.firstName || user.username || 'User'} 
+            />
+            <AvatarFallback className="text-lg">
+              {(user.firstName?.[0] || user.username?.[0] || 'U').toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex-1">
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              {user.firstName || user.username}
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Level {user.level}</p>
+            <div className="flex items-center space-x-4 mt-1">
+              <span className="text-xs text-primary font-semibold">{formatBalance(user.points || 0)} pts</span>
+              <span className="text-xs text-emerald-600 font-semibold">{userStats?.wins || 0} wins</span>
+            </div>
+          </div>
+
+          <Button 
+            onClick={() => window.location.href = '/profile/settings'}
+            size="sm"
+            className="bg-primary text-white hover:bg-primary/90"
+          >
+            <i className="fas fa-edit"></i>
+          </Button>
+        </div>
+
+        {/* Compact Level Progress */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              Level {user.level}
+            </span>
+            <span className="text-xs text-slate-600 dark:text-slate-400">
+              {user.xp} / {nextLevelXP} XP
+            </span>
+          </div>
+          <Progress value={levelProgress} className="h-1.5" />
+        </div>
+
+        {/* Compact Stats Grid */}
+        <div className="grid grid-cols-4 gap-2">
+          <div className="text-center">
+            <p className="text-lg font-bold text-primary">{formatBalance(user.points || 0)}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Points</p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-bold text-emerald-600">{userStats?.wins || 0}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Wins</p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-bold text-amber-600">{user.streak}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Streak</p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-bold text-cyan-600">{achievements.length}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Badges</p>
+          </div>
+        </div>
+      </MobileCard>
+
+      {/* Desktop Profile Header */}
+      <div className="hidden md:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 mb-8">
           <CardContent className="p-8">
             <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
@@ -171,30 +239,38 @@ export default function Profile() {
             </div>
           </CardContent>
         </Card>
+      </div>
 
         {/* Profile Tabs */}
-        <Tabs defaultValue="level" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="level">Level</TabsTrigger>
-            <TabsTrigger value="achievements">Achievements</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="stats">Statistics</TabsTrigger>
+        <Tabs defaultValue="level" className="space-y-3 md:space-y-6">
+          <TabsList className="grid w-full grid-cols-4 h-8 md:h-10">
+            <TabsTrigger value="level" className="text-xs md:text-sm">Level</TabsTrigger>
+            <TabsTrigger value="achievements" className="text-xs md:text-sm">Badges</TabsTrigger>
+            <TabsTrigger value="activity" className="text-xs md:text-sm">Activity</TabsTrigger>
+            <TabsTrigger value="stats" className="text-xs md:text-sm">Stats</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="level" className="space-y-6">
-            <LevelProgress 
-              level={user.level}
-              currentXP={user.xp}
-              totalXP={user.xp}
-              recentGains={[]}
-            />
+          <TabsContent value="level" className="space-y-3 md:space-y-6">
+            <MobileCard className="md:p-6">
+              <LevelProgress 
+                level={user.level}
+                currentXP={user.xp}
+                totalXP={user.xp}
+                recentGains={[]}
+              />
+            </MobileCard>
           </TabsContent>
 
-          <TabsContent value="achievements" className="space-y-6">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle>Achievements ({achievements.length})</CardTitle>
-              </CardHeader>
+          <TabsContent value="achievements" className="space-y-3 md:space-y-6">
+            <MobileCard>
+              <div className="md:hidden mb-3">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Badges ({achievements.length})</h3>
+              </div>
+              <div className="hidden md:block">
+                <CardHeader>
+                  <CardTitle>Achievements ({achievements.length})</CardTitle>
+                </CardHeader>
+              </div>
               <CardContent>
                 {achievements.length === 0 ? (
                   <div className="text-center py-12">

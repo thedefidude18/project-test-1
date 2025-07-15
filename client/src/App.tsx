@@ -10,26 +10,28 @@ import { useEffect, useState } from "react";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Home from "@/pages/Home";
-import Events from "@/pages/Events";
-import Challenges from "@/pages/Challenges";
-import Friends from "@/pages/Friends";
-import WalletPage from "@/pages/WalletPage";
-import Leaderboard from "@/pages/Leaderboard";
-import Notifications from "@/pages/Notifications";
-import Profile from "@/pages/Profile";
-import ProfileSettings from "@/pages/ProfileSettings";
-import ReferralPage from "@/pages/ReferralPage";
-import EventChatPage from "@/pages/EventChatPage";
-import History from "@/pages/History";
-import Settings from "@/pages/Settings";
+import Events from "./pages/Events";
+import EventCreate from "./pages/EventCreate";
+import Challenges from "./pages/Challenges";
+import Friends from "./pages/Friends";
+import Profile from "./pages/Profile";
+import ProfileSettings from "./pages/ProfileSettings";
+import History from "./pages/History";
+import Notifications from "./pages/Notifications";
+import WalletPage from "./pages/WalletPage";
+import ReferralPage from "./pages/ReferralPage";
+import Settings from "./pages/Settings";
+import Leaderboard from "./pages/Leaderboard";
+import ChallengeDetail from "./pages/ChallengeDetail";
+import EventChatPage from "./pages/EventChatPage";
 import AdminDashboardOverview from "./pages/AdminDashboardOverview";
 import AdminEventPayouts from "./pages/AdminEventPayouts";
 import AdminChallengePayouts from "./pages/AdminChallengePayouts";
 import AdminPayouts from "./pages/AdminPayouts";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminNotifications from "@/pages/AdminNotifications";
-import AdminUsersManagement from "@/pages/AdminUsersManagement";
-import AdminSettings from "@/pages/AdminSettings";
+import AdminUsersManagement from "./pages/AdminUsersManagement";
+import AdminSettings from "./pages/AdminSettings";
 import ChallengeDetail from "./pages/ChallengeDetail";
 import { DailySignInModal } from '@/components/DailySignInModal';
 import { useDailySignIn } from '@/hooks/useDailySignIn';
@@ -68,14 +70,14 @@ function Router() {
 
   // Show mobile splash screen only on mobile devices
   const isMobile = window.innerWidth < 768;
-  
+
   return (
     <div className="min-h-screen transition-all duration-300 ease-in-out">
       {/* Mobile Splash Screen */}
       {isMobile && showMobileSplash && (
         <MobileSplashScreen onComplete={() => setShowMobileSplash(false)} />
       )}
-      
+
       <Switch>
       {/* Admin Login Route - Always Available */}
       <Route path="/admin/login" component={AdminLogin} />
@@ -85,7 +87,8 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/events" component={Events} />
-          <Route path="/events/:id/chat" component={EventChatPage} />
+          <Route path="/events/create" component={EventCreate} />
+          <Route path="/event/:id" component={EventChatPage} />
           <Route path="/challenges" component={Challenges} />
           <Route path="/challenges/:id" component={ChallengeDetail} />
           <Route path="/friends" component={Friends} />
