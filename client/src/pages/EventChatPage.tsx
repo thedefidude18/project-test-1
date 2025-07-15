@@ -70,7 +70,7 @@ const COMMON_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '😡'];
 export default function EventChatPage() {
   const params = useParams();
   const eventId = params.id ? parseInt(params.id) : null;
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newMessage, setNewMessage] = useState("");
@@ -486,7 +486,7 @@ export default function EventChatPage() {
     p.user.firstName?.toLowerCase().includes(mentionQuery.toLowerCase())
   );
 
-  if (!eventId || !user) {
+  if (!eventId) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
@@ -606,7 +606,26 @@ export default function EventChatPage() {
                 </div>
               </div>
               <div className="flex space-x-1 md:space-x-2 ml-2 md:ml-3">
-                {hasUserBet || userBetLocked ? (
+                {!isAuthenticated ? (
+                  <div className="flex space-x-1 md:space-x-2">
+                    <Button
+                      size="sm"
+                      className="bg-emerald-500/70 text-white px-4 py-2 rounded-full font-medium cursor-not-allowed"
+                      disabled
+                    >
+                      YES
+                      <div className="text-xs ml-1">{yesPercentage.toFixed(0)}%</div>
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-red-500/70 text-white px-4 py-2 rounded-full font-medium cursor-not-allowed"
+                      disabled
+                    >
+                      NO
+                      <div className="text-xs ml-1">{noPercentage.toFixed(0)}%</div>
+                    </Button>
+                  </div>
+                ) : hasUserBet || userBetLocked ? (
                   <div className="flex items-center space-x-2">
                     <div className="bg-yellow-600 text-white px-3 py-1 rounded-full text-xs font-medium">
                       <i className="fas fa-lock mr-1"></i>
@@ -833,63 +852,83 @@ export default function EventChatPage() {
 
       {/* Message Input */}
       <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-2 sticky bottom-0 rounded-t-2xl md:rounded-none mobile-nav-safe-area">
-        <div className="relative">
-          {/* Mentions dropdown */}
-          {showMentions && filteredParticipants.length > 0 && (
-            <div className="absolute bottom-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-t-xl shadow-lg max-h-40 overflow-y-auto z-10">
-              {filteredParticipants.slice(0, 5).map((participant: any) => (
-                <div
-                  key={participant.user.id}
-                  className="px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer flex items-center space-x-2"
-                  onClick={() => handleMention(participant.user.username || participant.user.firstName)}
-                >
-                  <UserAvatar
-                    userId={participant.user.id}
-                    username={participant.user.username}
-                    size={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-sm">{participant.user.firstName || participant.user.username}</span>
-                </div>
-              ))}
+        {!isAuthenticated ? (
+          /* Guest User Prompt */
+          <div className="text-center py-4">
+            <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-xl p-4 mb-3">
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                Join the conversation!
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                Sign up to participate in this event chat and place your bets
+              </p>
+              <Button
+                onClick={() => window.location.href = '/api/login'}
+                className="bg-primary text-white hover:bg-primary/90 px-6 py-2 rounded-full font-medium"
+              >
+                Sign Up / Login
+              </Button>
             </div>
-          )}
-
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-primary hover:bg-primary/10 p-2 rounded-full"
-            >
-              <i className="fas fa-smile text-base md:text-lg"></i>
-            </Button>
-
-            <div className="flex-1 relative">
-              <Input
-                ref={inputRef}
-                type="text"
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyPress}
-                className="bg-slate-100 dark:bg-slate-700 border-none rounded-full pl-4 pr-4 py-2 text-sm"
-                disabled={false}
-              />
-              {!isConnected && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                </div>
-              )}
-            </div>
-
-            <Button
-              onClick={handleSendMessage}
-              disabled={!newMessage.trim() || sendMessageMutation.isPending}
-              className="bg-primary text-white hover:bg-primary/90 rounded-full p-2 active:scale-95">
-              <i className="fas fa-paper-plane text-sm"></i>
-            </Button>
           </div>
-        </div>
+        ) : (
+          <div className="relative">
+            {/* Mentions dropdown */}
+            {showMentions && filteredParticipants.length > 0 && (
+              <div className="absolute bottom-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-t-xl shadow-lg max-h-40 overflow-y-auto z-10">
+                {filteredParticipants.slice(0, 5).map((participant: any) => (
+                  <div
+                    key={participant.user.id}
+                    className="px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer flex items-center space-x-2"
+                    onClick={() => handleMention(participant.user.username || participant.user.firstName)}
+                  >
+                    <UserAvatar
+                      userId={participant.user.id}
+                      username={participant.user.username}
+                      size={20}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-sm">{participant.user.firstName || participant.user.username}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-primary hover:bg-primary/10 p-2 rounded-full"
+              >
+                <i className="fas fa-smile text-base md:text-lg"></i>
+              </Button>
+
+              <div className="flex-1 relative">
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Type a message..."
+                  value={newMessage}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyPress}
+                  className="bg-slate-100 dark:bg-slate-700 border-none rounded-full pl-4 pr-4 py-2 text-sm"
+                  disabled={false}
+                />
+                {!isConnected && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  </div>
+                )}
+              </div>
+
+              <Button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                className="bg-primary text-white hover:bg-primary/90 rounded-full p-2 active:scale-95">
+                <i className="fas fa-paper-plane text-sm"></i>
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Betting Dialog */}

@@ -1,8 +1,48 @@
+import { useAuth } from "@/hooks/useAuth";
+import { useLocation, useParams } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/contexts/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { motion } from "framer-motion";
+import { Zap, DollarSign, Users, Trophy, Shield, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Landing() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+  const params = useParams();
+  const { toast } = useToast();
+  const { theme } = useTheme();
+  const [isVisible, setIsVisible] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsVisible(true);
+
+    // Extract referral code from URL
+    if (params.code) {
+      setReferralCode(params.code);
+      localStorage.setItem('referralCode', params.code);
+      toast({
+        title: "Referral Code Applied!",
+        description: `You'll get bonus rewards when you sign up with code: ${params.code}`,
+      });
+    }
+
+    if (isAuthenticated) {
+      setLocation('/');
+    }
+  }, [isAuthenticated, setLocation, params.code, toast]);
+
+  const handleGetStarted = () => {
+    // Store referral code before redirecting to signup
+    if (referralCode) {
+      localStorage.setItem('referralCode', referralCode);
+    }
+    window.location.href = "/api/login";
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       {/* Header */}
@@ -43,22 +83,47 @@ export default function Landing() {
             Join the ultimate social betting platform. Predict events, challenge friends, 
             and win big while having fun with real-time chat and gamification.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg"
-              onClick={() => window.location.href = '/api/login'}
-              className="bg-primary hover:bg-primary/90 text-lg px-8 py-3"
+          {referralCode && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-500/30 rounded-xl p-4 mb-6"
+              >
+                <div className="text-center">
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                    🎁 Referral Code Applied: <span className="font-bold">{referralCode}</span>
+                  </p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                    You'll get bonus rewards when you sign up!
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center mt-8"
             >
-              Get Started Free
-            </Button>
-            <Button 
-              size="lg"
-              variant="outline"
-              className="text-lg px-8 py-3"
-            >
-              Learn More
-            </Button>
-          </div>
+              <Button 
+                size="lg" 
+                className="bg-[#7440ff] hover:bg-[#5f35cc] text-white px-8 py-3 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                onClick={handleGetStarted}
+              >
+                {referralCode ? 'Sign Up with Bonus' : 'Get Started Free'}
+                <Zap className="ml-2 h-5 w-5" />
+              </Button>
+
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="border-2 border-[#7440ff] text-[#7440ff] hover:bg-[#7440ff] hover:text-white px-8 py-3 rounded-full font-semibold text-lg transition-all duration-300"
+              >
+                Learn More
+              </Button>
+            </motion.div>
         </div>
 
         {/* Feature Cards */}

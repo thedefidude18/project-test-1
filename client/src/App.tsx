@@ -81,15 +81,20 @@ function Router() {
       <Switch>
       {/* Admin Login Route - Always Available */}
       <Route path="/admin/login" component={AdminLogin} />
+      {/* Public Routes - Accessible to everyone */}
+      <Route path="/events/:id/chat" component={EventChatPage} />
+      <Route path="/event/:id" component={EventChatPage} />
+      
       {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/ref/:code" component={Landing} />
+        </>
       ) : (
         <>
           <Route path="/" component={Home} />
           <Route path="/events" component={Events} />
           <Route path="/events/create" component={EventCreate} />
-          <Route path="/event/:id" component={EventChatPage} />
-          <Route path="/events/:id/chat" component={EventChatPage} />
           <Route path="/challenges" component={Challenges} />
           <Route path="/challenges/:id" component={ChallengeDetail} />
           <Route path="/friends" component={Friends} />
@@ -110,6 +115,7 @@ function Router() {
           <Route path="/admin/users" component={AdminUsersManagement} />
           <Route path="/admin/settings" component={AdminSettings} />
           <Route path="/telegram/test" component={TelegramTest} />
+          <Route path="/ref/:code" component={Landing} />
         </>
       )}
       <Route component={NotFound} />
