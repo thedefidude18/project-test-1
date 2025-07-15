@@ -2609,11 +2609,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
             
           case 'user_typing':
-            // Broadcast typing indicator
+            // Broadcast typing indicator to other participants
             await broadcastToEventParticipants(data.eventId, {
               type: 'user_typing',
               userId: data.userId,
               eventId: data.eventId,
+              username: data.username,
               isTyping: data.isTyping
             });
             break;
@@ -2684,6 +2685,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const participants = await storage.getEventParticipants(eventId);
       
       for (const participant of participants) {
+        // Skip sending typing indicator to the sender themselves
+        if (message.type === 'user_typing' && message.userId === participant.userId) {
+          continue;
+        }
+        
         const client = clients.get(participant.userId);
         if (client && client.readyState === WebSocket.OPEN) {
           // Send real-time message via WebSocket

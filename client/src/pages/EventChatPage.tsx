@@ -164,6 +164,13 @@ export default function EventChatPage() {
             }
             return filtered;
           });
+          
+          // Auto-remove typing indicator after 5 seconds
+          if (data.isTyping) {
+            setTimeout(() => {
+              setTypingUsers(prev => prev.filter(u => u.userId !== data.userId));
+            }, 5000);
+          }
         }
       } else if (data.type === 'message_reaction' && data.eventId === eventId) {
         refetchMessages();
@@ -355,17 +362,22 @@ export default function EventChatPage() {
           username: user.firstName || user.username || 'User'
         });
       }
+      
+      // Clean up typing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     };
   }, [user, eventId, sendMessage, isConnected]);
 
   // Handle typing indicators
   const handleTyping = () => {
-    if (!sendMessage || typingTimeoutRef.current) {
+    if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
     // Only send typing if WebSocket is connected
-    if (sendMessage && user?.id) {
+    if (sendMessage && user?.id && isConnected) {
       sendMessage({
         type: 'user_typing',
         eventId,
@@ -375,13 +387,15 @@ export default function EventChatPage() {
       });
 
       typingTimeoutRef.current = setTimeout(() => {
-        sendMessage({
-          type: 'user_typing',
-          eventId,
-          userId: user.id,
-          username: user.firstName || user.username || 'User',
-          isTyping: false,
-        });
+        if (sendMessage) {
+          sendMessage({
+            type: 'user_typing',
+            eventId,
+            userId: user.id,
+            username: user.firstName || user.username || 'User',
+            isTyping: false,
+          });
+        }
       }, 3000);
     }
   };
@@ -407,7 +421,10 @@ export default function EventChatPage() {
       setShowMentions(false);
     }
 
-    handleTyping();
+    // Only trigger typing indicator if user is actually typing
+    if (value.trim() !== '') {
+      handleTyping();
+    }
   };
 
   const handleSendMessage = () => {
@@ -415,6 +432,21 @@ export default function EventChatPage() {
     if (!newMessage.trim()) {
       console.log("Message is empty, returning");
       return;
+    }
+
+    // Clear typing indicator when sending message
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    if (sendMessage && user?.id && isConnected) {
+      sendMessage({
+        type: 'user_typing',
+        eventId,
+        userId: user.id,
+        username: user.firstName || user.username || 'User',
+        isTyping: false,
+      });
     }
 
     // Extract mentions
