@@ -49,8 +49,11 @@ webpush.setVapidDetails(
 
 
 // Initialize Telegram sync service
-let telegramSync = null;
-console.log("🔧 Telegram sync disabled via TELEGRAM_DISABLED environment variable");
+let telegramSync = createTelegramSync(pusher);
+if (telegramSync) {
+  console.log("🔧 Initializing Telegram sync service...");
+  telegramSync.initialize().catch(console.error);
+}
 
 interface AuthenticatedRequest extends Request {
   user: {
