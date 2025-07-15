@@ -32,7 +32,6 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminNotifications from "@/pages/AdminNotifications";
 import AdminUsersManagement from "./pages/AdminUsersManagement";
 import AdminSettings from "./pages/AdminSettings";
-import ChallengeDetail from "./pages/ChallengeDetail";
 import { DailySignInModal } from '@/components/DailySignInModal';
 import { useDailySignIn } from '@/hooks/useDailySignIn';
 import AdminLogin from "@/pages/AdminLogin"; // Assuming you have an AdminLogin component
