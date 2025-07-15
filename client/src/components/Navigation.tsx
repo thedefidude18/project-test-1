@@ -47,10 +47,12 @@ export function Navigation() {
               onClick={() => handleNavigation("/")}
               className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-                <i className="fas fa-dice text-white text-sm"></i>
-              </div>
-              <span className="text-xl font-bold bg-[#7440ff]"></span>
+              <img 
+                src="/assets/bantahblue.svg" 
+                alt="BetChat Logo" 
+                className="w-8 h-8"
+              />
+              <span className="text-xl font-bold text-slate-900 dark:text-white">BetChat</span>
             </button>
           </div>
 
