@@ -780,6 +780,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error sending Pusher notifications:", pusherError);
       }
 
+      // Broadcast matchmaking (challenge accepted) to Telegram
+      try {
+        const telegramBot = getTelegramBot();
+        if (telegramBot) {
+          await telegramBot.broadcastMatchmaking({
+            challengeId: challenge.id,
+            challenger: {
+              name: challenger?.firstName || challenger?.username || 'Unknown',
+              username: challenger?.username || undefined,
+            },
+            challenged: {
+              name: challenged?.firstName || challenged?.username || 'Unknown',
+              username: challenged?.username || undefined,
+            },
+            stake_amount: parseFloat(challenge.amount),
+            category: challenge.type,
+          });
+          console.log('📤 Challenge acceptance (matchmaking) broadcasted to Telegram successfully');
+        }
+      } catch (telegramError) {
+        console.error('❌ Error broadcasting matchmaking to Telegram:', telegramError);
+      }
+
       res.json(challenge);
     } catch (error) {
       console.error("Error accepting challenge:", error);
@@ -2058,6 +2081,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         platformFee: payoutResult.platformFee,
         timestamp: new Date().toISOString()
       });
+
+      // Broadcast challenge result to Telegram
+      try {
+        const challengerUser = await storage.getUser(existingChallenge.challenger);
+        const challengedUser = await storage.getUser(existingChallenge.challenged);
+        
+        const telegramBot = getTelegramBot();
+        if (telegramBot && challengerUser && challengedUser) {
+          // Determine winner and loser for Telegram broadcast
+          let winner, loser;
+          if (result === 'challenger_won') {
+            winner = challengerUser;
+            loser = challengedUser;
+          } else if (result === 'challenged_won') {
+            winner = challengedUser;
+            loser = challengerUser;
+          } else {
+            // Draw case - both are equal
+            winner = challengerUser;
+            loser = challengedUser;
+          }
+
+          await telegramBot.broadcastChallengeResult({
+            id: challengeId,
+            title: existingChallenge.title,
+            winner: {
+              name: winner.firstName || winner.username || 'Unknown',
+              username: winner.username || undefined,
+            },
+            loser: {
+              name: loser.firstName || loser.username || 'Unknown',
+              username: loser.username || undefined,
+            },
+            stake_amount: parseFloat(existingChallenge.amount),
+            category: existingChallenge.type,
+            result_type: result,
+          });
+          console.log('📤 Challenge result broadcasted to Telegram successfully');
+        }
+      } catch (telegramError) {
+        console.error('❌ Error broadcasting challenge result to Telegram:', telegramError);
+      }
 
       res.json({ 
         challenge, 

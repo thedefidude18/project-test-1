@@ -46,6 +46,48 @@ interface ChallengeBroadcast {
   category?: string;
 }
 
+interface ChallengeResultBroadcast {
+  id: string | number;
+  title: string;
+  winner: {
+    name: string;
+    username?: string;
+  };
+  loser: {
+    name: string;
+    username?: string;
+  };
+  stake_amount: number;
+  category?: string;
+  result_type: 'challenger_wins' | 'challenged_wins' | 'draw';
+}
+
+interface MatchmakingBroadcast {
+  challengeId: string | number;
+  challenger: {
+    name: string;
+    username?: string;
+  };
+  challenged: {
+    name: string;
+    username?: string;
+  };
+  stake_amount: number;
+  category?: string;
+}
+
+interface LeaderboardBroadcast {
+  user: {
+    name: string;
+    username?: string;
+  };
+  new_rank: number;
+  old_rank?: number;
+  total_wins: number;
+  total_earnings: number;
+  achievement?: string;
+}
+
 export class TelegramBotService {
   private token: string;
   private channelId: string;
@@ -266,6 +308,122 @@ ${timeInfo}
     return message;
   }
 
+  // Format challenge result message for Telegram
+  private formatChallengeResultMessage(result: ChallengeResultBroadcast): string {
+    const getCategoryEmoji = (category: string) => {
+      const categoryMap: { [key: string]: string } = {
+        'crypto': '₿', 'sports': '⚽', 'gaming': '🎮', 'music': '🎵',
+        'politics': '🏛️', 'entertainment': '🎬', 'tech': '💻', 'science': '🔬'
+      };
+      return categoryMap[category?.toLowerCase()] || '⚔️';
+    };
+
+    const categoryEmoji = getCategoryEmoji(result.category || '');
+    const winnerDisplay = result.winner.username ? `@${result.winner.username}` : result.winner.name;
+    const loserDisplay = result.loser.username ? `@${result.loser.username}` : result.loser.name;
+    
+    const resultEmoji = result.result_type === 'draw' ? '🤝' : '🏆';
+    const resultText = result.result_type === 'draw' ? 'DRAW' : 'VICTORY';
+
+    const message = `${resultEmoji} *CHALLENGE ${resultText}*
+
+━━━━━━━━━━━━━━━━━━━━━
+${categoryEmoji} *${result.title}*
+━━━━━━━━━━━━━━━━━━━━━
+
+${result.result_type === 'draw' ? 
+  `🤝 *Both players fought well!*
+💰 *Stakes returned:* ₦${result.stake_amount.toLocaleString()} each
+👥 *${winnerDisplay}* vs *${loserDisplay}*` :
+  `🏆 *Winner:* ${winnerDisplay}
+💸 *Loser:* ${loserDisplay}
+💰 *Prize:* ₦${(result.stake_amount * 2).toLocaleString()}`}
+
+${result.category ? `${categoryEmoji} *Category:* ${result.category.charAt(0).toUpperCase() + result.category.slice(1)}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━
+
+#BetChat #Challenge #${result.result_type === 'draw' ? 'Draw' : 'Victory'} #${result.category || 'Battle'}`;
+
+    return message;
+  }
+
+  // Format matchmaking message for Telegram
+  private formatMatchmakingMessage(match: MatchmakingBroadcast): string {
+    const getCategoryEmoji = (category: string) => {
+      const categoryMap: { [key: string]: string } = {
+        'crypto': '₿', 'sports': '⚽', 'gaming': '🎮', 'music': '🎵',
+        'politics': '🏛️', 'entertainment': '🎬', 'tech': '💻', 'science': '🔬'
+      };
+      return categoryMap[category?.toLowerCase()] || '⚔️';
+    };
+
+    const categoryEmoji = getCategoryEmoji(match.category || '');
+    const challengerDisplay = match.challenger.username ? `@${match.challenger.username}` : match.challenger.name;
+    const challengedDisplay = match.challenged.username ? `@${match.challenged.username}` : match.challenged.name;
+
+    const message = `🔥 *CHALLENGE ACCEPTED*
+
+━━━━━━━━━━━━━━━━━━━━━
+⚔️ *BATTLE BEGINS*
+━━━━━━━━━━━━━━━━━━━━━
+
+🚀 *Challenger:* ${challengerDisplay}
+🎯 *Accepted by:* ${challengedDisplay}
+💰 *Stakes:* ₦${match.stake_amount.toLocaleString()} each
+${match.category ? `${categoryEmoji} *Category:* ${match.category.charAt(0).toUpperCase() + match.category.slice(1)}` : ''}
+
+🍿 *The battle is ON! May the best player win!*
+
+━━━━━━━━━━━━━━━━━━━━━
+
+#BetChat #MatchMade #Battle #${match.category || 'Challenge'}`;
+
+    return message;
+  }
+
+  // Format leaderboard update message for Telegram
+  private formatLeaderboardMessage(update: LeaderboardBroadcast): string {
+    const userDisplay = update.user.username ? `@${update.user.username}` : update.user.name;
+    
+    const rankEmoji = update.new_rank <= 3 ? 
+      (update.new_rank === 1 ? '🥇' : update.new_rank === 2 ? '🥈' : '🥉') : '🏅';
+    
+    const changeEmoji = update.old_rank ? 
+      (update.new_rank < update.old_rank ? '📈' : update.new_rank > update.old_rank ? '📉' : '➡️') : '⭐';
+    
+    const changeText = update.old_rank ? 
+      (update.new_rank < update.old_rank ? 
+        `climbed from #${update.old_rank} to #${update.new_rank}` :
+        update.new_rank > update.old_rank ? 
+        `dropped from #${update.old_rank} to #${update.new_rank}` :
+        `maintained #${update.new_rank}`) :
+      `entered the leaderboard at #${update.new_rank}`;
+
+    const message = `${rankEmoji} *LEADERBOARD UPDATE*
+
+━━━━━━━━━━━━━━━━━━━━━
+${changeEmoji} *RANK CHANGE*
+━━━━━━━━━━━━━━━━━━━━━
+
+👤 *Player:* ${userDisplay}
+${rankEmoji} *New Rank:* #${update.new_rank}
+${changeEmoji} *${userDisplay}* ${changeText}
+
+📊 *Stats:*
+🏆 *Total Wins:* ${update.total_wins}
+💰 *Total Earnings:* ₦${update.total_earnings.toLocaleString()}
+${update.achievement ? `🎯 *Achievement:* ${update.achievement}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━
+🏆 *Climb the ranks and dominate!*
+━━━━━━━━━━━━━━━━━━━━━
+
+#BetChat #Leaderboard #Ranking #Champion`;
+
+    return message;
+  }
+
   // Send message to Telegram channel
   private async sendToChannel(message: string): Promise<boolean> {
     try {
@@ -333,6 +491,39 @@ ${timeInfo}
       return await this.sendToChannel(message);
     } catch (error) {
       console.error('❌ Error sending custom message:', error);
+      return false;
+    }
+  }
+
+  // Broadcast challenge result (win/loss)
+  async broadcastChallengeResult(result: ChallengeResultBroadcast): Promise<boolean> {
+    try {
+      const message = this.formatChallengeResultMessage(result);
+      return await this.sendToChannel(message);
+    } catch (error) {
+      console.error('❌ Error broadcasting challenge result:', error);
+      return false;
+    }
+  }
+
+  // Broadcast matchmaking (challenge accepted)
+  async broadcastMatchmaking(match: MatchmakingBroadcast): Promise<boolean> {
+    try {
+      const message = this.formatMatchmakingMessage(match);
+      return await this.sendToChannel(message);
+    } catch (error) {
+      console.error('❌ Error broadcasting matchmaking:', error);
+      return false;
+    }
+  }
+
+  // Broadcast leaderboard update
+  async broadcastLeaderboardUpdate(update: LeaderboardBroadcast): Promise<boolean> {
+    try {
+      const message = this.formatLeaderboardMessage(update);
+      return await this.sendToChannel(message);
+    } catch (error) {
+      console.error('❌ Error broadcasting leaderboard update:', error);
       return false;
     }
   }
