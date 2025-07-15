@@ -26,6 +26,7 @@ import {
 import { sql } from "drizzle-orm";
 import crypto from "crypto";
 import { createTelegramSync, getTelegramSync } from "./telegramSync";
+import { getTelegramBot } from "./telegramBot";
 import webpush from "web-push";
 
 // Initialize Pusher
@@ -145,6 +146,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const event = await storage.createEvent(eventData);
       console.log("Created event:", event);
+
+      // Get creator info for Telegram broadcast
+      const creator = await storage.getUser(userId);
+      
+      // Broadcast to Telegram channel
+      const telegramBot = getTelegramBot();
+      if (telegramBot && creator) {
+        try {
+          await telegramBot.broadcastEvent({
+            id: event.id,
+            title: event.title,
+            description: event.description || undefined,
+            creator: {
+              name: creator.firstName || creator.username || 'Unknown',
+              username: creator.username || undefined,
+            },
+            entryFee: event.entryFee,
+            endDate: event.endDate,
+            is_private: event.isPrivate,
+            max_participants: event.maxParticipants,
+            category: event.category,
+          });
+          console.log("📤 Event broadcasted to Telegram successfully");
+        } catch (error) {
+          console.error("❌ Failed to broadcast event to Telegram:", error);
+        }
+      }
 
       res.json(event);
     } catch (error) {
@@ -643,6 +671,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (pusherError) {
         console.error("Error sending Pusher notifications:", pusherError);
+      }
+
+      // Broadcast to Telegram channel
+      const telegramBot = getTelegramBot();
+      if (telegramBot && challenger && challenged) {
+        try {
+          await telegramBot.broadcastChallenge({
+            id: challenge.id,
+            title: challenge.title,
+            description: challenge.description || undefined,
+            creator: {
+              name: challenger.firstName || challenger.username || 'Unknown',
+              username: challenger.username || undefined,
+            },
+            challenged: {
+              name: challenged.firstName || challenged.username || 'Unknown',
+              username: challenged.username || undefined,
+            },
+            stake_amount: parseFloat(challenge.amount),
+            status: challenge.status,
+            end_time: challenge.dueDate,
+            category: challenge.type,
+          });
+          console.log("📤 Challenge broadcasted to Telegram successfully");
+        } catch (error) {
+          console.error("❌ Failed to broadcast challenge to Telegram:", error);
+        }
       }
 
       res.json(challenge);
@@ -1288,27 +1343,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/telegram/status', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const telegramSync = getTelegramSync();
+      const telegramBot = getTelegramBot();
 
-      if (!telegramSync) {
-        return res.json({ 
-          enabled: false, 
-          connected: false, 
-          message: "Telegram sync not configured" 
-        });
+      let syncStatus = { 
+        enabled: false, 
+        connected: false, 
+        message: "Telegram sync not configured" 
+      };
+      
+      let botStatus = { 
+        enabled: false, 
+        connected: false, 
+        message: "Telegram bot not configured" 
+      };
+
+      if (telegramSync) {
+        const isReady = telegramSync.isReady();
+        const groupInfo = isReady ? await telegramSync.getGroupInfo() : null;
+        syncStatus = {
+          enabled: true,
+          connected: isReady,
+          groupInfo,
+          message: isReady ? "Connected and syncing" : "Connecting..."
+        };
+      }
+      
+      if (telegramBot) {
+        const connection = await telegramBot.testConnection();
+        const channelInfo = connection ? await telegramBot.getChannelInfo() : null;
+        botStatus = {
+          enabled: true,
+          connected: connection,
+          channelInfo,
+          message: connection ? "Bot connected and ready for broadcasting" : "Bot connection failed"
+        };
       }
 
-      const isReady = telegramSync.isReady();
-      const groupInfo = isReady ? await telegramSync.getGroupInfo() : null;
-
       res.json({
-        enabled: true,
-        connected: isReady,
-        groupInfo,
-        message: isReady ? "Connected and syncing" : "Connecting..."
+        sync: syncStatus,
+        bot: botStatus
       });
     } catch (error) {
       console.error("Error getting Telegram status:", error);
       res.status(500).json({ message: "Failed to get Telegram status" });
+    }
+  });
+
+  // Test Telegram broadcast endpoint
+  app.post('/api/telegram/test-broadcast', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const telegramBot = getTelegramBot();
+      
+      if (!telegramBot) {
+        return res.status(400).json({ message: "Telegram bot not configured" });
+      }
+      
+      const message = req.body.message || "🧪 Test message from BetChat";
+      const success = await telegramBot.sendCustomMessage(message);
+      
+      res.json({ 
+        success, 
+        message: success ? "Message sent successfully" : "Failed to send message" 
+      });
+    } catch (error) {
+      console.error("Error testing Telegram broadcast:", error);
+      res.status(500).json({ message: "Failed to test Telegram broadcast" });
     }
   });
 

@@ -38,6 +38,7 @@ import AdminLogin from "@/pages/AdminLogin"; // Assuming you have an AdminLogin 
 import { WebsiteTour, useTour } from "@/components/WebsiteTour";
 import { SplashScreen } from "@/components/SplashScreen"; //Import Splashscreen
 import MobileSplashScreen from "@/components/MobileSplashScreen";
+import TelegramTest from "@/pages/TelegramTest";
 
 
 function Router() {
@@ -108,6 +109,7 @@ function Router() {
           <Route path="/admin/notifications" component={AdminNotifications} />
           <Route path="/admin/users" component={AdminUsersManagement} />
           <Route path="/admin/settings" component={AdminSettings} />
+          <Route path="/telegram/test" component={TelegramTest} />
         </>
       )}
       <Route component={NotFound} />

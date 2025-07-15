@@ -3,6 +3,8 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import "./eventScheduler"; // Start event lifecycle management
 import { addAuthTestRoutes } from "./authTest";
+import { createTelegramBot } from "./telegramBot";
+import { createTelegramBot } from "./telegramBot";
 
 const app = express();
 
@@ -42,6 +44,12 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize Telegram bot
+  const telegramBot = createTelegramBot();
+  if (telegramBot) {
+    await telegramBot.testConnection();
+  }
+
   const server = await registerRoutes(app);
   addAuthTestRoutes(app);
 
