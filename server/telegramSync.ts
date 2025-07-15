@@ -91,7 +91,7 @@ export class TelegramSyncService {
       }
       
       // You can set a specific group name to auto-find
-      const targetGroupName = process.env.TELEGRAM_GROUP_NAME || "BetChat Official";
+      const targetGroupName = process.env.TELEGRAM_GROUP_NAME || "Bantah";
       const targetGroup = dialogs.find(d => 
         (d.isGroup || d.isChannel) && 
         d.title?.toLowerCase().includes(targetGroupName.toLowerCase())

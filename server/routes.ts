@@ -347,6 +347,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (telegramError) {
           console.error('Error forwarding message to Telegram:', telegramError);
         }
+      } else {
+        // Fallback to Telegram bot if sync is not available
+        const telegramBot = getTelegramBot();
+        if (telegramBot) {
+          try {
+            const user = await storage.getUser(userId);
+            const event = await storage.getEventById(eventId);
+            const senderName = user?.firstName || user?.username || 'BetChat User';
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const formattedMessage = `🎯 [${event?.title || 'Event Chat'}]\n👤 ${senderName}: ${message}\n⏰ ${timestamp}\n\n#event${eventId}`;
+            
+            await telegramBot.sendCustomMessage(formattedMessage);
+            console.log(`📤 BetChat → Telegram Bot: ${senderName}: ${message} [Event: ${event?.title || 'Event Chat'}]`);
+          } catch (telegramError) {
+            console.error('Error sending message via Telegram bot:', telegramError);
+          }
+        }
       }
 
       // Create notifications for mentioned users
