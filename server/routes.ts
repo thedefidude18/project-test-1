@@ -28,6 +28,7 @@ import crypto from "crypto";
 import { createTelegramSync, getTelegramSync } from "./telegramSync";
 import { getTelegramBot } from "./telegramBot";
 import webpush from "web-push";
+import axios from "axios";
 
 // Initialize Pusher
 const pusher = new Pusher({
@@ -1403,11 +1404,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ 
         success, 
-        message: success ? "Message sent successfully" : "Failed to send message" 
+        message: success ? "Message sent successfully" : "Failed to send message - Make sure bot is added to your channel as admin" 
       });
     } catch (error) {
       console.error("Error testing Telegram broadcast:", error);
       res.status(500).json({ message: "Failed to test Telegram broadcast" });
+    }
+  });
+
+  // Add new endpoint to test with your personal chat
+  app.post('/api/telegram/test-personal', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const telegramBot = getTelegramBot();
+      
+      if (!telegramBot) {
+        return res.status(400).json({ message: "Telegram bot not configured" });
+      }
+      
+      const { chatId } = req.body;
+      if (!chatId) {
+        return res.status(400).json({ message: "Chat ID required" });
+      }
+      
+      // Test with personal chat ID first
+      const message = "🧪 Personal test from BetChat bot! If you see this, the bot is working.";
+      
+      try {
+        const response = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          chat_id: chatId,
+          text: message,
+          parse_mode: 'Markdown'
+        });
+
+        if (response.data.ok) {
+          res.json({ 
+            success: true, 
+            message: "Test message sent to your personal chat! Bot is working." 
+          });
+        } else {
+          res.json({ 
+            success: false, 
+            message: `Failed: ${response.data.description}` 
+          });
+        }
+      } catch (error) {
+        res.json({ 
+          success: false, 
+          message: "Failed to send test message" 
+        });
+      }
+    } catch (error) {
+      console.error("Error testing personal Telegram:", error);
+      res.status(500).json({ message: "Failed to test personal Telegram" });
     }
   });
 
