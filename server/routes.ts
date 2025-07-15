@@ -355,9 +355,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const user = await storage.getUser(userId);
             const event = await storage.getEventById(eventId);
             const senderName = user?.firstName || user?.username || 'BetChat User';
-            const timestamp = new Date().toLocaleTimeString();
             
-            const formattedMessage = `🎯 [${event?.title || 'Event Chat'}]\n👤 ${senderName}: ${message}\n⏰ ${timestamp}\n\n#event${eventId}`;
+            const formattedMessage = `🎯 ${event?.title || 'Event Chat'}\n👤 ${senderName}: ${message}`;
             
             await telegramBot.sendCustomMessage(formattedMessage);
             console.log(`📤 BetChat → Telegram Bot: ${senderName}: ${message} [Event: ${event?.title || 'Event Chat'}]`);
