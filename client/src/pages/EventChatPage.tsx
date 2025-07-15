@@ -120,6 +120,12 @@ export default function EventChatPage() {
     retry: false,
   });
 
+  const { data: telegramStatus } = useQuery({
+    queryKey: ['telegram-status'],
+    queryFn: () => apiRequest('/api/telegram/status'),
+    refetchInterval: 30000, // Check every 30 seconds
+  });
+
   // Check if user has already bet
   useEffect(() => {
     if (participants.length > 0 && user) {
@@ -591,7 +597,18 @@ export default function EventChatPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-sm md:text-base">@{event.title}</h3>
-                    <p className="text-xs text-white/80">{messages.length} Members</p>
+                    <div className="flex items-center space-x-2 text-xs text-white/80">
+                      <span>{participants.length} participants</span>
+                      {telegramStatus?.sync?.groupInfo?.participantsCount && (
+                        <>
+                          <span>•</span>
+                          <span className="flex items-center">
+                            <i className="fab fa-telegram-plane mr-1"></i>
+                            {telegramStatus.sync.groupInfo.participantsCount.toLocaleString()}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
