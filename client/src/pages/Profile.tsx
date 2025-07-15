@@ -394,7 +394,7 @@ export default function Profile() {
 
           <TabsContent value="stats" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <MobileCard className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-lg">Performance</CardTitle>
                 </CardHeader>
@@ -414,9 +414,9 @@ export default function Profile() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </MobileCard>
 
-              <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <MobileCard className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-lg">Progress</CardTitle>
                 </CardHeader>
@@ -436,9 +436,9 @@ export default function Profile() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </MobileCard>
 
-              <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <MobileCard className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 <CardHeader>
                   <CardTitle className="text-lg">Social</CardTitle>
                 </CardHeader>
@@ -460,13 +460,12 @@ export default function Profile() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </MobileCard>
             </div>
           </TabsContent>
         </Tabs>
-      </div>
 
       <MobileNavigation />
-    </div>
+    </MobileLayout>
   );
 }
