@@ -304,13 +304,13 @@ export default function EventChatPage() {
     mutationFn: async () => {
       await apiRequest("POST", `/api/events/${eventId}/join`, {
         prediction,
-        amount: parseFloat(betAmount),
+        amount: parseFloat(event.entryFee),
       });
     },
     onSuccess: () => {
       toast({
         title: "Bet Placed!",
-        description: `You've bet ₦${betAmount} on ${prediction ? 'YES' : 'NO'}. Your funds are now locked until the event concludes.`,
+        description: `You've bet ₦${parseFloat(event.entryFee).toLocaleString()} on ${prediction ? 'YES' : 'NO'}. Your funds are now locked until the event concludes.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/events", eventId] });
       queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
@@ -513,7 +513,9 @@ export default function EventChatPage() {
       return;
     }
 
-    if (prediction !== null && betAmount && parseFloat(betAmount) > 0) {
+    if (prediction !== null) {
+      // Use the event's predefined entry fee
+      setBetAmount(event.entryFee);
       joinEventMutation.mutate();
     }
   };
@@ -1031,19 +1033,16 @@ export default function EventChatPage() {
               </div>
             </div>
 
-            <div>
-              <label className="text-sm font-medium">Bet Amount (₦)</label>
-              <Input
-                type="number"
-                placeholder="Enter amount..."
-                value={betAmount}
-                onChange={(e) => setBetAmount(e.target.value)}
-                className="mt-1"
-                min="1"
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                Minimum bet: ₦{event.entryFee}
-              </p>
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+              <div className="text-center">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">Fixed Entry Amount</p>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  ₦{parseFloat(event.entryFee).toLocaleString()}
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Set by event creator
+                </p>
+              </div>
             </div>
 
             <div className="flex space-x-2">
@@ -1056,10 +1055,10 @@ export default function EventChatPage() {
               </Button>
               <Button
                 onClick={handlePlaceBet}
-                disabled={prediction === null || !betAmount || joinEventMutation.isPending}
+                disabled={prediction === null || joinEventMutation.isPending}
                 className="flex-1 bg-primary text-white hover:bg-primary/90"
               >
-                {joinEventMutation.isPending ? "Placing..." : "Place Bet"}
+                {joinEventMutation.isPending ? "Placing..." : `Place Bet (₦${parseFloat(event.entryFee).toLocaleString()})`}
               </Button>
             </div>
           </div>

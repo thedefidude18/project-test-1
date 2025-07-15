@@ -26,6 +26,7 @@ export default function EventCreate() {
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
   const [entryFee, setEntryFee] = useState("");
+  const [bettingModel, setBettingModel] = useState("fixed"); // "fixed" or "custom"
 
   const createEventMutation = useMutation({
     mutationFn: async (eventData: any) => {
@@ -81,6 +82,7 @@ export default function EventCreate() {
       description,
       category,
       entryFee: parseFloat(entryFee),
+      bettingModel,
     });
   };
 
@@ -194,7 +196,38 @@ export default function EventCreate() {
             </div>
 
             <div>
-              <Label htmlFor="entryFee" className="text-sm font-medium text-slate-700 dark:text-slate-300">Entry Fee (₦) *</Label>
+              <Label htmlFor="bettingModel" className="text-sm font-medium text-slate-700 dark:text-slate-300">Betting Model *</Label>
+              <Select value={bettingModel} onValueChange={setBettingModel} required>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select betting model" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">
+                    <div className="flex items-center space-x-2">
+                      <i className="fas fa-lock text-blue-500"></i>
+                      <div>
+                        <span className="font-medium">Fixed Amount</span>
+                        <p className="text-xs text-slate-500">All participants bet the same amount</p>
+                      </div>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="custom">
+                    <div className="flex items-center space-x-2">
+                      <i className="fas fa-coins text-green-500"></i>
+                      <div>
+                        <span className="font-medium">Custom Amount</span>
+                        <p className="text-xs text-slate-500">Participants choose their bet amount</p>
+                      </div>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="entryFee" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {bettingModel === "fixed" ? "Fixed Entry Fee (₦) *" : "Minimum Entry Fee (₦) *"}
+              </Label>
               <Input
                 id="entryFee"
                 type="number"
@@ -206,7 +239,12 @@ export default function EventCreate() {
                 step="1"
                 required
               />
-              <p className="text-xs text-slate-500 mt-1">Minimum entry fee is ₦1</p>
+              <p className="text-xs text-slate-500 mt-1">
+                {bettingModel === "fixed" 
+                  ? "All participants will bet exactly this amount" 
+                  : "Participants can bet this amount or higher"
+                }
+              </p>
             </div>
           </MobileCard>
 
