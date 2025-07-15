@@ -153,10 +153,13 @@ export default function EventChatPage() {
 
   const { sendMessage, isConnected } = useWebSocket({
     onMessage: (data) => {
+      console.log('WebSocket message received:', data);
+      
       if (data.type === 'event_message' && data.eventId === eventId) {
         refetchMessages();
       } else if (data.type === 'user_typing' && data.eventId === eventId) {
-        if (data.userId !== user?.id) {
+        // Only process typing indicators from other users
+        if (data.userId && data.userId !== user?.id) {
           setTypingUsers(prev => {
             const filtered = prev.filter(u => u.userId !== data.userId);
             if (data.isTyping) {
@@ -167,9 +170,12 @@ export default function EventChatPage() {
           
           // Auto-remove typing indicator after 5 seconds
           if (data.isTyping) {
-            setTimeout(() => {
+            const timeoutId = setTimeout(() => {
               setTypingUsers(prev => prev.filter(u => u.userId !== data.userId));
             }, 5000);
+            
+            // Store timeout for cleanup
+            return () => clearTimeout(timeoutId);
           }
         }
       } else if (data.type === 'message_reaction' && data.eventId === eventId) {
@@ -376,32 +382,41 @@ export default function EventChatPage() {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Only send typing if WebSocket is connected
+    // Only send typing if WebSocket is connected and user exists
     if (sendMessage && user?.id && isConnected) {
-      sendMessage({
-        type: 'user_typing',
-        eventId,
-        userId: user.id,
-        username: user.firstName || user.username || 'User',
-        isTyping: true,
-      });
+      try {
+        sendMessage({
+          type: 'user_typing',
+          eventId,
+          userId: user.id,
+          username: user.firstName || user.username || 'User',
+          isTyping: true,
+        });
 
-      typingTimeoutRef.current = setTimeout(() => {
-        if (sendMessage) {
-          sendMessage({
-            type: 'user_typing',
-            eventId,
-            userId: user.id,
-            username: user.firstName || user.username || 'User',
-            isTyping: false,
-          });
-        }
-      }, 3000);
+        typingTimeoutRef.current = setTimeout(() => {
+          if (sendMessage && isConnected) {
+            try {
+              sendMessage({
+                type: 'user_typing',
+                eventId,
+                userId: user.id,
+                username: user.firstName || user.username || 'User',
+                isTyping: false,
+              });
+            } catch (error) {
+              console.error('Error sending typing stop message:', error);
+            }
+          }
+        }, 3000);
+      } catch (error) {
+        console.error('Error sending typing message:', error);
+      }
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    const previousValue = newMessage;
     setNewMessage(value);
 
     // Handle @ mentions
@@ -421,8 +436,8 @@ export default function EventChatPage() {
       setShowMentions(false);
     }
 
-    // Only trigger typing indicator if user is actually typing
-    if (value.trim() !== '') {
+    // Only trigger typing indicator if user is actively typing (value is increasing)
+    if (value.length > previousValue.length && value.trim() !== '') {
       handleTyping();
     }
   };

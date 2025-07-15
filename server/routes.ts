@@ -2609,14 +2609,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
             
           case 'user_typing':
-            // Broadcast typing indicator to other participants
-            await broadcastToEventParticipants(data.eventId, {
-              type: 'user_typing',
-              userId: data.userId,
-              eventId: data.eventId,
-              username: data.username,
-              isTyping: data.isTyping
-            });
+            // Broadcast typing indicator to other participants (exclude sender)
+            if (data.eventId && data.userId) {
+              await broadcastToEventParticipants(data.eventId, {
+                type: 'user_typing',
+                userId: data.userId,
+                eventId: data.eventId,
+                username: data.username,
+                isTyping: data.isTyping
+              });
+            }
             break;
             
           case 'event_message':
@@ -2692,24 +2694,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const client = clients.get(participant.userId);
         if (client && client.readyState === WebSocket.OPEN) {
-          // Send real-time message via WebSocket
-          client.send(JSON.stringify(message));
+          try {
+            // Send real-time message via WebSocket
+            client.send(JSON.stringify(message));
+          } catch (wsError) {
+            console.error('Error sending WebSocket message to participant:', participant.userId, wsError);
+            // Remove broken connection
+            clients.delete(participant.userId);
+          }
         } else {
-          // User is offline/idle, send push notification
-          if (message.type === 'user' && message.userId !== participant.userId) {
-            const event = await storage.getEventById(eventId);
-            const sender = message.user?.firstName || message.user?.username || 'Someone';
-            
-            await sendPushNotification(participant.userId, {
-              title: `💬 New message in ${event?.title}`,
-              body: `${sender}: ${message.message}`,
-              data: {
-                type: 'event_message',
-                eventId,
-                messageId: message.id,
-                url: `/events/${eventId}`,
-              },
-            });
+          // User is offline/idle, send push notification for actual messages (not typing indicators)
+          if (message.type === 'event_message' && message.message && message.userId !== participant.userId) {
+            try {
+              const event = await storage.getEventById(eventId);
+              const sender = message.user?.firstName || message.user?.username || 'Someone';
+              
+              await sendPushNotification(participant.userId, {
+                title: `💬 New message in ${event?.title}`,
+                body: `${sender}: ${message.message}`,
+                data: {
+                  type: 'event_message',
+                  eventId,
+                  messageId: message.id,
+                  url: `/events/${eventId}`,
+                },
+              });
+            } catch (pushError) {
+              console.error('Error sending push notification:', pushError);
+            }
           }
         }
       }
