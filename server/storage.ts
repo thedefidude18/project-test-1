@@ -46,7 +46,7 @@ import {
   type InsertPlatformSettings,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, sql, count, sum, inArray } from "drizzle-orm";
+import { eq, desc, and, or, sql, count, sum, inArray, asc, isNull } from "drizzle-orm";
 import { nanoid } from 'nanoid';
 
 export interface IStorage {
@@ -317,6 +317,21 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
+    // First, try to find an unmatched participant with opposite prediction (FCFS)
+    const oppositeParticipant = await db
+      .select()
+      .from(eventParticipants)
+      .where(
+        and(
+          eq(eventParticipants.eventId, eventId),
+          eq(eventParticipants.prediction, !prediction), // Opposite prediction
+          eq(eventParticipants.status, "active"), // Not yet matched
+          isNull(eventParticipants.matchedWith) // No opponent assigned
+        )
+      )
+      .orderBy(asc(eventParticipants.joinedAt)) // FCFS order
+      .limit(1);
+
     const [participant] = await db
       .insert(eventParticipants)
       .values({
@@ -326,6 +341,28 @@ export class DatabaseStorage implements IStorage {
         amount: amount.toString(),
       })
       .returning();
+
+    // If opponent found, match them (FCFS matching)
+    if (oppositeParticipant.length > 0) {
+      const opponent = oppositeParticipant[0];
+      
+      // Update both participants to "matched" status
+      await db
+        .update(eventParticipants)
+        .set({ 
+          status: "matched",
+          matchedWith: userId 
+        })
+        .where(eq(eventParticipants.id, opponent.id));
+      
+      await db
+        .update(eventParticipants)
+        .set({ 
+          status: "matched",
+          matchedWith: opponent.userId 
+        })
+        .where(eq(eventParticipants.id, participant.id));
+    }
 
     // Update event pools (both individual and total)
     if (prediction) {
