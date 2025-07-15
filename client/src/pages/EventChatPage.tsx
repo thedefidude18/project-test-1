@@ -340,18 +340,23 @@ export default function EventChatPage() {
     },
   });
 
+  
+
+  // Scroll to bottom when component mounts and messages load
   useEffect(() => {
-    if (messagesEndRef.current) {
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "instant" });
+      }
+    }, 100);
+  }, []);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current && messages.length > 0) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
-
-  // Scroll to bottom when component mounts
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "instant" });
-    }
-  }, []);
 
   // Send join notification when user enters the chat
   useEffect(() => {
@@ -479,6 +484,13 @@ export default function EventChatPage() {
       replyToId: replyingTo?.id,
       mentions,
     });
+
+    // Force scroll to bottom after sending
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 100);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -728,16 +740,16 @@ export default function EventChatPage() {
       </div>
 
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-2 md:px-3 py-2 md:py-3 space-y-1 md:space-y-2">
+      <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-800 px-2 md:px-3 py-2 md:py-3">
         {messages.length === 0 ? (
-          <div className="text-center text-slate-500 dark:text-slate-400 py-8">
-            <i className="fas fa-comments text-2xl mb-2"></i>
-            <p>No messages yet. Start the conversation!</p>
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center text-slate-500 dark:text-slate-400 py-8">
+              <i className="fas fa-comments text-2xl mb-2"></i>
+              <p>No messages yet. Start the conversation!</p>
+            </div>
           </div>
         ) : (
-          <>
-            {/* Spacer to push messages to bottom */}
-            <div className="flex-1"></div>
+          <div className="space-y-1 md:space-y-2">
             {messages.map((message: ExtendedMessage, index: number) => {
             // Check if this is a system message
             const isSystemMessage = message.type === 'system';
@@ -880,16 +892,16 @@ export default function EventChatPage() {
               </div>
             );
           })}
-        </>
+          
+            {/* Typing Indicators */}
+            <TypingIndicator 
+              typingUsers={typingUsers.map(u => u.name)} 
+              className="px-4 py-2"
+            />
+
+            <div ref={messagesEndRef} />
+          </div>
         )}
-
-        {/* Typing Indicators */}
-        <TypingIndicator 
-          typingUsers={typingUsers.map(u => u.name)} 
-          className="px-4 py-2"
-        />
-
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Reply indicator */}
