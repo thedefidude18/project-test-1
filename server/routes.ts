@@ -1412,8 +1412,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add new endpoint to test with your personal chat
-  app.post('/api/telegram/test-personal', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+  // Broadcast existing events to Telegram channel
+  app.post('/api/telegram/broadcast-existing', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const telegramBot = getTelegramBot();
       
@@ -1421,41 +1421,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Telegram bot not configured" });
       }
       
-      const { chatId } = req.body;
-      if (!chatId) {
-        return res.status(400).json({ message: "Chat ID required" });
-      }
+      // Get all existing events
+      const existingEvents = await storage.getEvents();
+      let successCount = 0;
+      let totalCount = existingEvents.length;
       
-      // Test with personal chat ID first
-      const message = "🧪 Personal test from BetChat bot! If you see this, the bot is working.";
-      
-      try {
-        const response = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          chat_id: chatId,
-          text: message,
-          parse_mode: 'Markdown'
-        });
-
-        if (response.data.ok) {
-          res.json({ 
-            success: true, 
-            message: "Test message sent to your personal chat! Bot is working." 
+      for (const event of existingEvents) {
+        try {
+          // Get creator info
+          const creator = await storage.getUser(event.creatorId);
+          
+          const success = await telegramBot.broadcastEvent({
+            id: event.id,
+            title: event.title,
+            description: event.description || undefined,
+            creator: {
+              name: creator?.firstName || creator?.username || 'Unknown',
+              username: creator?.username || undefined,
+            },
+            entryFee: event.entryFee.toString(),
+            endDate: event.endDate.toISOString(),
+            is_private: event.isPrivate,
+            max_participants: event.maxParticipants,
+            category: event.category,
           });
-        } else {
-          res.json({ 
-            success: false, 
-            message: `Failed: ${response.data.description}` 
-          });
+          
+          if (success) {
+            successCount++;
+          }
+          
+          // Add small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error(`Failed to broadcast event ${event.id}:`, error);
         }
-      } catch (error) {
-        res.json({ 
-          success: false, 
-          message: "Failed to send test message" 
-        });
       }
+      
+      res.json({ 
+        success: successCount > 0, 
+        message: `Broadcasted ${successCount} out of ${totalCount} existing events`,
+        details: { successCount, totalCount }
+      });
     } catch (error) {
-      console.error("Error testing personal Telegram:", error);
-      res.status(500).json({ message: "Failed to test personal Telegram" });
+      console.error("Error broadcasting existing events:", error);
+      res.status(500).json({ message: "Failed to broadcast existing events" });
     }
   });
 

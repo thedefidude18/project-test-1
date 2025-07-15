@@ -49,6 +49,29 @@ export default function TelegramTest() {
     },
   });
 
+  // Broadcast existing events mutation
+  const broadcastExistingMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('/api/telegram/broadcast-existing', {
+        method: 'POST',
+      });
+    },
+    onSuccess: (data) => {
+      toast({
+        title: data.success ? "Success" : "Info",
+        description: data.message,
+        variant: data.success ? "default" : "destructive",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to broadcast existing events",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleTestBroadcast = () => {
     if (!testMessage.trim()) {
       toast({
@@ -220,6 +243,31 @@ export default function TelegramTest() {
                     Bot must be connected to send test messages
                   </p>
                 )}
+
+                {/* Broadcast Existing Events Button */}
+                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <Button
+                    onClick={() => broadcastExistingMutation.mutate()}
+                    disabled={broadcastExistingMutation.isPending || !telegramStatus?.bot?.connected}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {broadcastExistingMutation.isPending ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Broadcasting Existing Events...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-broadcast-tower mr-2"></i>
+                        Broadcast All Existing Events
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-slate-500 mt-2 text-center">
+                    This will send all existing events to your Telegram channel
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
