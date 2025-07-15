@@ -52,7 +52,10 @@ webpush.setVapidDetails(
 let telegramSync = createTelegramSync(pusher);
 if (telegramSync) {
   console.log("🔧 Initializing Telegram sync service...");
-  telegramSync.initialize().catch(console.error);
+  telegramSync.initialize().catch((error) => {
+    console.error("❌ Telegram sync initialization failed:", error);
+    console.log("📱 BetChat will continue without Telegram sync");
+  });
 }
 
 interface AuthenticatedRequest extends Request {

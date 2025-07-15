@@ -64,7 +64,18 @@ export class TelegramSyncService {
       
     } catch (error) {
       console.error("❌ Failed to initialize Telegram client:", error);
-      throw error;
+      
+      // Handle specific errors gracefully
+      if (error.message && error.message.includes('AUTH_KEY_DUPLICATED')) {
+        console.log("⚠️ Telegram session is being used by another instance. Telegram sync disabled.");
+        console.log("💡 To fix this, generate a new session string or stop other instances using the same session.");
+      } else if (error.message && error.message.includes('AUTH_KEY_INVALID')) {
+        console.log("⚠️ Telegram session is invalid. Please re-authenticate.");
+        console.log("💡 Generate a new session string using the authentication script.");
+      }
+      
+      // Don't throw the error - let the service continue without Telegram sync
+      this.isConnected = false;
     }
   }
 
