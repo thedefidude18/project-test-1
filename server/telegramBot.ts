@@ -126,29 +126,63 @@ export class TelegramBotService {
       try {
         const endDate = new Date(endTime);
         if (!isNaN(endDate.getTime())) {
-          timeInfo = `⏰ Ends: ${endDate.toLocaleString()}`;
+          const now = new Date();
+          const diffMs = endDate.getTime() - now.getTime();
+          const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+          const diffDays = Math.floor(diffHours / 24);
+          
+          if (diffDays > 0) {
+            timeInfo = `⏰ *${diffDays}d ${diffHours % 24}h remaining*`;
+          } else if (diffHours > 0) {
+            timeInfo = `⏰ *${diffHours}h remaining*`;
+          } else {
+            timeInfo = `⏰ *Ending soon!*`;
+          }
         }
       } catch (error) {
         console.warn('Invalid date in event:', endTime);
       }
     }
 
-    const message = `🎯 **NEW EVENT CREATED**
+    // Get category emoji
+    const getCategoryEmoji = (category: string) => {
+      const categoryMap: { [key: string]: string } = {
+        'crypto': '₿',
+        'sports': '⚽',
+        'gaming': '🎮',
+        'music': '🎵',
+        'politics': '🏛️',
+        'entertainment': '🎬',
+        'tech': '💻',
+        'science': '🔬'
+      };
+      return categoryMap[category?.toLowerCase()] || '🎯';
+    };
 
-📝 **${event.title}**
-${event.description ? `\n💭 ${event.description}` : ''}
+    const categoryEmoji = getCategoryEmoji(event.category || '');
+    const privacyEmoji = event.is_private ? '🔒' : '🌍';
+    const creatorDisplay = event.creator.username ? `@${event.creator.username}` : event.creator.name;
 
-👤 **Creator:** ${event.creator.name}${event.creator.username ? ` (@${event.creator.username})` : ''}
-💰 **Pool:** ₦${poolTotal.toLocaleString()}
-🎫 **Entry Fee:** ₦${entryFee.toLocaleString()}
-${event.max_participants ? `👥 **Max Participants:** ${event.max_participants}` : ''}
-${event.category ? `🏷️ **Category:** ${event.category}` : ''}
-${event.is_private ? '🔒 **Private Event**' : '🌍 **Public Event**'}
+    const message = `🔥 *NEW PREDICTION EVENT*
+
+━━━━━━━━━━━━━━━━━━━━━
+${categoryEmoji} *${event.title}*
+━━━━━━━━━━━━━━━━━━━━━
+
+${event.description ? `💭 _${event.description}_\n` : ''}
+👤 *Creator:* ${creatorDisplay}
+💰 *Current Pool:* ₦${poolTotal.toLocaleString()}
+🎫 *Entry Fee:* ₦${entryFee.toLocaleString()}
+👥 *Max Players:* ${event.max_participants || 'Unlimited'}
+${privacyEmoji} *${event.is_private ? 'Private' : 'Public'}* • ${categoryEmoji} *${(event.category || 'General').charAt(0).toUpperCase() + (event.category || 'General').slice(1)}*
+
 ${timeInfo}
 
-🚀 **Join the event:** [Click here](${eventUrl})
+━━━━━━━━━━━━━━━━━━━━━
+🚀 [*JOIN EVENT NOW*](${eventUrl})
+━━━━━━━━━━━━━━━━━━━━━
 
-#BetChat #Event #Prediction`;
+#BetChat #Prediction #${event.category || 'Event'}`;
 
     return message;
   }
@@ -165,28 +199,69 @@ ${timeInfo}
       try {
         const endDate = new Date(endTime);
         if (!isNaN(endDate.getTime())) {
-          timeInfo = `⏰ Ends: ${endDate.toLocaleString()}`;
+          const now = new Date();
+          const diffMs = endDate.getTime() - now.getTime();
+          const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+          const diffDays = Math.floor(diffHours / 24);
+          
+          if (diffDays > 0) {
+            timeInfo = `⏰ *${diffDays}d ${diffHours % 24}h to accept*`;
+          } else if (diffHours > 0) {
+            timeInfo = `⏰ *${diffHours}h to accept*`;
+          } else {
+            timeInfo = `⏰ *Accept soon!*`;
+          }
         }
       } catch (error) {
         console.warn('Invalid date in challenge:', endTime);
       }
     }
 
-    const message = `⚔️ **NEW CHALLENGE CREATED**
+    // Get category emoji  
+    const getCategoryEmoji = (category: string) => {
+      const categoryMap: { [key: string]: string } = {
+        'crypto': '₿',
+        'sports': '⚽',
+        'gaming': '🎮',
+        'music': '🎵',
+        'politics': '🏛️',
+        'entertainment': '🎬',
+        'tech': '💻',
+        'science': '🔬'
+      };
+      return categoryMap[category?.toLowerCase()] || '⚔️';
+    };
 
-📝 **${challenge.title}**
-${challenge.description ? `\n💭 ${challenge.description}` : ''}
+    const categoryEmoji = getCategoryEmoji(challenge.category || '');
+    const challengerDisplay = challenge.creator.username ? `@${challenge.creator.username}` : challenge.creator.name;
+    const challengedDisplay = challenge.challenged 
+      ? (challenge.challenged.username ? `@${challenge.challenged.username}` : challenge.challenged.name)
+      : null;
 
-👤 **Challenger:** ${challenge.creator.name}${challenge.creator.username ? ` (@${challenge.creator.username})` : ''}
-${challenge.challenged ? `🎯 **Challenged:** ${challenge.challenged.name}${challenge.challenged.username ? ` (@${challenge.challenged.username})` : ''}` : '🌍 **Open Challenge**'}
-💰 **Stake:** ₦${challenge.stake_amount.toLocaleString()}
-${challenge.category ? `🏷️ **Category:** ${challenge.category}` : ''}
-📊 **Status:** ${challenge.status}
+    const statusEmoji = challenge.status === 'pending' ? '⏳' : 
+                       challenge.status === 'active' ? '🔥' : 
+                       challenge.status === 'completed' ? '✅' : '📋';
+
+    const message = `⚔️ *NEW P2P CHALLENGE*
+
+━━━━━━━━━━━━━━━━━━━━━
+${categoryEmoji} *${challenge.title}*
+━━━━━━━━━━━━━━━━━━━━━
+
+${challenge.description ? `💭 _${challenge.description}_\n` : ''}
+🚀 *Challenger:* ${challengerDisplay}
+${challengedDisplay ? `🎯 *Challenged:* ${challengedDisplay}` : '🌍 *Open Challenge - Anyone can accept!*'}
+💰 *Stake Amount:* ₦${challenge.stake_amount.toLocaleString()}
+${statusEmoji} *Status:* ${challenge.status.charAt(0).toUpperCase() + challenge.status.slice(1)}
+${challenge.category ? `${categoryEmoji} *Category:* ${challenge.category.charAt(0).toUpperCase() + challenge.category.slice(1)}` : ''}
+
 ${timeInfo}
 
-🚀 **View challenge:** [Click here](${challengeUrl})
+━━━━━━━━━━━━━━━━━━━━━
+🎯 [*VIEW CHALLENGE*](${challengeUrl})
+━━━━━━━━━━━━━━━━━━━━━
 
-#BetChat #Challenge #P2P`;
+#BetChat #Challenge #P2P #${challenge.category || 'Battle'}`;
 
     return message;
   }
