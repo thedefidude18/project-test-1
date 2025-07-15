@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { formatDistanceToNow } from "date-fns";
 import { useNotificationSettings } from "@/hooks/useNotificationSettings";
+import { useTheme } from "@/contexts/ThemeProvider";
 
 const updateProfileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -32,6 +33,7 @@ export default function ProfileSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { settings: notificationSettings, updateSetting, isUpdating } = useNotificationSettings();
+  const { theme, toggleTheme } = useTheme();
 
   const form = useForm<z.infer<typeof updateProfileSchema>>({
     resolver: zodResolver(updateProfileSchema),
@@ -251,6 +253,41 @@ export default function ProfileSettings() {
                   </div>
                 </form>
               </Form>
+            </CardContent>
+          </Card>
+
+          {/* Appearance Settings */}
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <CardHeader>
+              <CardTitle>Appearance</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">Theme</Label>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Choose between light and dark mode
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleTheme}
+                  className="flex items-center gap-2"
+                >
+                  {theme === "dark" ? (
+                    <>
+                      <i className="fas fa-sun"></i>
+                      Light Mode
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-moon"></i>
+                      Dark Mode
+                    </>
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

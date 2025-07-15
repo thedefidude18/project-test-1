@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useNotifications } from "@/hooks/useNotifications";
-import { ThemeToggle } from "@/components/ThemeToggle";
+
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -128,9 +128,6 @@ export function Navigation() {
                 </Badge>
               )}
             </button>
-
-            {/* Theme Toggle */}
-            <ThemeToggle />
 
             {/* Tour Button */}
             <button

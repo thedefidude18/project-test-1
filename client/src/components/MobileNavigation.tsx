@@ -102,7 +102,7 @@ export function MobileNavigation() {
               "hover:bg-accent/50 active:scale-95",
               location.startsWith('/wallet')
                 ? "text-primary bg-primary/10 scale-105" 
-                : "text-muted-foreground hover:text-foreground"
+                : "text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
             )}
           >
             <i className={cn(
@@ -110,7 +110,7 @@ export function MobileNavigation() {
               location.startsWith('/wallet') && "scale-110"
             )}></i>
             <span className={cn(
-              "text-xs font-medium transition-all duration-200",
+              "text-xs font-medium transition-all duration-200 truncate max-w-[50px]",
               location.startsWith('/wallet') && "font-semibold"
             )}>
               {formatBalance(typeof balance === 'object' ? (balance.balance || 0) : (balance || 0))}
