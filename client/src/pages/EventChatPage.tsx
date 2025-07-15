@@ -599,15 +599,12 @@ export default function EventChatPage() {
                     <h3 className="font-semibold text-sm md:text-base">@{event.title}</h3>
                     <div className="flex items-center space-x-2 text-xs text-white/80">
                       <span>{participants.length} participants</span>
-                      {telegramStatus?.sync?.groupInfo?.participantsCount && (
-                        <>
-                          <span>•</span>
-                          <span className="flex items-center">
-                            <i className="fab fa-telegram-plane mr-1"></i>
-                            {telegramStatus.sync.groupInfo.participantsCount.toLocaleString()}
-                          </span>
-                        </>
-                      )}
+                      {/* Always show Telegram count, even if 0 or unavailable */}
+                      <span>•</span>
+                      <span className="flex items-center">
+                        <i className="fab fa-telegram-plane mr-1"></i>
+                        {(telegramStatus?.sync?.groupInfo?.participantsCount || 0).toLocaleString()}
+                      </span>
                     </div>
                   </div>
                 </div>
