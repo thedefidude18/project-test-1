@@ -175,6 +175,11 @@ export interface IStorage {
   giveUserPoints(userId: string, points: number): Promise<void>;
   updateEventCapacity(eventId: number, additionalSlots: number): Promise<void>;
 
+  // Event lifecycle notifications
+  notifyEventStarting(eventId: number): Promise<void>;
+  notifyEventEnding(eventId: number): Promise<void>;
+  notifyFundsReleased(userId: string, eventId: number, amount: number, isWinner: boolean): Promise<void>;
+
   // Push Notification operations
   savePushSubscription(userId: string, subscription: any): Promise<void>;
   getPushSubscriptions(userId: string): Promise<any[]>;
@@ -2035,6 +2040,110 @@ export class DatabaseStorage implements IStorage {
     }));
 
     await db.insert(notifications).values(notificationData);
+  }
+
+  // Event lifecycle notification methods
+  async notifyEventStarting(eventId: number): Promise<void> {
+    const event = await this.getEventById(eventId);
+    if (!event) return;
+
+    const participants = await this.getEventParticipants(eventId);
+    
+    for (const participant of participants) {
+      await this.createNotification({
+        userId: participant.userId,
+        type: 'event_starting',
+        title: '🏁 Event Starting Soon',
+        message: `The event "${event.title}" is starting in 1 hour!`,
+        data: { 
+          eventId: eventId,
+          eventTitle: event.title,
+          startTime: event.endDate
+        },
+      });
+    }
+
+    // Notify creator
+    await this.createNotification({
+      userId: event.creatorId,
+      type: 'event_starting',
+      title: '🏁 Your Event is Starting Soon',
+      message: `Your event "${event.title}" is starting in 1 hour!`,
+      data: { 
+        eventId: eventId,
+        eventTitle: event.title,
+        startTime: event.endDate
+      },
+    });
+  }
+
+  async notifyEventEnding(eventId: number): Promise<void> {
+    const event = await this.getEventById(eventId);
+    if (!event) return;
+
+    const participants = await this.getEventParticipants(eventId);
+    
+    for (const participant of participants) {
+      await this.createNotification({
+        userId: participant.userId,
+        type: 'event_ending',
+        title: '⏰ Event Ending Soon',
+        message: `The event "${event.title}" is ending in 1 hour! Make sure your prediction is locked in.`,
+        data: { 
+          eventId: eventId,
+          eventTitle: event.title,
+          endTime: event.endDate,
+          prediction: participant.prediction ? 'YES' : 'NO',
+          amount: parseFloat(participant.amount)
+        },
+      });
+    }
+
+    // Notify creator
+    await this.createNotification({
+      userId: event.creatorId,
+      type: 'event_ending',
+      title: '⏰ Your Event is Ending Soon',
+      message: `Your event "${event.title}" is ending in 1 hour! Results will need to be set soon.`,
+      data: { 
+        eventId: eventId,
+        eventTitle: event.title,
+        endTime: event.endDate
+      },
+    });
+  }
+
+  async notifyFundsReleased(userId: string, eventId: number, amount: number, isWinner: boolean): Promise<void> {
+    const event = await this.getEventById(eventId);
+    if (!event) return;
+
+    if (isWinner) {
+      await this.createNotification({
+        userId: userId,
+        type: 'funds_released',
+        title: '🎉 You Won!',
+        message: `Congratulations! You won ₦${amount.toLocaleString()} from "${event.title}". Funds have been released to your wallet.`,
+        data: { 
+          eventId: eventId,
+          eventTitle: event.title,
+          amount: amount,
+          isWinner: true
+        },
+      });
+    } else {
+      await this.createNotification({
+        userId: userId,
+        type: 'funds_released',
+        title: '😔 Event Results',
+        message: `The event "${event.title}" has concluded. Better luck next time!`,
+        data: { 
+          eventId: eventId,
+          eventTitle: event.title,
+          amount: 0,
+          isWinner: false
+        },
+      });
+    }
   }
 
   // Missing admin functions
