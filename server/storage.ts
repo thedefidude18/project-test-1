@@ -292,6 +292,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async joinEvent(eventId: number, userId: string, prediction: boolean, amount: number): Promise<EventParticipant> {
+    // Get event to validate betting model and amount
+    const event = await this.getEventById(eventId);
+    if (!event) {
+      throw new Error("Event not found");
+    }
+
+    const minAmount = parseFloat(event.entryFee);
+    
+    // Validate amount based on betting model
+    if (event.bettingModel === "fixed") {
+      if (Math.abs(amount - minAmount) > 0.01) { // Allow for floating point precision
+        throw new Error(`Fixed betting model requires exactly ₦${minAmount}`);
+      }
+    } else if (event.bettingModel === "custom") {
+      if (amount < minAmount) {
+        throw new Error(`Custom betting requires minimum ₦${minAmount}`);
+      }
+      
+      // Add reasonable maximum to prevent abuse (10x the minimum)
+      const maxAmount = minAmount * 10;
+      if (amount > maxAmount) {
+        throw new Error(`Maximum bet amount is ₦${maxAmount.toLocaleString()}`);
+      }
+    }
+
     const [participant] = await db
       .insert(eventParticipants)
       .values({
@@ -1235,10 +1260,27 @@ export class DatabaseStorage implements IStorage {
     // Calculate individual payouts
     const totalWinnerBets = winners.reduce((sum, w) => sum + parseFloat(w.amount), 0);
 
+    // Handle edge case where total winner bets exceed available payout (shouldn't happen but safety check)
+    if (totalWinnerBets > availablePayout) {
+      console.warn(`Event ${eventId}: Total winner bets (₦${totalWinnerBets}) exceed available payout (₦${availablePayout})`);
+    }
+
     for (const winner of winners) {
       const winnerBet = parseFloat(winner.amount);
-      const winnerShare = winnerBet / totalWinnerBets;
-      const payout = winnerBet + (availablePayout - totalWinnerBets) * winnerShare;
+      const winnerShare = totalWinnerBets > 0 ? winnerBet / totalWinnerBets : 1 / winners.length;
+      
+      let payout;
+      if (event.bettingModel === "fixed") {
+        // Fixed model: equal share of the profit pool + original bet back
+        const profitPool = Math.max(0, availablePayout - totalWinnerBets);
+        payout = winnerBet + (profitPool / winners.length);
+      } else {
+        // Custom model: proportional payout
+        payout = winnerBet + (Math.max(0, availablePayout - totalWinnerBets) * winnerShare);
+      }
+
+      // Ensure minimum payout is at least the original bet
+      payout = Math.max(payout, winnerBet);
 
       // Update participant with payout info
       await db

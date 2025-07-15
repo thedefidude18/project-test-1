@@ -1043,7 +1043,7 @@ export default function EventChatPage() {
                       ₦{parseFloat(event.entryFee).toLocaleString()}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">
-                      Set by event creator
+                      Set by event creator • All participants bet the same amount
                     </p>
                   </>
                 ) : (
@@ -1058,8 +1058,13 @@ export default function EventChatPage() {
                       min={event.entryFee}
                       step="1"
                     />
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mt-2">
+                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                        ⚠️ <strong>Custom Model:</strong> Your payout depends on your bet size relative to other winners. Higher bets get larger shares of the winning pool.
+                      </p>
+                    </div>
                     <p className="text-xs text-slate-500 mt-1">
-                      Enter your preferred betting amount
+                      Minimum: ₦{parseFloat(event.entryFee).toLocaleString()} • Payout is proportional to bet size
                     </p>
                   </>
                 )}
