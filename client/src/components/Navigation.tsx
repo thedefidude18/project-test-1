@@ -102,7 +102,7 @@ export function Navigation() {
             {/* Wallet Balance */}
             <button
               onClick={() => handleNavigation("/wallet")}
-              className="hidden sm:flex items-center space-x-2 bg-slate-100 dark:bg-slate-700 px-3 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              className="flex items-center space-x-2 bg-slate-100 dark:bg-slate-700 px-3 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
               data-tour="wallet"
             >
               <i className="fas fa-wallet text-emerald-500"></i>
