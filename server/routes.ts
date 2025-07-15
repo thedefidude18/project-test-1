@@ -328,6 +328,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: userId,
       });
 
+      // Forward to Telegram if sync is available
+      const telegramSync = getTelegramSync();
+      if (telegramSync && telegramSync.isReady()) {
+        try {
+          const user = await storage.getUser(userId);
+          const event = await storage.getEventById(eventId);
+          const senderName = user?.firstName || user?.username || 'BetChat User';
+          
+          await telegramSync.sendMessageToTelegram(
+            message, 
+            senderName, 
+            { id: eventId, title: event?.title || 'Event Chat' }
+          );
+        } catch (telegramError) {
+          console.error('Error forwarding message to Telegram:', telegramError);
+        }
+      }
+
       // Create notifications for mentioned users
       if (mentions && mentions.length > 0) {
         for (const mentionedUsername of mentions) {
