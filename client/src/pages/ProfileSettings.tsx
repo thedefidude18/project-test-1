@@ -135,13 +135,13 @@ export default function ProfileSettings() {
       <Navigation />
 
       <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
-        {/* Header - More compact on mobile */}
-        <div className="flex items-center justify-between mb-4 sm:mb-8">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-1 sm:mb-2">
+        {/* Header - Removed title on mobile, more compact */}
+        <div className="flex items-center justify-between mb-3 sm:mb-8">
+          <div className="hidden sm:block">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
               Profile Settings ⚙️
             </h1>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+            <p className="text-base text-slate-600 dark:text-slate-400">
               Manage your account settings and preferences
             </p>
           </div>
@@ -149,7 +149,7 @@ export default function ProfileSettings() {
             variant="outline"
             size="sm"
             onClick={() => window.location.href = '/profile'}
-            className="sm:size-default"
+            className="sm:size-default ml-auto"
           >
             <i className="fas fa-arrow-left mr-1 sm:mr-2"></i>
             <span className="hidden sm:inline">Back to Profile</span>
@@ -157,11 +157,11 @@ export default function ProfileSettings() {
           </Button>
         </div>
 
-        <div className="space-y-4 sm:space-y-8">
+        <div className="space-y-3 sm:space-y-6">
           {/* Profile Information - More compact on mobile */}
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardHeader className="pb-3 sm:pb-6">
-              <CardTitle className="text-lg sm:text-xl">Profile Information</CardTitle>
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-2xl">
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Profile Information</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="flex items-center space-x-4 sm:space-x-6 mb-4 sm:mb-6">
@@ -261,11 +261,11 @@ export default function ProfileSettings() {
           </Card>
 
           {/* Appearance Settings */}
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardHeader>
-              <CardTitle>Appearance</CardTitle>
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-2xl">
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Appearance</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 sm:space-y-6 pt-0">
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-base font-medium">Theme</Label>
@@ -296,11 +296,11 @@ export default function ProfileSettings() {
           </Card>
 
           {/* Notification Settings */}
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-2xl">
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Notification Preferences</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 sm:space-y-6 pt-0">
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-base font-medium">Email Notifications</Label>

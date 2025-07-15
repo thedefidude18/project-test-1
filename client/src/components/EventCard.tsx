@@ -112,6 +112,35 @@ export function EventCard({ event, featured = false }: EventCardProps) {
     setLocation(`/events/${eventId}/chat`);
   };
 
+  const handleShareEvent = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const shareUrl = `${window.location.origin}/events/${eventId}/chat`;
+    const shareText = `Check out this event: ${title} - Pool: ₦${poolTotal.toLocaleString()}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: title,
+        text: shareText,
+        url: shareUrl,
+      }).catch(console.error);
+    } else {
+      // Fallback to clipboard
+      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
+        toast({
+          title: "Link Copied",
+          description: "Event link has been copied to your clipboard",
+        });
+      }).catch(() => {
+        toast({
+          title: "Share Failed",
+          description: "Unable to share this event",
+          variant: "destructive",
+        });
+      });
+    }
+  };
+
   const getStatusDot = () => {
     if (event.status === 'completed') {
       return <div className="w-2 h-2 bg-blue-500 rounded-full"></div>;
@@ -138,7 +167,7 @@ export function EventCard({ event, featured = false }: EventCardProps) {
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
 
-        {/* Top Row - Status and Private Badge */}
+        {/* Top Row - Status, Share, and Private Badge */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             {getStatusDot()}
@@ -148,12 +177,23 @@ export function EventCard({ event, featured = false }: EventCardProps) {
             </span>
           </div>
 
-          {isPrivate && (
-            <div className="bg-black/40 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1">
-              <Lock size={12} className="text-white" />
-              <span className="text-white text-xs">Private</span>
-            </div>
-          )}
+          <div className="flex items-center space-x-2">
+            {/* Share Button */}
+            <button
+              onClick={handleShareEvent}
+              className="bg-black/40 backdrop-blur-sm rounded-full p-2 hover:bg-black/60 transition-colors"
+              title="Share event"
+            >
+              <i className="fas fa-share-alt text-white text-xs"></i>
+            </button>
+            
+            {isPrivate && (
+              <div className="bg-black/40 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1">
+                <Lock size={12} className="text-white" />
+                <span className="text-white text-xs">Private</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Bottom Content */}

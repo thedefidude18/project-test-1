@@ -196,24 +196,18 @@ export default function Notifications() {
             {unreadNotifications.length > 0 && (
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => {
                   unreadNotifications.forEach((notification: any) => {
                     handleMarkAsRead(notification.id);
                   });
                 }}
                 disabled={markAsReadMutation.isPending}
+                className="text-xs sm:text-sm"
               >
                 Mark All as Read
               </Button>
             )}
-            <Button
-              onClick={() => createTestNotificationMutation.mutate()}
-              disabled={createTestNotificationMutation.isPending}
-              className="bg-primary text-white hover:bg-primary/90"
-            >
-              <i className="fas fa-plus mr-2"></i>
-              Test Notification
-            </Button>
           </div>
         </div>
 
@@ -238,7 +232,7 @@ export default function Notifications() {
                 <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">Loading notifications...</p>
               </div>
             ) : !Array.isArray(notifications) || notifications.length === 0 ? (
-              <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+              <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-2xl">
                 <CardContent className="text-center py-6 sm:py-12">
                   <i className="fas fa-bell-slash text-2xl sm:text-4xl text-slate-400 mb-2 sm:mb-4"></i>
                   <h3 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100 mb-1 sm:mb-2">
@@ -253,11 +247,11 @@ export default function Notifications() {
               (Array.isArray(notifications) ? notifications : []).map((notification: any) => (
                 <Card
                   key={notification.id}
-                  className={`bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 ${
+                  className={`bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-2xl ${
                     !notification.read ? 'ring-2 ring-primary/20' : ''
                   }`}
                 >
-                  <CardContent className="p-3 sm:p-4">
+                  <CardContent className="p-2 sm:p-3">
                     <div className="flex items-start space-x-3 sm:space-x-4">
                       <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${getNotificationColor(notification.type)}`}>
                         <i className={`${getNotificationIcon(notification.type)} text-xs sm:text-sm`}></i>

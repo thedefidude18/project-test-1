@@ -56,6 +56,13 @@ export function MobileNavigation() {
       isActive: location.startsWith("/profile/settings"),
       tourId: "settings"
     },
+    { 
+      path: "/profile", 
+      iconPath: "/assets/user.svg",
+      label: "Profile",
+      isActive: location === "/profile",
+      tourId: "profile"
+    },
   ];
 
   const handleNavigation = (path: string) => {
