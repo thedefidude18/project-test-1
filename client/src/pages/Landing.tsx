@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion } from "framer-motion";
 import { Zap, DollarSign, Users, Trophy, Shield, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
