@@ -196,12 +196,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const eventId = parseInt(req.params.id);
-      const { prediction, amount } = req.body;
+      const { prediction } = req.body;
 
       const event = await storage.getEventById(eventId);
       if (!event) {
         return res.status(404).json({ message: "Event not found" });
       }
+
+      // Always use the event's entry fee (fixed model)
+      const amount = parseFloat(event.entryFee);
 
       // Check user balance
       const balance = await storage.getUserBalance(userId);
