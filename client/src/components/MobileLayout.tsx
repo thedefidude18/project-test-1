@@ -38,9 +38,9 @@ export function MobileCard({ children, className, ...props }: React.HTMLAttribut
     <div
       className={cn(
         "bg-white dark:bg-slate-800",
-        "rounded-2xl md:rounded-lg", // More rounded on mobile
+        "rounded-3xl md:rounded-lg", // Even more rounded on mobile for app-like feel
         "shadow-sm border border-slate-200 dark:border-slate-700",
-        "p-4 md:p-6", // Less padding on mobile
+        "p-3 md:p-6", // More compact padding on mobile
         className
       )}
       {...props}
@@ -81,7 +81,7 @@ export function MobileButton({
   );
 }
 
-// Mobile-optimized section header (no title on mobile)
+// Mobile-optimized section header (no title on mobile for app-like feel)
 export function MobileSectionHeader({ 
   title, 
   subtitle, 
@@ -96,10 +96,10 @@ export function MobileSectionHeader({
   return (
     <div className={cn(
       "flex items-center justify-between",
-      "mb-4 md:mb-6", // Less margin on mobile
+      "mb-2 md:mb-6", // Even less margin on mobile for compactness
       className
     )}>
-      <div className="hidden md:block"> {/* Hide title on mobile */}
+      <div className="hidden md:block"> {/* Hide title on mobile for app-like feel */}
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h1>
         {subtitle && (
           <p className="text-sm text-slate-600 dark:text-slate-400">{subtitle}</p>

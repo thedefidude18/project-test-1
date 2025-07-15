@@ -112,14 +112,14 @@ export default function Home() {
         </div>
 
         {/* Main hero content - compact on mobile */}
-        <div className="relative z-10 px-4 py-8 md:py-20 text-center md:max-w-7xl md:mx-auto md:px-8">
+        <div className="relative z-10 px-4 py-6 md:py-20 text-center md:max-w-7xl md:mx-auto md:px-8">
           <div className="md:max-w-4xl md:mx-auto">
             {/* Logo and title - mobile optimized */}
             <div className="flex items-center justify-center mb-4 md:hidden">
               <img 
                 src="/assets/bantahblue.svg" 
                 alt="BetChat" 
-                className="w-8 h-8 mr-2 filter brightness-0 invert"
+                className="w-8 h-8 mr-2"
               />
               <h1 className="text-2xl font-bold text-white">BetChat</h1>
             </div>
@@ -134,13 +134,13 @@ export default function Home() {
             </p>
 
             {/* Search bar - mobile optimized */}
-            <div className="relative max-w-sm md:max-w-md mx-auto mb-6 md:mb-8">
+            <div className="relative max-w-sm md:max-w-md mx-auto mb-4 md:mb-8">
               <Input
                 type="text"
                 placeholder="Explore communities and events"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white dark:bg-slate-800 border-0 rounded-3xl md:rounded-full px-6 py-3 md:py-4 text-base md:text-lg shadow-lg"
+                className="w-full bg-white dark:bg-slate-800 border-0 rounded-full px-6 py-3 md:py-4 text-base md:text-lg shadow-lg"
               />
               <Button
                 size="sm"
@@ -170,17 +170,17 @@ export default function Home() {
       </div>
 
       {/* Featured Content Section */}
-      <div className="px-3 md:px-4 md:sm:px-6 lg:px-8 py-6 md:py-12">
+      <div className="px-3 md:px-4 md:sm:px-6 lg:px-8 py-4 md:py-12">
         <MobileSectionHeader
           title="Featured Communities"
           className="mb-4 md:mb-8"
         />
 
         {/* Featured Events Grid - mobile optimized */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-12">
           {(searchQuery ? filteredEvents : events.slice(0, 6)).map((event, index) => (
-            <MobileCard key={event.id} className="group hover:shadow-lg transition-all duration-200 cursor-pointer p-3 md:p-4">
-              <div className="aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl relative overflow-hidden">
+            <MobileCard key={event.id} className="group hover:shadow-lg transition-all duration-200 cursor-pointer">
+              <div className="aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl md:rounded-2xl relative overflow-hidden">
                 {/* Event type badge */}
                 <div className="absolute top-2 left-2 md:top-3 md:left-3">
                   <span className="bg-primary text-white px-2 py-1 rounded-full text-xs font-medium">
@@ -220,26 +220,28 @@ export default function Home() {
 
         {/* Quick Actions */}
         <div className="text-center">
-          <div className="inline-flex space-x-4">
+          <div className="flex flex-col space-y-2 md:inline-flex md:flex-row md:space-y-0 md:space-x-4">
             <Button
-              size="lg"
-              className="bg-primary hover:bg-primary/90"
+              size="default"
+              className="bg-primary hover:bg-primary/90 rounded-full md:rounded-lg"
               onClick={() => window.location.href = '/events'}
             >
               <i className="fas fa-plus mr-2"></i>
               Create Event
             </Button>
             <Button
-              size="lg"
+              size="default"
               variant="outline"
+              className="rounded-full md:rounded-lg"
               onClick={() => window.location.href = '/challenges'}
             >
               <i className="fas fa-swords mr-2"></i>
               Challenge Friends
             </Button>
             <Button
-              size="lg"
+              size="default"
               variant="outline"
+              className="rounded-full md:rounded-lg"
               onClick={() => window.location.href = '/wallet'}
             >
               <i className="fas fa-wallet mr-2"></i>
@@ -250,14 +252,14 @@ export default function Home() {
 
         {/* Recent Activity (simplified) */}
         {(filteredChallenges.length > 0 || challenges.length > 0) && (
-          <div className="mt-8 md:mt-16">
+          <div className="mt-6 md:mt-16">
             <MobileSectionHeader
               title="Recent Challenges"
               className="mb-4 md:mb-8"
             />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
               {(searchQuery ? filteredChallenges : challenges.slice(0, 4)).map((challenge) => (
-                <MobileCard key={challenge.id} className="hover:shadow-md transition-shadow p-4 md:p-6">
+                <MobileCard key={challenge.id} className="hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-base md:text-lg">{challenge.title || 'Challenge'}</h3>
                     <span className="text-sm text-slate-500 dark:text-slate-400">
