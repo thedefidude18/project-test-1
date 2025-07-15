@@ -36,10 +36,12 @@ import { useDailySignIn } from '@/hooks/useDailySignIn';
 import AdminLogin from "@/pages/AdminLogin"; // Assuming you have an AdminLogin component
 import { WebsiteTour, useTour } from "@/components/WebsiteTour";
 import { SplashScreen } from "@/components/SplashScreen"; //Import Splashscreen
+import MobileSplashScreen from "@/components/MobileSplashScreen";
 
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [showMobileSplash, setShowMobileSplash] = useState(true);
 
   // Initialize tour
   const tour = useTour();
@@ -64,8 +66,16 @@ function Router() {
   const dailySignIn = useDailySignIn();
   const { signInStatus, showModal, setShowModal } = dailySignIn;
 
+  // Show mobile splash screen only on mobile devices
+  const isMobile = window.innerWidth < 768;
+  
   return (
     <div className="min-h-screen transition-all duration-300 ease-in-out">
+      {/* Mobile Splash Screen */}
+      {isMobile && showMobileSplash && (
+        <MobileSplashScreen onComplete={() => setShowMobileSplash(false)} />
+      )}
+      
       <Switch>
       {/* Admin Login Route - Always Available */}
       <Route path="/admin/login" component={AdminLogin} />

@@ -1,0 +1,115 @@
+import React from 'react';
+import { cn } from '@/lib/utils';
+
+interface MobileLayoutProps {
+  children: React.ReactNode;
+  className?: string;
+  showPadding?: boolean;
+}
+
+export default function MobileLayout({ children, className, showPadding = true }: MobileLayoutProps) {
+  return (
+    <div className={cn(
+      "min-h-screen bg-slate-50 dark:bg-slate-900",
+      "md:bg-slate-100 md:dark:bg-slate-800", // Different background for desktop
+      className
+    )}>
+      {/* Mobile-first container */}
+      <div className={cn(
+        "mx-auto max-w-md md:max-w-6xl",
+        "md:pt-6", // Only add top padding on desktop
+        showPadding && "px-3 md:px-6"
+      )}>
+        <div className={cn(
+          // Mobile: Full screen app-like
+          "md:bg-white md:dark:bg-slate-900 md:rounded-xl md:shadow-lg md:border md:border-slate-200 md:dark:border-slate-800",
+          "md:min-h-[calc(100vh-3rem)]" // Desktop: Card-like with margins
+        )}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Mobile-optimized card component
+export function MobileCard({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn(
+        "bg-white dark:bg-slate-800",
+        "rounded-2xl md:rounded-lg", // More rounded on mobile
+        "shadow-sm border border-slate-200 dark:border-slate-700",
+        "p-4 md:p-6", // Less padding on mobile
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Mobile-optimized button
+export function MobileButton({ 
+  children, 
+  className, 
+  size = "default",
+  ...props 
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  size?: "sm" | "default" | "lg";
+}) {
+  const sizeClasses = {
+    sm: "h-8 px-3 text-sm rounded-xl",
+    default: "h-11 px-4 rounded-2xl md:rounded-lg", // More rounded on mobile
+    lg: "h-12 px-6 text-lg rounded-2xl md:rounded-lg"
+  };
+
+  return (
+    <button
+      className={cn(
+        "inline-flex items-center justify-center font-medium transition-colors",
+        "bg-blue-600 hover:bg-blue-700 text-white",
+        "disabled:opacity-50 disabled:pointer-events-none",
+        sizeClasses[size],
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+// Mobile-optimized section header (no title on mobile)
+export function MobileSectionHeader({ 
+  title, 
+  subtitle, 
+  action,
+  className 
+}: {
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn(
+      "flex items-center justify-between",
+      "mb-4 md:mb-6", // Less margin on mobile
+      className
+    )}>
+      <div className="hidden md:block"> {/* Hide title on mobile */}
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h1>
+        {subtitle && (
+          <p className="text-sm text-slate-600 dark:text-slate-400">{subtitle}</p>
+        )}
+      </div>
+      {action && (
+        <div className="ml-auto md:ml-0">
+          {action}
+        </div>
+      )}
+    </div>
+  );
+}
