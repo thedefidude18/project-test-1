@@ -4,9 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
@@ -14,10 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { formatDistanceToNow } from "date-fns";
 import { formatBalance } from "@/utils/currencyUtils";
-import { PaymentTestPanel } from "@/components/PaymentTestPanel";
-import { PlayfulLoading, PlayfulLoadingOverlay } from "@/components/ui/playful-loading";
+import { PlayfulLoading } from "@/components/ui/playful-loading";
 import { AnimatedButton } from "@/components/ui/animated-button";
-import { SkeletonCard } from "@/components/ui/loading-states";
 
 export default function WalletPage() {
   const { user } = useAuth();
@@ -69,32 +66,29 @@ export default function WalletPage() {
     },
     onSuccess: (data: any) => {
       console.log("Deposit response:", data);
-      
+
       if (data.authorization_url && data.access_code && data.publicKey) {
-        // Use Paystack inline popup
         const handler = (window as any).PaystackPop.setup({
           key: data.publicKey,
           email: user?.email,
-          amount: parseFloat(depositAmount) * 100, // Amount in kobo
+          amount: parseFloat(depositAmount) * 100,
           currency: 'NGN',
           ref: data.reference,
           callback: function(response: any) {
             console.log('Payment response:', response);
-            
-            // Only show success if payment was actually successful
+
             if (response.status === 'success') {
               toast({
                 title: "Payment Successful",
                 description: "Verifying payment... Please wait.",
               });
-              
-              // Manually verify payment with backend
+
               setTimeout(async () => {
                 try {
                   const verifyResponse = await apiRequest("POST", "/api/wallet/verify-payment", { 
                     reference: response.reference 
                   });
-                  
+
                   if (verifyResponse.ok) {
                     toast({
                       title: "Payment Verified",
@@ -116,12 +110,11 @@ export default function WalletPage() {
                     variant: "destructive",
                   });
                 }
-                
-                // Refresh balance and transactions
+
                 queryClient.invalidateQueries({ queryKey: ["/api/wallet/balance"] });
                 queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
               }, 1000);
-              
+
               setIsDepositDialogOpen(false);
               setDepositAmount("");
             } else {
@@ -141,10 +134,9 @@ export default function WalletPage() {
             });
           }
         });
-        
+
         handler.openIframe();
       } else if (data.authorization_url) {
-        // Fallback to redirect if inline doesn't work
         console.log("Fallback: Redirecting to:", data.authorization_url);
         window.location.href = data.authorization_url;
       } else {
@@ -212,11 +204,11 @@ export default function WalletPage() {
 
   const getTransactionIcon = (type: string) => {
     switch (type) {
-      case 'deposit': return 'fas fa-plus-circle';
-      case 'withdrawal': return 'fas fa-minus-circle';
+      case 'deposit': return 'fas fa-arrow-down';
+      case 'withdrawal': return 'fas fa-arrow-up';
       case 'bet': return 'fas fa-dice';
       case 'win': return 'fas fa-trophy';
-      case 'challenge': return 'fas fa-swords';
+      case 'challenge': return 'fas fa-handshake';
       case 'referral': return 'fas fa-gift';
       default: return 'fas fa-circle';
     }
@@ -227,13 +219,13 @@ export default function WalletPage() {
       case 'deposit':
       case 'win':
       case 'referral':
-        return 'text-emerald-600 dark:text-emerald-400';
+        return 'text-green-500';
       case 'withdrawal':
       case 'bet':
       case 'challenge':
-        return 'text-red-600 dark:text-red-400';
+        return 'text-red-500';
       default:
-        return 'text-slate-600 dark:text-slate-400';
+        return 'text-gray-500';
     }
   };
 
@@ -278,262 +270,212 @@ export default function WalletPage() {
   const currentBalance = typeof balance === 'object' ? (balance.balance || 0) : (balance || 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
-      
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
-        {/* Header - More compact on mobile */}
-        <div className="mb-4 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-1 sm:mb-2">
-            Wallet 💰
-          </h1>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-            Manage your funds and view transaction history
-          </p>
-        </div>
 
-        {/* Balance Card - More compact on mobile */}
-        <Card className="bg-gradient-to-br from-primary to-secondary text-white mb-4 sm:mb-8">
-          <CardContent className="p-4 sm:p-8">
-            <div className="text-center">
-              <p className="text-primary-100 mb-1 sm:mb-2 text-sm sm:text-base">Current Balance</p>
-              <h2 className="text-2xl sm:text-4xl font-bold mb-4 sm:mb-6">{formatBalance(currentBalance)}</h2>
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center">
-                <Dialog open={isDepositDialogOpen} onOpenChange={setIsDepositDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="bg-white text-primary hover:bg-primary-50">
-                      <i className="fas fa-plus mr-2"></i>
-                      Deposit
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Deposit Funds</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium">Amount (₦)</label>
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          value={depositAmount}
-                          onChange={(e) => setDepositAmount(e.target.value)}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {[500, 1000, 2500, 5000].map((amount) => (
-                          <Button
-                            key={amount}
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setDepositAmount(amount.toString())}
-                          >
-                            ₦{amount}
-                          </Button>
-                        ))}
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsDepositDialogOpen(false)}
-                          className="flex-1"
-                        >
-                          Cancel
-                        </Button>
-                        <AnimatedButton
-                          onClick={handleDeposit}
-                          disabled={!depositAmount || depositMutation.isPending}
-                          isLoading={depositMutation.isPending}
-                          loadingText="Processing..."
-                          className="flex-1 bg-primary text-white hover:bg-primary/90"
-                          icon={<i className="fas fa-plus"></i>}
-                        >
-                          Deposit
-                        </AnimatedButton>
-                      </div>
+      {/* Mobile-first design */}
+      <div className="max-w-md mx-auto md:max-w-7xl px-4 py-6">
+
+        {/* Balance Section - Card Style */}
+        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 mb-6 shadow-sm">
+          <div className="text-center">
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">Total Balance</p>
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+              {formatBalance(currentBalance)}
+            </h1>
+
+            {/* Action Buttons */}
+            <div className="flex gap-4">
+              <Dialog open={isDepositDialogOpen} onOpenChange={setIsDepositDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl h-12 font-medium">
+                    <i className="fas fa-plus mr-2"></i>
+                    Add Money
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="mx-4 rounded-3xl">
+                  <DialogHeader>
+                    <DialogTitle className="text-center text-xl">Add Money</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-6 pt-4">
+                    <div>
+                      <Input
+                        type="number"
+                        placeholder="Enter amount"
+                        value={depositAmount}
+                        onChange={(e) => setDepositAmount(e.target.value)}
+                        className="h-14 text-lg text-center border-gray-200 rounded-2xl"
+                      />
                     </div>
-                  </DialogContent>
-                </Dialog>
+                    <div className="grid grid-cols-4 gap-3">
+                      {[500, 1000, 2500, 5000].map((amount) => (
+                        <Button
+                          key={amount}
+                          variant="outline"
+                          onClick={() => setDepositAmount(amount.toString())}
+                          className="h-12 rounded-xl border-gray-200 hover:bg-blue-50 hover:border-blue-300"
+                        >
+                          ₦{amount}
+                        </Button>
+                      ))}
+                    </div>
+                    <AnimatedButton
+                      onClick={handleDeposit}
+                      disabled={!depositAmount || depositMutation.isPending}
+                      isLoading={depositMutation.isPending}
+                      loadingText="Processing..."
+                      className="w-full h-14 bg-blue-600 text-white rounded-2xl text-lg font-medium"
+                    >
+                      Continue
+                    </AnimatedButton>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
-                <Dialog open={isWithdrawDialogOpen} onOpenChange={setIsWithdrawDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="secondary" className="bg-primary-700 text-white hover:bg-primary-800">
-                      <i className="fas fa-minus mr-2"></i>
+              <Dialog open={isWithdrawDialogOpen} onOpenChange={setIsWithdrawDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 border-gray-300 text-gray-700 dark:text-gray-300 rounded-2xl h-12 font-medium hover:bg-gray-50"
+                  >
+                    <i className="fas fa-arrow-up mr-2"></i>
+                    Send
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="mx-4 rounded-3xl">
+                  <DialogHeader>
+                    <DialogTitle className="text-center text-xl">Withdraw Money</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-6 pt-4">
+                    <div>
+                      <Input
+                        type="number"
+                        placeholder="Enter amount"
+                        value={withdrawAmount}
+                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                        className="h-14 text-lg text-center border-gray-200 rounded-2xl"
+                        max={currentBalance}
+                      />
+                      <p className="text-sm text-gray-500 text-center mt-2">
+                        Available: {formatBalance(currentBalance)}
+                      </p>
+                    </div>
+                    <AnimatedButton
+                      onClick={handleWithdraw}
+                      disabled={!withdrawAmount || withdrawMutation.isPending}
+                      isLoading={withdrawMutation.isPending}
+                      loadingText="Processing..."
+                      className="w-full h-14 bg-blue-600 text-white rounded-2xl text-lg font-medium"
+                    >
                       Withdraw
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Withdraw Funds</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium">Amount (₦)</label>
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          value={withdrawAmount}
-                          onChange={(e) => setWithdrawAmount(e.target.value)}
-                          className="mt-1"
-                          max={currentBalance}
-                        />
-                        <p className="text-xs text-slate-500 mt-1">
-                          Available: {formatBalance(currentBalance)}
-                        </p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsWithdrawDialogOpen(false)}
-                          className="flex-1"
-                        >
-                          Cancel
-                        </Button>
-                        <AnimatedButton
-                          onClick={handleWithdraw}
-                          disabled={!withdrawAmount || withdrawMutation.isPending}
-                          isLoading={withdrawMutation.isPending}
-                          loadingText="Processing..."
-                          className="flex-1 bg-primary text-white hover:bg-primary/90"
-                          icon={<i className="fas fa-minus"></i>}
-                        >
-                          Withdraw
-                        </AnimatedButton>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                    </AnimatedButton>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Quick Stats - More compact on mobile */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-8">
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardContent className="p-3 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Total Deposited</p>
-                  <p className="text-lg sm:text-2xl font-bold text-emerald-600">
-                    {formatBalance(transactions
-                      .filter((t: any) => t.type === 'deposit')
-                      .reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0))}
-                  </p>
-                </div>
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center">
-                  <i className="fas fa-arrow-down text-emerald-600 dark:text-emerald-400 text-sm sm:text-base"></i>
-                </div>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <Card className="bg-white dark:bg-gray-800 rounded-2xl border-0 shadow-sm">
+            <CardContent className="p-4 text-center">
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <i className="fas fa-arrow-down text-green-600 dark:text-green-400"></i>
               </div>
+              <p className="text-xs text-gray-500 mb-1">Deposited</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                {formatBalance(transactions
+                  .filter((t: any) => t.type === 'deposit')
+                  .reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0))}
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardContent className="p-3 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Total Won</p>
-                  <p className="text-lg sm:text-2xl font-bold text-amber-600">
-                    {formatBalance(transactions
-                      .filter((t: any) => t.type === 'win')
-                      .reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0))}
-                  </p>
-                </div>
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-amber-100 dark:bg-amber-900 rounded-lg flex items-center justify-center">
-                  <i className="fas fa-trophy text-amber-600 dark:text-amber-400 text-sm sm:text-base"></i>
-                </div>
+          <Card className="bg-white dark:bg-gray-800 rounded-2xl border-0 shadow-sm">
+            <CardContent className="p-4 text-center">
+              <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <i className="fas fa-trophy text-yellow-600 dark:text-yellow-400"></i>
               </div>
+              <p className="text-xs text-gray-500 mb-1">Won</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                {formatBalance(transactions
+                  .filter((t: any) => t.type === 'win')
+                  .reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0))}
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardContent className="p-3 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">Total Spent</p>
-                  <p className="text-lg sm:text-2xl font-bold text-red-600">
-                    {formatBalance(transactions
-                      .filter((t: any) => ['bet', 'challenge', 'withdrawal'].includes(t.type))
-                      .reduce((sum: number, t: any) => sum + Math.abs(parseFloat(t.amount)), 0))}
-                  </p>
-                </div>
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
-                  <i className="fas fa-arrow-up text-red-600 dark:text-red-400 text-sm sm:text-base"></i>
-                </div>
+          <Card className="bg-white dark:bg-gray-800 rounded-2xl border-0 shadow-sm">
+            <CardContent className="p-4 text-center">
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <i className="fas fa-arrow-up text-red-600 dark:text-red-400"></i>
               </div>
+              <p className="text-xs text-gray-500 mb-1">Spent</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                {formatBalance(transactions
+                  .filter((t: any) => ['bet', 'challenge', 'withdrawal'].includes(t.type))
+                  .reduce((sum: number, t: any) => sum + Math.abs(parseFloat(t.amount)), 0))}
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Payment Testing (Development Only) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mb-8">
-            <PaymentTestPanel />
-          </div>
-        )}
+        {/* Recent Transactions */}
+        <Card className="bg-white dark:bg-gray-800 rounded-3xl border-0 shadow-sm">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
 
-        {/* Transactions - More compact on mobile */}
-        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-          <CardHeader className="pb-3 sm:pb-6">
-            <CardTitle className="text-lg sm:text-xl">Transaction History</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
             {isLoading ? (
               <PlayfulLoading 
                 type="wallet" 
                 title="Loading Transactions" 
-                description="Organizing your financial history..."
-                className="py-4 sm:py-8"
+                description="Getting your transaction history..."
+                className="py-8"
               />
             ) : transactions.length === 0 ? (
-              <div className="text-center py-6 sm:py-12">
-                <i className="fas fa-receipt text-2xl sm:text-4xl text-slate-400 mb-2 sm:mb-4"></i>
-                <h3 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100 mb-1 sm:mb-2">
-                  No transactions yet
-                </h3>
-                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-                  Your transaction history will appear here once you start using your wallet.
-                </p>
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i className="fas fa-receipt text-gray-400 text-xl"></i>
+                </div>
+                <h4 className="text-gray-900 dark:text-white font-medium mb-1">No transactions yet</h4>
+                <p className="text-gray-500 text-sm">Your transaction history will appear here.</p>
               </div>
             ) : (
-              <div className="space-y-2 sm:space-y-4">
-                {transactions.map((transaction: any) => (
+              <div className="space-y-3">
+                {transactions.slice(0, 10).map((transaction: any) => (
                   <div
                     key={transaction.id}
-                    className="flex items-center justify-between p-3 sm:p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
+                    className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-2xl transition-colors"
                   >
-                    <div className="flex items-center space-x-3 sm:space-x-4">
-                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         transaction.type === 'deposit' || transaction.type === 'win' || transaction.type === 'referral'
-                          ? 'bg-emerald-100 dark:bg-emerald-900'
+                          ? 'bg-green-100 dark:bg-green-900'
                           : 'bg-red-100 dark:bg-red-900'
                       }`}>
-                        <i className={`${getTransactionIcon(transaction.type)} ${getTransactionColor(transaction.type)} text-sm sm:text-base`}></i>
+                        <i className={`${getTransactionIcon(transaction.type)} ${getTransactionColor(transaction.type)} text-sm`}></i>
                       </div>
                       <div>
-                        <h4 className="font-medium text-sm sm:text-base text-slate-900 dark:text-slate-100 capitalize">
+                        <h4 className="font-medium text-gray-900 dark:text-white capitalize text-sm">
                           {transaction.type}
                         </h4>
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                          {transaction.description || `${transaction.type} transaction`}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-500">
+                        <p className="text-xs text-gray-500">
                           {formatDistanceToNow(new Date(transaction.createdAt), { addSuffix: true })}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`text-sm sm:text-lg font-semibold ${getTransactionColor(transaction.type)}`}>
+                      <p className={`text-sm font-semibold ${getTransactionColor(transaction.type)}`}>
                         {getTransactionPrefix(transaction.type)}{formatBalance(Math.abs(parseFloat(transaction.amount)))}
                       </p>
                       <Badge
                         className={`text-xs ${
                           transaction.status === 'completed'
-                            ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                             : transaction.status === 'pending'
-                            ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
-                            : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
+                            : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
                         }`}
                       >
                         {transaction.status}

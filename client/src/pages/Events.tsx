@@ -159,7 +159,7 @@ export default function Events() {
       <Navigation />
 
       <div className="max-w-7xl mx-auto px-3 md:px-4 sm:px-6 lg:px-8 py-3 md:py-8">
-        
+
 
         {/* Category Navigation Bar */}
         <div className="mb-6">
@@ -174,7 +174,7 @@ export default function Events() {
               />
             </div>
           </div>
-          
+
           <div className="flex overflow-x-auto pb-2 gap-3 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
@@ -361,7 +361,7 @@ export default function Events() {
               </div>
               <span className="text-xs font-medium">All</span>
             </button>
-            
+
             {categories.map((category) => (
               <button
                 key={category.value}
