@@ -114,10 +114,10 @@ export function EventCard({ event, featured = false }: EventCardProps) {
 
   const handleShareEvent = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     const shareUrl = `${window.location.origin}/events/${eventId}/chat`;
     const shareText = `Check out this event: ${title} - Pool: ₦${poolTotal.toLocaleString()}`;
-    
+
     if (navigator.share) {
       navigator.share({
         title: title,
@@ -186,7 +186,7 @@ export function EventCard({ event, featured = false }: EventCardProps) {
             >
               <i className="fas fa-share-alt text-white text-xs"></i>
             </button>
-            
+
             {isPrivate && (
               <div className="bg-black/40 backdrop-blur-sm rounded-full px-2 py-1 flex items-center space-x-1">
                 <Lock size={12} className="text-white" />
@@ -197,39 +197,39 @@ export function EventCard({ event, featured = false }: EventCardProps) {
         </div>
 
         {/* Bottom Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
+        <div className="absolute bottom-0 left-0 right-0 p-3">
           {/* Creator Info */}
           {creator && (
-            <div className="flex items-center space-x-2 mb-3">
+            <div className="flex items-center space-x-2 mb-2">
               <img
                 src={creator.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${creator.name}`}
                 alt={creator.name}
-                className="w-6 h-6 rounded-full border border-white/20"
+                className="w-5 h-5 rounded-full border border-white/20"
               />
-              <span className="text-white text-sm font-medium">
+              <span className="text-white text-xs font-medium">
                 {creator.name || creator.username || 'Unknown'}
               </span>
             </div>
           )}
 
           {/* Event Title */}
-          <h3 className="text-white font-bold text-lg mb-2 line-clamp-2">
+          <h3 className="text-white font-bold text-base mb-2 line-clamp-2">
             {title}
           </h3>
 
           {/* Stats Row */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-3">
               {/* Pool Total */}
               <div className="text-white">
-                <span className="text-lg font-bold">₦{poolTotal.toLocaleString()}</span>
-                <span className="text-white/70 text-sm ml-1">pool</span>
+                <span className="text-base font-bold">₦{poolTotal.toLocaleString()}</span>
+                <span className="text-white/70 text-xs ml-1">pool</span>
               </div>
 
               {/* Participants */}
               <div className="flex items-center space-x-1 text-white/70">
-                <Users size={14} />
-                <span className="text-sm">
+                <Users size={12} />
+                <span className="text-xs">
                   {participantCount}{maxParticipants ? `/${maxParticipants}` : ''}
                 </span>
               </div>
@@ -237,10 +237,10 @@ export function EventCard({ event, featured = false }: EventCardProps) {
 
             {/* Time */}
             <div className="flex items-center space-x-1 text-white/70">
-              <Clock size={14} />
-              <span className="text-sm">{timeLeft}</span>
+              <Clock size={12} />
+              <span className="text-xs">{timeLeft}</span>
             </div>
-          </div>
+          }</div>
 
           {/* Join Button */}
           <button

@@ -159,45 +159,56 @@ export default function Events() {
       <Navigation />
 
       <div className="max-w-7xl mx-auto px-3 md:px-4 sm:px-6 lg:px-8 py-3 md:py-8">
-        {/* Header */}
-        <div id="events-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-8">
-          <div className="hidden md:block">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-              Events 🎯
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400">
-              Predict outcomes and join betting pools on various topics
-            </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowOnboarding(true)}
-              className="mt-2 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-            >
-              ℹ️ Show rewards guide
-            </Button>
-          </div>
-
-          {/* Mobile compact header */}
-          <div className="flex md:hidden w-full justify-between items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowOnboarding(true)}
-              className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-            >
-              ℹ️ Rewards guide
-            </Button>
-          </div>
+        {/* Modern Header with Gradient */}
+        <div className="bg-gradient-to-br from-primary via-purple-600 to-blue-600 rounded-2xl p-4 md:p-6 mb-6 text-white">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                  <i className="fas fa-calendar-alt text-white text-lg"></i>
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold">
+                    Events 🎯
+                  </h1>
+                  <p className="text-white/80 text-sm md:text-base">
+                    Predict outcomes and win rewards
+                  </p>
+                </div>
+              </div>
+              
+              {/* Stats Row */}
+              <div className="flex items-center space-x-4 mt-3">
+                <div className="bg-white/10 rounded-lg px-3 py-1">
+                  <span className="text-xs text-white/70">Active Events</span>
+                  <div className="font-bold">{events.length}</div>
+                </div>
+                <div className="bg-white/10 rounded-lg px-3 py-1">
+                  <span className="text-xs text-white/70">Total Pool</span>
+                  <div className="font-bold">₦{events.reduce((sum, e) => sum + parseFloat(e.eventPool || '0'), 0).toLocaleString()}</div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowOnboarding(true)}
+                  className="text-white/70 hover:text-white hover:bg-white/10 text-xs"
+                >
+                  ℹ️ Guide
+                </Button>
+              </div>
+            </div>
 
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button id="create-event-btn" className="mobile-btn-primary mt-2 md:mt-4 sm:mt-0 md:bg-primary md:text-white md:hover:bg-primary/90">
-                <i className="fas fa-plus mr-1 md:mr-2"></i>
-                <span className="hidden sm:inline">Create Event</span>
-                <span className="sm:hidden">Create</span>
-              </Button>
-            </DialogTrigger>
+              <DialogTrigger asChild>
+                <Button 
+                  id="create-event-btn" 
+                  className="bg-white text-primary hover:bg-white/90 font-semibold mt-4 sm:mt-0 shadow-lg"
+                >
+                  <i className="fas fa-plus mr-2"></i>
+                  <span className="hidden sm:inline">Create Event</span>
+                  <span className="sm:hidden">Create</span>
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Event</DialogTitle>
@@ -360,39 +371,63 @@ export default function Events() {
               </Form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
-        {/* Filters */}
-        <Card className="mobile-card-compact md:bg-white md:dark:bg-slate-800 md:border-slate-200 md:dark:border-slate-700 mb-3 md:mb-8">
-          <CardContent className="p-3 md:p-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search events..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-slate-50 dark:bg-slate-700"
-                />
-              </div>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
-                      <div className="flex items-center space-x-2">
-                        <i className={category.icon}></i>
-                        <span>{category.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* Category Navigation Bar */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Categories</h3>
+            <div className="flex-1 max-w-md ml-4">
+              <Input
+                placeholder="Search events..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          
+          <div className="flex overflow-x-auto pb-2 gap-3 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
+            <button
+              onClick={() => setCategoryFilter("all")}
+              className={`flex-shrink-0 flex flex-col items-center p-3 rounded-xl transition-all ${
+                categoryFilter === "all" 
+                  ? "bg-primary text-white shadow-lg" 
+                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+              }`}
+            >
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-2">
+                <i className="fas fa-th-large text-white text-lg"></i>
+              </div>
+              <span className="text-xs font-medium">All</span>
+            </button>
+            
+            {categories.map((category) => (
+              <button
+                key={category.value}
+                onClick={() => setCategoryFilter(category.value)}
+                className={`flex-shrink-0 flex flex-col items-center p-3 rounded-xl transition-all ${
+                  categoryFilter === category.value 
+                    ? "bg-primary text-white shadow-lg" 
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                }`}
+              >
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                  category.value === 'crypto' ? 'bg-gradient-to-br from-orange-400 to-yellow-500' :
+                  category.value === 'sports' ? 'bg-gradient-to-br from-green-400 to-blue-500' :
+                  category.value === 'gaming' ? 'bg-gradient-to-br from-purple-400 to-pink-500' :
+                  category.value === 'music' ? 'bg-gradient-to-br from-red-400 to-pink-500' :
+                  category.value === 'politics' ? 'bg-gradient-to-br from-blue-600 to-indigo-700' :
+                  'bg-gradient-to-br from-slate-400 to-slate-600'
+                }`}>
+                  <i className={`${category.icon} text-white text-lg`}></i>
+                </div>
+                <span className="text-xs font-medium">{category.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Events Grid */}
         {isLoading ? (
@@ -427,12 +462,12 @@ export default function Events() {
             </CardContent>
           </Card>
         ) : (
-          <div id="events-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+          <div id="events-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {filteredEvents.map((event: any, index: number) => (
               <EventCard 
                 key={event.id} 
                 event={event} 
-                featured={index === 0}
+                featured={index === 0 && filteredEvents.length > 3}
               />
             ))}
           </div>
