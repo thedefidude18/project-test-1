@@ -6,8 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useQuery } from "@tanstack/react-query";
 import { formatBalance } from "@/utils/currencyUtils";
-import { createAvatar } from '@dicebear/core';
-import { avataaars } from '@dicebear/collection';
 
 export function MobileNavigation() {
   const { user } = useAuth();
@@ -23,11 +21,7 @@ export function MobileNavigation() {
   const [location, navigate] = useLocation();
 
   // Generate user avatar for profile nav item
-  const userAvatar = user ? createAvatar(avataaars, {
-    seed: user.email || user.claims?.email || 'default',
-    backgroundColor: ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf'],
-    scale: 85,
-  }).toDataUri() : null;
+  const userAvatar = user ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.email || user.claims?.email || 'default')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&scale=85` : null;
 
   const navItems = [
     { 
