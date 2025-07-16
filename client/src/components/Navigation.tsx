@@ -98,21 +98,29 @@ export function Navigation() {
 
           {/* Right Side Items */}
           <div className="flex items-center space-x-4">
-            {/* Wallet Balance */}
+            {/* Wallet Balance & Coins */}
             <button
               onClick={() => handleNavigation("/wallet")}
-              className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors"
+              className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors"
               style={{ backgroundColor: '#7440ff', color: 'white' }}
               data-tour="wallet"
             >
-              <i className="fas fa-wallet text-emerald-500"></i>
-              <span className="text-sm font-medium">
-                {formatBalance(
-                  typeof balance === "object"
-                    ? balance.balance || 0
-                    : balance || 0,
-                )}
-              </span>
+              <div className="flex items-center space-x-1">
+                <i className="fas fa-wallet text-emerald-500"></i>
+                <span className="text-sm font-medium">
+                  {formatBalance(
+                    typeof balance === "object"
+                      ? balance.balance || 0
+                      : balance || 0,
+                  )}
+                </span>
+              </div>
+              <div className="flex items-center space-x-1 border-l border-white/20 pl-3">
+                <i className="fas fa-coins text-yellow-400"></i>
+                <span className="text-sm font-medium">
+                  {typeof balance === "object" ? (balance.coins || 0).toLocaleString() : '0'}
+                </span>
+              </div>
             </button>
 
             {/* Leaderboard */}
