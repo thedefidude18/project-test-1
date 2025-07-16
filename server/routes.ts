@@ -345,7 +345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await telegramSync.sendMessageToTelegram(
             message, 
             senderName, 
-            { id: eventId, title: event?.title || 'Event Chat' }
+            { id: eventId, title: event?.title || `Event ${eventId}` }
           );
         } catch (telegramError) {
           console.error('Error forwarding message to Telegram:', telegramError);

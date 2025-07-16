@@ -80,7 +80,7 @@ export interface IStorage {
   joinEvent(eventId: number, userId: string, prediction: boolean, amount: number): Promise<EventParticipant>;
   getEventParticipants(eventId: number): Promise<EventParticipant[]>;
   getEventMessages(eventId: number, limit?: number): Promise<any[]>;
-  createEventMessage(eventId: number, userId: string, message: string, replyToId?: string, mentions?: string[]): Promise<EventMessage>;
+  createEventMessage(eventId: number, userId: string, message: string, replyToId?: string, mentions?: string[], telegramUser?: any): Promise<EventMessage>;
   getEventMessageById(messageId: string): Promise<EventMessage | undefined>;
   toggleMessageReaction(messageId: string, userId: string, emoji: string): Promise<any>;
   getMessageReactions(messageId: string): Promise<any[]>;
@@ -185,7 +185,7 @@ export interface IStorage {
   getPushSubscriptions(userId: string): Promise<any[]>;
   removePushSubscription(endpoint: string): Promise<void>;
   broadcastMessage(message: string, type: string): Promise<void>;
-  
+
   // Missing admin functions
   getAdminNotifications(limit: number): Promise<any[]>;
   broadcastNotification(data: any): Promise<any>;
@@ -299,7 +299,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     const minAmount = parseFloat(event.entryFee);
-    
+
     // Validate amount based on betting model
     if (event.bettingModel === "fixed") {
       if (Math.abs(amount - minAmount) > 0.01) { // Allow for floating point precision
@@ -309,7 +309,7 @@ export class DatabaseStorage implements IStorage {
       if (amount < minAmount) {
         throw new Error(`Custom betting requires minimum ₦${minAmount}`);
       }
-      
+
       // Add reasonable maximum to prevent abuse (10x the minimum)
       const maxAmount = minAmount * 10;
       if (amount > maxAmount) {
@@ -345,7 +345,7 @@ export class DatabaseStorage implements IStorage {
     // If opponent found, match them (FCFS matching)
     if (oppositeParticipant.length > 0) {
       const opponent = oppositeParticipant[0];
-      
+
       // Update both participants to "matched" status
       await db
         .update(eventParticipants)
@@ -354,7 +354,7 @@ export class DatabaseStorage implements IStorage {
           matchedWith: userId 
         })
         .where(eq(eventParticipants.id, opponent.id));
-      
+
       await db
         .update(eventParticipants)
         .set({ 
@@ -536,7 +536,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createEventMessage(eventId: number, userId: string, message: string, replyToId?: string, mentions?: string[]): Promise<EventMessage> {
+  async createEventMessage(eventId: number, userId: string, message: string, replyToId?: string, mentions?: string[], telegramUser?: any): Promise<EventMessage> {
     const [newMessage] = await db
       .insert(eventMessages)
       .values({ 
@@ -547,7 +547,29 @@ export class DatabaseStorage implements IStorage {
         mentions: mentions || []
       })
       .returning();
-    return newMessage;
+
+    // Get user info for the response
+    let user;
+    if (telegramUser) {
+      // Use provided Telegram user info
+      user = telegramUser;
+    } else {
+      // Get from database for regular BetChat users
+      user = await this.getUser(userId);
+    }
+
+    return {
+      ...newMessage,
+      user: {
+        id: user?.id,
+        firstName: user?.firstName,
+        lastName: user?.lastName,
+        username: user?.username,
+        profileImageUrl: user?.profileImageUrl,
+        level: user?.level,
+        isTelegramUser: telegramUser ? true : false,
+      }
+    };
   }
 
   async getEventMessageById(messageId: string): Promise<EventMessage | undefined> {
@@ -1305,7 +1327,7 @@ export class DatabaseStorage implements IStorage {
     for (const winner of winners) {
       const winnerBet = parseFloat(winner.amount);
       const winnerShare = totalWinnerBets > 0 ? winnerBet / totalWinnerBets : 1 / winners.length;
-      
+
       let payout;
       if (event.bettingModel === "fixed") {
         // Fixed model: equal share of the profit pool + original bet back
@@ -1991,7 +2013,7 @@ export class DatabaseStorage implements IStorage {
       lastLogin: users.lastLogin,
       status: users.status
     }).from(users).where(eq(users.isAdmin, true));
-    
+
     return admins;
   }
 
@@ -2025,19 +2047,19 @@ export class DatabaseStorage implements IStorage {
   // Platform Settings
   async getPlatformSettings(): Promise<PlatformSettings> {
     const [settings] = await db.select().from(platformSettings).limit(1);
-    
+
     if (!settings) {
       // Create default settings if none exist
       const [defaultSettings] = await db.insert(platformSettings).values({}).returning();
       return defaultSettings;
     }
-    
+
     return settings;
   }
 
   async updatePlatformSettings(settingsUpdate: Partial<PlatformSettings>): Promise<PlatformSettings> {
     const existingSettings = await this.getPlatformSettings();
-    
+
     const [updatedSettings] = await db
       .update(platformSettings)
       .set({
@@ -2046,7 +2068,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(platformSettings.id, existingSettings.id))
       .returning();
-    
+
     return updatedSettings;
   }
 
@@ -2108,7 +2130,7 @@ export class DatabaseStorage implements IStorage {
   async broadcastMessage(message: string, type: string): Promise<void> {
     // Get all users to broadcast to
     const allUsers = await db.select({ id: users.id }).from(users);
-    
+
     // Create notifications for all users
     const notificationData = allUsers.map(user => ({
       userId: user.id,
@@ -2127,7 +2149,7 @@ export class DatabaseStorage implements IStorage {
     if (!event) return;
 
     const participants = await this.getEventParticipants(eventId);
-    
+
     for (const participant of participants) {
       await this.createNotification({
         userId: participant.userId,
@@ -2161,7 +2183,7 @@ export class DatabaseStorage implements IStorage {
     if (!event) return;
 
     const participants = await this.getEventParticipants(eventId);
-    
+
     for (const participant of participants) {
       await this.createNotification({
         userId: participant.userId,
@@ -2236,7 +2258,7 @@ export class DatabaseStorage implements IStorage {
     // Get all users if no target specified
     const targetUsers = data.targetUserIds || 
       (await db.select({ id: users.id }).from(users)).map(u => u.id);
-    
+
     const notificationData = targetUsers.map((userId: string) => ({
       userId: userId,
       type: data.type || 'admin_announcement',

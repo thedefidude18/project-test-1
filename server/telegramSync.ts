@@ -139,12 +139,53 @@ export class TelegramSyncService {
 
     console.log(`📨 Telegram → BetChat: ${senderName}: ${messageText}`);
 
-    // Create a "virtual" user for Telegram users in BetChat
+    // Check if message is for a specific event (hashtag format: #event123)
+    const eventMatch = messageText.match(/#event(\d+)/);
+    
+    if (eventMatch) {
+      // Route to specific event chat
+      const eventId = parseInt(eventMatch[1]);
+      
+      try {
+        // Create message in event chat
+        const virtualUserId = `telegram_${senderId}`;
+        
+        await storage.createEventMessage(eventId, virtualUserId, messageText, null, [], {
+          id: virtualUserId,
+          firstName: senderName,
+          username: senderName,
+          profileImageUrl: null,
+          isTelegramUser: true,
+        });
+
+        // Broadcast to event participants via Pusher
+        await this.pusher.trigger(`event-${eventId}`, 'new-message', {
+          type: 'event_message',
+          eventId: eventId,
+          source: 'telegram',
+          sender: senderName
+        });
+
+        console.log(`✅ Telegram message synced to Event ${eventId}`);
+        
+      } catch (error) {
+        console.error(`❌ Failed to sync message to event ${eventId}:`, error);
+        // Fall back to global chat
+        await this.syncToGlobalChat(senderId, senderName, messageText, timestamp);
+      }
+      
+    } else {
+      // Route to global chat
+      await this.syncToGlobalChat(senderId, senderName, messageText, timestamp);
+    }
+  }
+
+  private async syncToGlobalChat(senderId: string, senderName: string, messageText: string, timestamp: string): Promise<void> {
     const virtualUserId = `telegram_${senderId}`;
     
     // Store message in BetChat database
     const chatMessage = await storage.createGlobalChatMessage({
-      id: `tg_${message.id}`,
+      id: `tg_${Date.now()}`,
       userId: virtualUserId,
       user: {
         id: virtualUserId,
@@ -165,7 +206,7 @@ export class TelegramSyncService {
       source: 'telegram'
     });
 
-    console.log("✅ Telegram message synced to BetChat");
+    console.log("✅ Telegram message synced to Global Chat");
   }
 
   private async getSenderName(message: any): Promise<string> {
@@ -196,12 +237,12 @@ export class TelegramSyncService {
       let formattedMessage: string;
       
       if (eventInfo) {
-        // Format with event context for multi-room differentiation
+        // Format with event context and hashtag for routing back
         const timestamp = new Date().toLocaleTimeString();
         formattedMessage = `🎯 [${eventInfo.title}]\n👤 ${senderName}: ${message}\n⏰ ${timestamp}\n\n#event${eventInfo.id}`;
       } else {
         // Default global chat format
-        formattedMessage = `🌐 [BetChat] ${senderName}: ${message}`;
+        formattedMessage = `🌐 [BetChat Global] ${senderName}: ${message}`;
       }
       
       await this.client.sendMessage(parseInt(this.groupId), {
