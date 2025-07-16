@@ -240,7 +240,7 @@ export function EventCard({ event, featured = false }: EventCardProps) {
               <Clock size={12} />
               <span className="text-xs">{timeLeft}</span>
             </div>
-          }</div>
+          </div>
 
           {/* Join Button */}
           <button
