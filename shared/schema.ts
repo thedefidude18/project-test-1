@@ -80,7 +80,7 @@ export const eventParticipants = pgTable("event_participants", {
   eventId: integer("event_id").notNull(),
   userId: varchar("user_id").notNull(),
   prediction: boolean("prediction").notNull(), // true for yes, false for no
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  amount: integer("amount").notNull(), // Changed to coins
   status: varchar("status").default("active"), // active, matched, won, lost
   matchedWith: varchar("matched_with"), // User ID of opponent (for FCFS matching)
   payout: decimal("payout", { precision: 10, scale: 2 }).default("0.00"), // Winner payout amount
@@ -172,13 +172,13 @@ export const challenges = pgTable("challenges", {
   title: text("title").notNull(),
   description: text("description"),
   category: varchar("category").notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  amount: integer("amount").notNull(), // Changed to coins
   status: varchar("status").default("pending"), // pending, active, completed, disputed, cancelled
   evidence: jsonb("evidence"),
   result: varchar("result"), // challenger_won, challenged_won, draw
   dueDate: timestamp("due_date"),
   createdAt: timestamp("created_at").defaultNow(),
-  completedAt: timestamp("completed_at"),
+  completedAt: timestamp("completedAt"),
 });
 
 // Real-time chat in challenges

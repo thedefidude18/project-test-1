@@ -16,6 +16,8 @@ import {
 import { formatBalance } from "@/utils/currencyUtils";
 import { getAvatarUrl } from "@/utils/avatarUtils";
 import { UserAvatar } from "@/components/UserAvatar";
+import { Bell, Settings, Users, Calendar, Trophy, Wallet, Home, Menu, X, Sun, Moon, ShoppingCart } from "lucide-react";
+import { Link } from "wouter"; // Import Link from wouter
 
 export function Navigation() {
   const { user } = useAuth();

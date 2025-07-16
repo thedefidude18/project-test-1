@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useQuery } from "@tanstack/react-query";
 import { formatBalance } from "@/utils/currencyUtils";
+import { ShoppingCart } from "lucide-react";
 
 export function MobileNavigation() {
   const { user } = useAuth();
@@ -66,6 +67,13 @@ export function MobileNavigation() {
       isActive: location === "/profile",
       tourId: "profile",
       isProfileIcon: true
+    },
+    { 
+      path: "/shop", 
+      iconPath: "/assets/shop.svg",
+      label: "Shop",
+      isActive: location.startsWith("/shop"),
+      tourId: "shop"
     },
   ];
 

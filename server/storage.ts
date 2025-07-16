@@ -1101,21 +1101,17 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async getUserBalance(userId: string): Promise<{ balance: number }> {
-    // Calculate balance from all transactions
+  async getUserBalance(userId: string): Promise<{ balance: number , coins: number}> {
     const [result] = await db
-      .select({
-        totalBalance: sql<number>`COALESCE(SUM(CAST(${transactions.amount} AS DECIMAL)), 0)`
+      .select({ 
+        balance: users.balance,
+        coins: users.coins 
       })
-      .from(transactions)
-      .where(
-        and(
-          eq(transactions.userId, userId),
-          eq(transactions.status, 'completed')
-        )
-      );
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
-    return { balance: result?.totalBalance || 0 };
+    return result[0] || { balance: 0, coins: 0 };
   }
 
   async updateUserBalance(userId: string, amount: number): Promise<User> {

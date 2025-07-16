@@ -15,11 +15,14 @@ import { formatDistanceToNow } from "date-fns";
 import { formatBalance } from "@/utils/currencyUtils";
 import { PlayfulLoading } from "@/components/ui/playful-loading";
 import { AnimatedButton } from "@/components/ui/animated-button";
+import { ShoppingCart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function WalletPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
@@ -279,10 +282,27 @@ export default function WalletPage() {
         {/* Balance Section - Card Style */}
         <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 mb-6 shadow-sm">
           <div className="text-center">
-            <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">Total Balance</p>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">Naira Balance</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               {formatBalance(currentBalance)}
             </h1>
+            
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-2xl p-4 mb-6">
+              <p className="text-yellow-600 dark:text-yellow-400 text-sm mb-1">Coins Balance</p>
+              <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
+                {(typeof balance === 'object' ? (balance.coins || 0) : 0).toLocaleString()} coins
+              </h2>
+              <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                Use coins to bet in events and challenges
+              </p>
+              <Button
+                onClick={() => navigate('/shop')}
+                className="mt-3 w-full bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl h-10"
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Buy More Coins
+              </Button>
+            </div>
 
             {/* Action Buttons */}
             <div className="flex gap-4">

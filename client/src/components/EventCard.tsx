@@ -4,6 +4,8 @@ import { useLocation } from 'wouter';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { formatBalance } from "@/utils/currencyUtils";
+import { formatCoins } from "@/utils/coinsUtils";
 
 const DEFAULT_BANNER = 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&auto=format&fit=crop';
 

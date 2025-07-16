@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,7 +18,7 @@ export default function EventCreate() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -98,7 +97,7 @@ export default function EventCreate() {
   return (
     <MobileLayout>
       <Navigation />
-      
+
       <div className="max-w-2xl mx-auto">
         {/* Mobile Header */}
         <div className="flex items-center justify-between mb-4 md:hidden">

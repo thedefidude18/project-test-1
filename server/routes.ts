@@ -28,6 +28,11 @@ import crypto from "crypto";
 import { createTelegramSync, getTelegramSync } from "./telegramSync";
 import { getTelegramBot } from "./telegramBot";
 import webpush from "web-push";
+
+// Import formatBalance utility for coin operations
+function formatBalance(amount: number): string {
+  return `₦${amount.toLocaleString()}`;
+}
 import axios from "axios";
 
 // Initialize Pusher
@@ -125,8 +130,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
-      // Convert entryFee to proper decimal format
-      const entryFee = parseFloat(req.body.entryFee);
+      // Convert entryFee to proper integer format (coins)
+      const entryFee = parseInt(req.body.entryFee);
       if (isNaN(entryFee) || entryFee <= 0) {
         return res.status(400).json({ message: "Invalid entry fee" });
       }
@@ -141,7 +146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: req.body.title,
         description: req.body.description || null,
         category: req.body.category,
-        entryFee: entryFee.toString(),
+        entryFee: entryFee,
         endDate: endDate,
         creatorId: userId,
         status: 'active',
@@ -203,13 +208,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Event not found" });
       }
 
-      // Always use the event's entry fee (fixed model)
-      const amount = parseFloat(event.entryFee);
+      // Always use the event's entry fee (fixed model) - now in coins
+      const amount = parseInt(event.entryFee.toString());
 
-      // Check user balance
+      // Check user coin balance
       const balance = await storage.getUserBalance(userId);
-      if (balance.balance < amount) {
-        return res.status(400).json({ message: "Insufficient balance" });
+      const userCoins = balance.coins || 0;
+      if (userCoins < amount) {
+        return res.status(400).json({ message: "Insufficient coins" });
       }
 
       // Check if event is private
@@ -245,22 +251,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const participant = await storage.joinEvent(eventId, userId, prediction, amount);
 
-      // Create transaction record for escrow
+      // Create transaction record for coin escrow
       await storage.createTransaction({
         userId,
         type: 'event_escrow',
         amount: `-${amount}`,
-        description: `Funds locked in escrow for event: ${event.title}`,
+        description: `${amount.toLocaleString()} coins locked in escrow for event: ${event.title}`,
         relatedId: eventId,
         status: 'completed',
       });
 
+      // Deduct coins from user
+      await db
+        .update(users)
+        .set({ 
+          coins: sql`${users.coins} - ${amount}`,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+
       // Create comprehensive notifications
       await storage.createNotification({
         userId,
-        type: 'funds_locked',
-        title: '🔒 Funds Locked in Escrow',
-        message: `₦${amount.toLocaleString()} locked for your ${prediction ? 'YES' : 'NO'} prediction on "${event.title}". Funds will be released when the event ends.`,
+        type: 'coins_locked',
+        title: '🔒 Coins Locked in Escrow',
+        message: `${amount.toLocaleString()} coins locked for your ${prediction ? 'YES' : 'NO'} prediction on "${event.title}". Coins will be released when the event ends.`,
         data: { 
           eventId: eventId,
           amount: amount,
@@ -276,7 +291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: event.creatorId,
         type: 'event_participant_joined',
         title: '🎯 New Event Participant',
-        message: `${req.user.claims.first_name || 'Someone'} joined your event "${event.title}" with a ${prediction ? 'YES' : 'NO'} prediction!`,
+        message: `${req.user.claims.first_name || 'Someone'} joined your event "${event.title}" with a ${prediction ? 'YES' : 'NO'} prediction (${amount.toLocaleString()} coins)!`,
         data: { 
           eventId: eventId,
           participantId: userId,
@@ -287,11 +302,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Send real-time notifications via Pusher
-      await pusher.trigger(`user-${userId}`, 'funds-locked', {
-        title: '🔒 Funds Locked in Escrow',
-        message: `₦${amount.toLocaleString()} locked for your ${prediction ? 'YES' : 'NO'} prediction on "${event.title}"`,
+      await pusher.trigger(`user-${userId}`, 'coins-locked', {
+        title: '🔒 Coins Locked in Escrow',
+        message: `${amount.toLocaleString()} coins locked for your ${prediction ? 'YES' : 'NO'} prediction on "${event.title}"`,
         eventId: eventId,
-        type: 'funds_locked',
+        type: 'coins_locked',
       });
 
       await pusher.trigger(`user-${event.creatorId}`, 'participant-joined', {
@@ -648,7 +663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dataToValidate = {
         ...req.body,
         challenger: userId,
-        amount: req.body.amount.toString(), // Ensure it's a string for decimal field
+        amount: parseInt(req.body.amount), // Ensure it's an integer for coins
         dueDate: req.body.dueDate ? new Date(req.body.dueDate) : undefined // Convert string to Date
       };
 
@@ -768,6 +783,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const challengeId = parseInt(req.params.id);
       const userId = req.user.claims.sub;
+
+      // Check user has enough coins before accepting
+      const balance = await storage.getUserBalance(userId);
+      const challengeData = await storage.getChallengeById(challengeId);
+      const requiredCoins = parseInt(challengeData.amount.toString());
+
+      if ((balance.coins || 0) < requiredCoins) {
+        return res.status(400).json({ message: "Insufficient coins to accept this challenge" });
+      }
 
       const challenge = await storage.acceptChallenge(challengeId, userId);
 
@@ -2371,6 +2395,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Tools - Give User Coins
+  app.post('/api/admin/users/give-coins', isAdmin, async (req, res) => {
+    try {
+      const { userId, coins } = req.body;
+
+      if (!userId || !coins || coins <= 0) {
+        return res.status(400).json({ message: 'Invalid user ID or coins amount' });
+      }
+
+      await db
+        .update(users)
+        .set({ 
+          coins: sql`${users.coins} + ${coins}`,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+
+      // Create transaction record
+      await storage.createTransaction({
+        userId,
+        type: 'admin_gift',
+        amount: coins.toString(),
+        description: `Admin gift: ${coins.toLocaleString()} coins`,
+        status: 'completed'
+      });
+
+      // Create notification
+      await storage.createNotification({
+        userId,
+        type: 'admin_gift',
+        title: '🎁 Admin Gift',
+        message: `You received ${coins.toLocaleString()} coins from admin!`,
+        data: { coins, type: 'admin_gift' },
+      });
+
+      res.json({ message: 'Coins given successfully' });
+    } catch (error) {
+      console.error('Error giving user coins:', error);
+      res.status(500).json({ message: 'Failed to give user coins' });
+    }
+  });
+
   // Admin Tools - Event Capacity
   app.post('/api/admin/events/update-capacity', isAdmin, async (req, res) => {
     try {
@@ -2474,6 +2540,200 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error during admin logout:', error);
       res.status(500).json({ message: 'Admin logout failed' });
+    }
+  });
+
+  // Coin shop routes
+  app.post('/api/shop/purchase-coins', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { coins, nairaAmount } = req.body;
+
+      if (!coins || !nairaAmount || coins <= 0 || nairaAmount <= 0) {
+        return res.status(400).json({ message: "Invalid coin or Naira amount" });
+      }
+
+      if (nairaAmount < 50) {
+        return res.status(400).json({ message: "Minimum purchase is ₦50" });
+      }
+
+      // Check user balance
+      const balance = await storage.getUserBalance(userId);
+      if (balance.balance < nairaAmount) {
+        return res.status(400).json({ message: "Insufficient Naira balance" });
+      }
+
+      // Create transactions for both Naira deduction and coin addition
+      await storage.createTransaction({
+        userId,
+        type: 'coin_purchase',
+        amount: `-${nairaAmount}`,
+        description: `Purchased ${coins.toLocaleString()} coins`,
+        status: 'completed',
+      });
+
+      await storage.createTransaction({
+        userId,
+        type: 'coin_purchase',
+        amount: coins.toString(),
+        description: `Received ${coins.toLocaleString()} coins from purchase`,
+        status: 'completed',
+      });
+
+      // Update user coins balance
+      await db
+        .update(users)
+        .set({ 
+          coins: sql`${users.coins} + ${coins}`,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+
+      // Create notification
+      await storage.createNotification({
+        userId,
+        type: 'coin_purchase',
+        title: '🪙 Coins Purchased',
+        message: `You purchased ${coins.toLocaleString()} coins for ${formatBalance(nairaAmount)}!`,
+        data: { 
+          coins: coins,
+          nairaAmount: nairaAmount,
+          type: 'coin_purchase'
+        },
+      });
+
+      res.json({ 
+        message: "Coins purchased successfully", 
+        coins: coins,
+        nairaAmount: nairaAmount 
+      });
+    } catch (error) {
+      console.error("Error purchasing coins:", error);
+      res.status(500).json({ message: "Failed to purchase coins" });
+    }
+  });
+
+  app.post('/api/shop/gift-coins', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const senderId = req.user.claims.sub;
+      const { recipientId, coins } = req.body;
+
+      if (!recipientId || !coins || coins <= 0) {
+        return res.status(400).json({ message: "Invalid recipient or coin amount" });
+      }
+
+      if (coins < 100) {
+        return res.status(400).json({ message: "Minimum gift is 100 coins" });
+      }
+
+      if (senderId === recipientId) {
+        return res.status(400).json({ message: "Cannot gift coins to yourself" });
+      }
+
+      // Check sender's coin balance
+      const senderBalance = await storage.getUserBalance(senderId);
+      const senderCoins = typeof senderBalance === 'object' ? (senderBalance.coins || 0) : 0;
+      
+      if (senderCoins < coins) {
+        return res.status(400).json({ message: "Insufficient coins to gift" });
+      }
+
+      // Get sender and recipient info
+      const sender = await storage.getUser(senderId);
+      const recipient = await storage.getUser(recipientId);
+
+      if (!recipient) {
+        return res.status(404).json({ message: "Recipient not found" });
+      }
+
+      // Create transactions for both users
+      await storage.createTransaction({
+        userId: senderId,
+        type: 'coin_gift_sent',
+        amount: `-${coins}`,
+        description: `Gifted ${coins.toLocaleString()} coins to @${recipient.firstName || recipient.username}`,
+        relatedId: recipientId,
+        status: 'completed',
+      });
+
+      await storage.createTransaction({
+        userId: recipientId,
+        type: 'coin_gift_received',
+        amount: coins.toString(),
+        description: `Received ${coins.toLocaleString()} coins gift from @${sender?.firstName || sender?.username}`,
+        relatedId: senderId,
+        status: 'completed',
+      });
+
+      // Update both users' coin balances
+      await db
+        .update(users)
+        .set({ 
+          coins: sql`${users.coins} - ${coins}`,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, senderId));
+
+      await db
+        .update(users)
+        .set({ 
+          coins: sql`${users.coins} + ${coins}`,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, recipientId));
+
+      // Create notifications for both users
+      await storage.createNotification({
+        userId: recipientId,
+        type: 'coin_gift_received',
+        title: '🎁 Coin Gift Received',
+        message: `@${sender?.firstName || sender?.username} gifted you ${coins.toLocaleString()} coins!`,
+        data: { 
+          coins: coins,
+          senderId: senderId,
+          senderName: sender?.firstName || sender?.username
+        },
+      });
+
+      await storage.createNotification({
+        userId: senderId,
+        type: 'coin_gift_sent',
+        title: '🎁 Gift Sent',
+        message: `You gifted ${coins.toLocaleString()} coins to @${recipient.firstName || recipient.username}!`,
+        data: { 
+          coins: coins,
+          recipientId: recipientId,
+          recipientName: recipient.firstName || recipient.username
+        },
+      });
+
+      // Send real-time notifications via Pusher
+      await pusher.trigger(`user-${recipientId}`, 'coin-gift-received', {
+        title: '🎁 Coin Gift Received',
+        message: `@${sender?.firstName || sender?.username} gifted you ${coins.toLocaleString()} coins!`,
+        coins: coins,
+        senderId: senderId,
+        senderName: sender?.firstName || sender?.username,
+        timestamp: new Date().toISOString(),
+      });
+
+      await pusher.trigger(`user-${senderId}`, 'coin-gift-sent', {
+        title: '🎁 Gift Sent',
+        message: `You gifted ${coins.toLocaleString()} coins to @${recipient.firstName || recipient.username}!`,
+        coins: coins,
+        recipientId: recipientId,
+        recipientName: recipient.firstName || recipient.username,
+        timestamp: new Date().toISOString(),
+      });
+
+      res.json({ 
+        message: "Coin gift sent successfully", 
+        coins: coins,
+        recipientName: recipient.firstName || recipient.username
+      });
+    } catch (error) {
+      console.error("Error gifting coins:", error);
+      res.status(500).json({ message: "Failed to gift coins" });
     }
   });
 

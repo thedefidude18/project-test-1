@@ -18,7 +18,8 @@ import Profile from "./pages/Profile";
 import ProfileSettings from "./pages/ProfileSettings";
 import History from "./pages/History";
 import Notifications from "./pages/Notifications";
-import WalletPage from "./pages/WalletPage";
+import WalletPage from "@/pages/WalletPage";
+import Shop from "@/pages/Shop";
 import ReferralPage from "./pages/ReferralPage";
 import Settings from "./pages/Settings";
 import Leaderboard from "./pages/Leaderboard";
@@ -84,7 +85,7 @@ function Router() {
       {/* Public Routes - Accessible to everyone */}
       <Route path="/events/:id/chat" component={EventChatPage} />
       <Route path="/event/:id" component={EventChatPage} />
-      
+
       {isLoading || !isAuthenticated ? (
         <>
           <Route path="/" component={Landing} />
@@ -99,6 +100,7 @@ function Router() {
           <Route path="/challenges/:id" component={ChallengeDetail} />
           <Route path="/friends" component={Friends} />
           <Route path="/wallet" component={WalletPage} />
+          <Route path="/shop" component={Shop} />
           <Route path="/leaderboard" component={Leaderboard} />
           <Route path="/notifications" component={Notifications} />
           <Route path="/profile" component={Profile} />
