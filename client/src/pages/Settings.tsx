@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeProvider";
 import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
+import { MobileHeader } from "@/components/MobileHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -97,20 +98,7 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition pb-20 md:pb-0">
       <Navigation />
-      
-      {/* Mobile Header */}
-      <div className="md:hidden bg-white dark:bg-slate-800 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700">
-        <div className="flex items-center justify-between px-4 py-3">
-          <button
-            onClick={() => window.history.back()}
-            className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
-          >
-            <i className="fas fa-arrow-left text-slate-600 dark:text-slate-300"></i>
-          </button>
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Settings</h1>
-          <div className="w-10"></div>
-        </div>
-      </div>
+      <MobileHeader />
       
       <div className="max-w-4xl mx-auto px-3 md:px-6 lg:px-8 py-4 md:py-8">
         {/* Desktop Header */}
