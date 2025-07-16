@@ -107,7 +107,6 @@ export default function EventCreate() {
           >
             <i className="fas fa-arrow-left text-slate-600 dark:text-slate-300"></i>
           </button>
-          <h1 className="text-lg font-bold text-slate-900 dark:text-white">Create Event</h1>
           <div className="w-10"></div>
         </div>
 
@@ -246,7 +245,6 @@ export default function EventCreate() {
         </form>
       </div>
 
-      <MobileNavigation />
     </MobileLayout>
   );
 }
