@@ -1,3 +1,6 @@
+/* Inter Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
 /* Mobile Compact Design Styles */
 @import './styles/mobile-compact.css';
 
@@ -12,9 +15,17 @@
   }
 
   body {
+    font-family: 'Inter', 'Inter Placeholder', sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+    font-variation-settings: 'opsz' 32;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Remove any existing Poppins references */
+  * {
+    font-family: inherit;
   }
 
   /* Mobile-specific scrollbar hiding */
@@ -157,6 +168,6 @@
 
   body {
     @apply antialiased bg-background text-foreground;
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    font-family: 'Inter', 'Inter Placeholder', sans-serif;
   }
 }
