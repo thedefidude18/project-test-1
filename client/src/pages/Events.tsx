@@ -159,220 +159,7 @@ export default function Events() {
       <Navigation />
 
       <div className="max-w-7xl mx-auto px-3 md:px-4 sm:px-6 lg:px-8 py-3 md:py-8">
-        {/* Modern Header with Gradient */}
-        <div className="bg-gradient-to-br from-primary via-purple-600 to-blue-600 rounded-2xl p-4 md:p-6 mb-6 text-white">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-            <div className="flex-1">
-              <div className="flex items-center space-x-3 mb-2">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <i className="fas fa-calendar-alt text-white text-lg"></i>
-                </div>
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-bold">
-                    Events 🎯
-                  </h1>
-                  <p className="text-white/80 text-sm md:text-base">
-                    Predict outcomes and win rewards
-                  </p>
-                </div>
-              </div>
-              
-              {/* Stats Row */}
-              <div className="flex items-center space-x-4 mt-3">
-                <div className="bg-white/10 rounded-lg px-3 py-1">
-                  <span className="text-xs text-white/70">Active Events</span>
-                  <div className="font-bold">{events.length}</div>
-                </div>
-                <div className="bg-white/10 rounded-lg px-3 py-1">
-                  <span className="text-xs text-white/70">Total Pool</span>
-                  <div className="font-bold">₦{events.reduce((sum, e) => sum + parseFloat(e.eventPool || '0'), 0).toLocaleString()}</div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowOnboarding(true)}
-                  className="text-white/70 hover:text-white hover:bg-white/10 text-xs"
-                >
-                  ℹ️ Guide
-                </Button>
-              </div>
-            </div>
-
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  id="create-event-btn" 
-                  className="bg-white text-primary hover:bg-white/90 font-semibold mt-4 sm:mt-0 shadow-lg"
-                >
-                  <i className="fas fa-plus mr-2"></i>
-                  <span className="hidden sm:inline">Create Event</span>
-                  <span className="sm:hidden">Create</span>
-                </Button>
-              </DialogTrigger>
-            <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Create New Event</DialogTitle>
-                <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-                  🎁 Earn 1000 Points for creating an event!
-                </p>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter event title..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description (Optional)</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Describe your event..." 
-                            className="min-h-[60px]"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories.map((category) => (
-                              <SelectItem key={category.value} value={category.value}>
-                                <div className="flex items-center space-x-2">
-                                  <i className={category.icon}></i>
-                                  <span>{category.label}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <FormField
-                      control={form.control}
-                      name="entryFee"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Entry Fee (₦)</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="100" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="maxParticipants"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Max Participants</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="100" min="2" max="1000" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="endDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>End Date</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="datetime-local" 
-                            {...field}
-                            min={new Date().toISOString().slice(0, 16)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="isPrivate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Private Event</FormLabel>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Require approval to join
-                          </p>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex space-x-2 pt-4 sticky bottom-0 bg-white dark:bg-slate-800 pb-2 border-t border-slate-200 dark:border-slate-700 mt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsCreateDialogOpen(false)}
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-                    <AnimatedButton
-                      type="submit"
-                      disabled={createEventMutation.isPending}
-                      isLoading={createEventMutation.isPending}
-                      loadingText="Creating..."
-                      className="flex-1 bg-primary text-white hover:bg-primary/90"
-                      icon={<i className="fas fa-plus"></i>}
-                    >
-                      Create Event (+1000 Points)
-                    </AnimatedButton>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
-          </div>
-        </div>
+        
 
         {/* Category Navigation Bar */}
         <div className="mb-6">
@@ -389,6 +176,178 @@ export default function Events() {
           </div>
           
           <div className="flex overflow-x-auto pb-2 gap-3 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <button className="flex-shrink-0 flex flex-col items-center p-3 rounded-xl transition-all bg-primary text-white shadow-lg hover:bg-primary/90">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-2">
+                    <i className="fas fa-plus text-white text-lg"></i>
+                  </div>
+                  <span className="text-xs font-medium">Create</span>
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New Event</DialogTitle>
+                  <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+                    🎁 Earn 1000 Points for creating an event!
+                  </p>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter event title..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description (Optional)</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Describe your event..." 
+                              className="min-h-[60px]"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {categories.map((category) => (
+                                <SelectItem key={category.value} value={category.value}>
+                                  <div className="flex items-center space-x-2">
+                                    <i className={category.icon}></i>
+                                    <span>{category.label}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="entryFee"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Entry Fee (₦)</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="100" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="maxParticipants"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Max Participants</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="100" min="2" max="1000" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="endDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>End Date</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="datetime-local" 
+                              {...field}
+                              min={new Date().toISOString().slice(0, 16)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="isPrivate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Private Event</FormLabel>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Require approval to join
+                            </p>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="flex space-x-2 pt-4 sticky bottom-0 bg-white dark:bg-slate-800 pb-2 border-t border-slate-200 dark:border-slate-700 mt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsCreateDialogOpen(false)}
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                      <AnimatedButton
+                        type="submit"
+                        disabled={createEventMutation.isPending}
+                        isLoading={createEventMutation.isPending}
+                        loadingText="Creating..."
+                        className="flex-1 bg-primary text-white hover:bg-primary/90"
+                        icon={<i className="fas fa-plus"></i>}
+                      >
+                        Create Event (+1000 Points)
+                      </AnimatedButton>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+
             <button
               onClick={() => setCategoryFilter("all")}
               className={`flex-shrink-0 flex flex-col items-center p-3 rounded-xl transition-all ${
