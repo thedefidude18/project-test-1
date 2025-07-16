@@ -1083,7 +1083,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/wallet/balance', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.claims.sub;
+      console.log(`Fetching balance for user: ${userId}`);
+      
       const balance = await storage.getUserBalance(userId);
+      console.log(`Balance result for user ${userId}:`, balance);
+      
       res.json(balance);
     } catch (error) {
       console.error("Error fetching balance:", error);

@@ -1101,17 +1101,47 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async getUserBalance(userId: string): Promise<{ balance: number , coins: number}> {
-    const [result] = await db
-      .select({ 
-        balance: users.balance,
-        coins: users.coins 
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+  async getUserBalance(userId: string): Promise<{ balance: number; coins: number }> {
+    try {
+      // Get user's current coins from users table
+      const user = await db
+        .select({ coins: users.coins })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
 
-    return result[0] || { balance: 0, coins: 0 };
+      const currentCoins = user[0]?.coins || 0;
+
+      // Calculate Naira balance from transactions
+      const transactions = await db
+        .select()
+        .from(transactions)
+        .where(eq(transactions.userId, userId));
+
+      let balance = 0;
+      for (const transaction of transactions) {
+        const amount = parseFloat(transaction.amount);
+        // Only include completed transactions in balance calculation
+        if (transaction.status === 'completed') {
+          balance += amount;
+        }
+      }
+
+      console.log(`Balance calculation for user ${userId}:`, {
+        totalTransactions: transactions.length,
+        completedTransactions: transactions.filter(t => t.status === 'completed').length,
+        calculatedBalance: balance,
+        currentCoins
+      });
+
+      return { 
+        balance: Math.max(0, balance), // Ensure balance is never negative
+        coins: currentCoins 
+      };
+    } catch (error) {
+      console.error("Error getting user balance:", error);
+      return { balance: 0, coins: 0 };
+    }
   }
 
   async updateUserBalance(userId: string, amount: number): Promise<User> {

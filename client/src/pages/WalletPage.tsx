@@ -28,7 +28,7 @@ export default function WalletPage() {
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
   const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
 
-  const { data: balance = 0 } = useQuery({
+  const { data: balance = { balance: 0, coins: 0 } } = useQuery({
     queryKey: ["/api/wallet/balance"],
     retry: false,
     onError: (error: Error) => {
@@ -271,6 +271,12 @@ export default function WalletPage() {
   if (!user) return null;
 
   const currentBalance = typeof balance === 'object' ? (balance.balance || 0) : (balance || 0);
+  const currentCoins = typeof balance === 'object' ? (balance.coins || 0) : 0;
+
+  // Debug logging to help identify the issue
+  console.log('Balance data:', balance);
+  console.log('Current balance:', currentBalance);
+  console.log('Current coins:', currentCoins);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -290,7 +296,7 @@ export default function WalletPage() {
             <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-2xl p-4 mb-6">
               <p className="text-yellow-600 dark:text-yellow-400 text-sm mb-1">Coins Balance</p>
               <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
-                {(typeof balance === 'object' ? (balance.coins || 0) : 0).toLocaleString()} coins
+                {currentCoins.toLocaleString()} coins
               </h2>
               <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
                 Use coins to bet in events and challenges
