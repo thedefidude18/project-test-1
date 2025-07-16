@@ -16,13 +16,13 @@ import { formatBalance } from "@/utils/currencyUtils";
 import { PlayfulLoading } from "@/components/ui/playful-loading";
 import { AnimatedButton } from "@/components/ui/animated-button";
 import { ShoppingCart } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 
 export default function WalletPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false);
