@@ -21,8 +21,8 @@ export function MobileNavigation() {
 
   const [location, navigate] = useLocation();
 
-  // Generate user avatar for profile nav item
-  const userAvatar = user ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.email || user.claims?.email || 'default')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&scale=85` : null;
+  // Generate user avatar for profile nav item with default Dicebear avatar
+  const userAvatar = user ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.email || user.claims?.email || 'default')}&backgroundColor=7440ff&scale=85` : null;
 
   const navItems = [
     { 
@@ -40,18 +40,18 @@ export function MobileNavigation() {
       tourId: "challenges"
     },
     { 
-      path: "/friends", 
-      iconPath: "/assets/mesagesvg.svg",
-      label: "Friends",
-      isActive: location.startsWith("/friends"),
-      tourId: "friends"
-    },
-    { 
       path: "/events/create", 
       iconPath: "/assets/createvent.svg",
       label: "Create",
       isActive: location.startsWith("/events/create"),
       tourId: "create"
+    },
+    { 
+      path: "/history", 
+      iconPath: "/assets/listsvg.svg",
+      label: "History",
+      isActive: location.startsWith("/history"),
+      tourId: "history"
     },
     { 
       path: "/profile", 

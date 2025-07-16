@@ -1,4 +1,3 @@
-
 import { createAvatar } from '@dicebear/core';
 import { avataaars, initials, personas } from '@dicebear/collection';
 
@@ -18,7 +17,7 @@ export const generateAvatar = (seed: string, style: 'avataaars' | 'initials' | '
   return avatar.toString();
 };
 
-export const getAvatarUrl = (userId: string, userAvatar?: string, userName?: string) => {
-  // Always return generated avatar for consistency
-  return generateAvatar(userId || userName || 'default', 'avataaars');
-};
+export function getAvatarUrl(userId: string, username?: string): string {
+  const seed = userId || username || 'default';
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}&backgroundColor=7440ff&scale=85`;
+}

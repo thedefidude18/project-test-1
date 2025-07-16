@@ -90,7 +90,9 @@ export function Navigation() {
             <button
               onClick={() => handleNavigation("/leaderboard")}
               className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+              data-tour="leaderboard"
             >
+              <i className="fas fa-trophy mr-1"></i>
               Leaderboard
             </button>
             <button
@@ -106,7 +108,8 @@ export function Navigation() {
             {/* Wallet Balance */}
             <button
               onClick={() => handleNavigation("/wallet")}
-              className="flex items-center space-x-2 bg-slate-100 dark:bg-slate-700 px-3 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors"
+              style={{ backgroundColor: '#7440ff', color: 'white' }}
               data-tour="wallet"
             >
               <i className="fas fa-wallet text-emerald-500"></i>
@@ -179,6 +182,10 @@ export function Navigation() {
                 <DropdownMenuItem onClick={() => handleNavigation("/wallet")}>
                   <i className="fas fa-wallet mr-2"></i>
                   Wallet
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation("/friends")}>
+                  <i className="fas fa-users mr-2"></i>
+                  Friends
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleNavigation("/shop")}>
                   <i className="fas fa-shopping-cart mr-2"></i>

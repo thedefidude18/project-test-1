@@ -1129,7 +1129,7 @@ export class DatabaseStorage implements IStorage {
 
       let balance = 0;
       const completedTransactions = transactions.filter(t => t.status === 'completed');
-      
+
       console.log(`Completed transactions for user ${userId}:`, completedTransactions.map(t => ({
         type: t.type,
         amount: t.amount,
@@ -1146,17 +1146,20 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      console.log(`Final balance calculation for user ${userId}:`, {
+      console.log(`Balance calculation for user ${userId}:`, {
         totalTransactions: transactions.length,
-        completedTransactions: completedTransactions.length,
+        completedTransactions: transactions.filter(t => t.status === 'completed').length,
         calculatedBalance: balance,
         currentCoins
       });
 
-      return { 
-        balance: Math.max(0, balance),
+      const result = { 
+        balance: Math.max(0, balance), // Ensure balance is never negative
         coins: currentCoins 
       };
+
+      console.log(`Returning balance result:`, result);
+      return result;
     } catch (error) {
       console.error("Error getting user balance:", error);
       return { balance: 0, coins: 0 };
