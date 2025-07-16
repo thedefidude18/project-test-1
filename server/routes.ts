@@ -1324,7 +1324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!exists) {
             console.log(`Creating new deposit transaction for user ${userId}: ₦${depositAmount}`);
             
-            await storage.createTransaction({
+            const newTransaction = await storage.createTransaction({
               userId,
               type: 'deposit',
               amount: depositAmount.toString(),
@@ -1332,6 +1332,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
               reference: reference,
               status: 'completed',
             });
+
+            console.log(`Transaction created:`, newTransaction);
+
+            // Verify the transaction was created
+            const verifyTransactions = await storage.getTransactions(userId);
+            console.log(`All transactions after creation:`, verifyTransactions.map(t => ({
+              id: t.id,
+              type: t.type,
+              amount: t.amount,
+              status: t.status,
+              reference: t.reference
+            })));
+
+            // Get updated balance
+            const updatedBalance = await storage.getUserBalance(userId);
+            console.log(`Updated balance for user ${userId}:`, updatedBalance);
 
             // Create notification for successful deposit
             await storage.createNotification({
@@ -1348,10 +1364,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
 
             console.log(`✅ Manual verification completed for user ${userId}: ₦${depositAmount}`);
-            res.json({ message: "Payment verified successfully", amount: depositAmount });
+            res.json({ 
+              message: "Payment verified successfully", 
+              amount: depositAmount,
+              newBalance: updatedBalance 
+            });
           } else {
             console.log(`Transaction with reference ${reference} already exists for user ${userId}`);
-            res.json({ message: "Payment already processed", amount: depositAmount });
+            const currentBalance = await storage.getUserBalance(userId);
+            res.json({ 
+              message: "Payment already processed", 
+              amount: depositAmount,
+              currentBalance: currentBalance 
+            });
           }
         } else {
           console.log('Metadata validation failed:', {
@@ -2628,6 +2653,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Debug verification error:", error);
       res.status(500).json({ message: "Debug verification failed" });
+    }
+  });
+
+  // Debug route to check balance calculation
+  app.get('/api/debug/balance', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      console.log(`🔍 Debug balance check for user: ${userId}`);
+      
+      // Get all transactions
+      const allTransactions = await storage.getTransactions(userId);
+      console.log(`All transactions:`, allTransactions);
+      
+      // Get calculated balance
+      const calculatedBalance = await storage.getUserBalance(userId);
+      console.log(`Calculated balance:`, calculatedBalance);
+      
+      // Manual calculation
+      let manualBalance = 0;
+      const completedTxns = allTransactions.filter(t => t.status === 'completed');
+      for (const txn of completedTxns) {
+        const amount = parseFloat(txn.amount);
+        if (!isNaN(amount)) {
+          manualBalance += amount;
+        }
+      }
+      
+      res.json({
+        userId,
+        totalTransactions: allTransactions.length,
+        completedTransactions: completedTxns.length,
+        calculatedBalance,
+        manualBalance,
+        transactions: allTransactions.map(t => ({
+          id: t.id,
+          type: t.type,
+          amount: t.amount,
+          parsedAmount: parseFloat(t.amount),
+          status: t.status,
+          description: t.description,
+          reference: t.reference,
+          createdAt: t.createdAt
+        }))
+      });
+    } catch (error) {
+      console.error("Debug balance error:", error);
+      res.status(500).json({ message: "Debug balance failed" });
     }
   });
 

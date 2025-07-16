@@ -1118,24 +1118,43 @@ export class DatabaseStorage implements IStorage {
         .from(transactions)
         .where(eq(transactions.userId, userId));
 
+      console.log(`All transactions for user ${userId}:`, transactions.map(t => ({
+        id: t.id,
+        type: t.type,
+        amount: t.amount,
+        status: t.status,
+        description: t.description,
+        createdAt: t.createdAt
+      })));
+
       let balance = 0;
-      for (const transaction of transactions) {
+      const completedTransactions = transactions.filter(t => t.status === 'completed');
+      
+      console.log(`Completed transactions for user ${userId}:`, completedTransactions.map(t => ({
+        type: t.type,
+        amount: t.amount,
+        parsedAmount: parseFloat(t.amount)
+      })));
+
+      for (const transaction of completedTransactions) {
         const amount = parseFloat(transaction.amount);
-        // Only include completed transactions in balance calculation
-        if (transaction.status === 'completed') {
+        if (!isNaN(amount)) {
           balance += amount;
+          console.log(`Added ${amount} to balance, new total: ${balance}`);
+        } else {
+          console.warn(`Invalid amount in transaction ${transaction.id}: ${transaction.amount}`);
         }
       }
 
-      console.log(`Balance calculation for user ${userId}:`, {
+      console.log(`Final balance calculation for user ${userId}:`, {
         totalTransactions: transactions.length,
-        completedTransactions: transactions.filter(t => t.status === 'completed').length,
+        completedTransactions: completedTransactions.length,
         calculatedBalance: balance,
         currentCoins
       });
 
       return { 
-        balance: Math.max(0, balance), // Ensure balance is never negative
+        balance: Math.max(0, balance),
         coins: currentCoins 
       };
     } catch (error) {
@@ -1171,27 +1190,7 @@ export class DatabaseStorage implements IStorage {
         .values(transaction)
         .returning();
 
-      console.log('Transaction created:', newTransaction);
-
-      // Update user balance for specific transaction types
-      if (transaction.type === 'deposit' || transaction.type === 'withdrawal' || transaction.type === 'win' || 
-          transaction.type === 'event_escrow' || transaction.type === 'event_win' || transaction.type === 'tip_received' ||
-          transaction.type === 'tip_sent') {
-        const amount = parseFloat(transaction.amount);
-        if (!isNaN(amount)) {
-          console.log(`Updating user ${transaction.userId} balance by ${amount}`);
-          
-          await db
-            .update(users)
-            .set({
-              balance: sql`COALESCE(${users.balance}, 0) + ${amount}`,
-              updatedAt: new Date(),
-            })
-            .where(eq(users.id, transaction.userId));
-
-          console.log(`User balance updated for ${transaction.userId}`);
-        }
-      }
+      console.log('Transaction created successfully:', newTransaction);
 
       return newTransaction;
     } catch (error) {
