@@ -213,32 +213,35 @@ export default function EventCreate() {
             </div>
           </MobileCard>
 
-          <div className="flex space-x-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => window.history.back()}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <MobileButton
-              type="submit"
-              disabled={createEventMutation.isPending}
-              className="flex-1 bg-primary text-white hover:bg-primary/90"
-            >
-              {createEventMutation.isPending ? (
-                <>
-                  <i className="fas fa-spinner fa-spin mr-2"></i>
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-plus mr-2"></i>
-                  Create Event
-                </>
-              )}
-            </MobileButton>
+          {/* Fixed Button Container */}
+          <div className="sticky bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-4 -mx-4 mt-6">
+            <div className="flex space-x-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => window.history.back()}
+                className="flex-1 h-12 border-slate-300 dark:border-slate-600"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={createEventMutation.isPending}
+                className="flex-1 h-12 bg-primary text-white hover:bg-primary/90 font-semibold"
+              >
+                {createEventMutation.isPending ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin mr-2"></i>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-plus mr-2"></i>
+                    Create Event
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </form>
       </div>

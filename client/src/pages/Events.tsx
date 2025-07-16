@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
@@ -41,6 +41,8 @@ export default function Events() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [visibleEvents, setVisibleEvents] = useState(12);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Check if user should see onboarding
   useEffect(() => {
@@ -138,15 +140,28 @@ export default function Events() {
     { value: "politics", label: "Politics", icon: "fas fa-landmark" },
   ];
 
-  const filteredEvents = events.filter((event: any) => {
-    const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = !searchTerm || 
-      event.title.toLowerCase().includes(searchLower) ||
-      (event.description || '').toLowerCase().includes(searchLower) ||
-      event.category.toLowerCase().includes(searchLower);
-    const matchesCategory = categoryFilter === "all" || event.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredEvents = useMemo(() => {
+    return events.filter((event: any) => {
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = !searchTerm || 
+        event.title.toLowerCase().includes(searchLower) ||
+        (event.description || '').toLowerCase().includes(searchLower) ||
+        event.category.toLowerCase().includes(searchLower);
+      const matchesCategory = categoryFilter === "all" || event.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    });
+  }, [events, searchTerm, categoryFilter]);
+
+  const displayedEvents = filteredEvents.slice(0, visibleEvents);
+  const hasMoreEvents = visibleEvents < filteredEvents.length;
+
+  const loadMoreEvents = () => {
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleEvents(prev => Math.min(prev + 12, filteredEvents.length));
+      setIsLoadingMore(false);
+    }, 500);
+  };
 
   const onSubmit = (data: z.infer<typeof createEventSchema>) => {
     createEventMutation.mutate(data);
@@ -421,15 +436,40 @@ export default function Events() {
             </CardContent>
           </Card>
         ) : (
-          <div id="events-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {filteredEvents.map((event: any, index: number) => (
-              <EventCard 
-                key={event.id} 
-                event={event} 
-                featured={index === 0 && filteredEvents.length > 3}
-              />
-            ))}
-          </div>
+          <>
+            <div id="events-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {displayedEvents.map((event: any, index: number) => (
+                <EventCard 
+                  key={event.id} 
+                  event={event} 
+                  featured={false}
+                />
+              ))}
+            </div>
+            
+            {/* Load More Button */}
+            {hasMoreEvents && (
+              <div className="flex justify-center mt-8">
+                <Button
+                  onClick={loadMoreEvents}
+                  disabled={isLoadingMore}
+                  className="bg-primary text-white hover:bg-primary/90 px-8 py-3 rounded-2xl"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-plus mr-2"></i>
+                      Load More Events ({filteredEvents.length - visibleEvents} remaining)
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

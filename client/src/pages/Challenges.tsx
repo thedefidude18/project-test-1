@@ -501,12 +501,15 @@ export default function Challenges() {
 
           <TabsContent value="users" className="space-y-4">
             <div className="mb-4">
-              <Input
-                placeholder="Search users..."
-                value={userSearchTerm}
-                onChange={(e) => setUserSearchTerm(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-700"
-              />
+              <div className="relative">
+                <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                <Input
+                  placeholder="Search friends to challenge..."
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  className="pl-12 h-12 bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 rounded-2xl"
+                />
+              </div>
             </div>
 
             {usersLoading ? (
@@ -539,7 +542,7 @@ export default function Challenges() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-3">
                 {allUsers
                   .filter((u: any) => u.id !== user?.id)
                   .filter((u: any) => {
@@ -563,82 +566,52 @@ export default function Challenges() {
                     });
 
                     return (
-                      <Card key={userItem.id} className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-center space-x-3 mb-3">
-                            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center relative">
-                              <span className="text-white font-semibold">
-                                {(userItem.firstName?.[0] || userItem.username?.[0] || 'U').toUpperCase()}
-                              </span>
-                              {isFriend && (
-                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                                  <i className="fas fa-user-friends text-xs text-white"></i>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2">
-                                <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-                                  {userItem.firstName || userItem.username || 'Anonymous'}
-                                </h3>
-                                {isFriend && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    Friend
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-xs text-slate-600 dark:text-slate-400">
+                      <div key={userItem.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold relative">
+                            {(userItem.firstName?.[0] || userItem.username?.[0] || 'U').toUpperCase()}
+                            {isFriend && (
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                                {userItem.firstName || userItem.username || 'Anonymous'}
+                              </h3>
+                              <span className="text-slate-500 dark:text-slate-400 text-sm">
                                 @{userItem.username || 'unknown'}
-                              </p>
-                              <p className="text-sm text-slate-600 dark:text-slate-400">
-                                Balance: ₦{parseFloat(userItem.balance || '0').toLocaleString()}
-                              </p>
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-4 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              <span className="flex items-center">
+                                <i className="fas fa-trophy mr-1 text-amber-500"></i>
+                                {userItem.wins || 0}
+                              </span>
+                              <span className="flex items-center">
+                                <i className="fas fa-bolt mr-1 text-purple-500"></i>
+                                {userItem.level || 1}
+                              </span>
+                              <span className="flex items-center">
+                                <i className="fas fa-naira-sign mr-1 text-green-500"></i>
+                                {userItem.balance || 'N0'}
+                              </span>
                             </div>
                           </div>
-
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                              <div className="flex items-center space-x-4">
-                                <span className="text-slate-600 dark:text-slate-400">
-                                  <i className="fas fa-trophy mr-1 text-amber-500"></i>
-                                  {userItem.wins || 0} wins
-                                </span>
-                                <span className="text-slate-600 dark:text-slate-400">
-                                  <i className="fas fa-star mr-1 text-blue-500"></i>
-                                  Level {userItem.level || 1}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                                onClick={() => {
-                                  form.setValue('challenged', userItem.id);
-                                  setPreSelectedUser(userItem);
-                                  setIsCreateDialogOpen(true);
-                                }}
-                              >
-                                <i className="fas fa-swords mr-1"></i>
-                                Challenge
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="flex-1"
-                                onClick={() => {
-                                  // Navigate to user profile or show profile modal
-                                  console.log('View profile:', userItem.id);
-                                }}
-                              >
-                                <i className="fas fa-user mr-1"></i>
-                                Profile
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                        </div>
+                        
+                        <Button
+                          size="sm"
+                          className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6 py-2 font-medium"
+                          onClick={() => {
+                            form.setValue('challenged', userItem.id);
+                            setPreSelectedUser(userItem);
+                            setIsCreateDialogOpen(true);
+                          }}
+                        >
+                          Challenge
+                        </Button>
+                      </div>
                     );
                   })}
               </div>

@@ -180,6 +180,10 @@ export function Navigation() {
                   <i className="fas fa-wallet mr-2"></i>
                   Wallet
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation("/shop")}>
+                  <i className="fas fa-shopping-cart mr-2"></i>
+                  Shop
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleNavigation("/history")}>
                   <i className="fas fa-history mr-2"></i>
                   History

@@ -54,26 +54,12 @@ export function MobileNavigation() {
       tourId: "create"
     },
     { 
-      path: "/profile/settings", 
-      iconPath: "/assets/avatar.svg",
-      label: "Settings",
-      isActive: location.startsWith("/profile/settings"),
-      tourId: "settings"
-    },
-    { 
       path: "/profile", 
       iconPath: "/assets/user.svg",
       label: "Profile",
       isActive: location === "/profile",
       tourId: "profile",
       isProfileIcon: true
-    },
-    { 
-      path: "/shop", 
-      iconPath: "/assets/shop.svg",
-      label: "Shop",
-      isActive: location.startsWith("/shop"),
-      tourId: "shop"
     },
   ];
 

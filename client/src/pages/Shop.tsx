@@ -15,7 +15,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { formatBalance } from "@/utils/currencyUtils";
 import { PlayfulLoading } from "@/components/ui/playful-loading";
 import { AnimatedButton } from "@/components/ui/animated-button";
-import { Coins, Gift, ShoppingCart, Star, Zap, Crown } from "lucide-react";
+import { Coins, Gift, ShoppingCart, Star, Zap, Crown, Sparkles } from "lucide-react";
 
 export default function Shop() {
   const { user } = useAuth();
@@ -55,32 +55,36 @@ export default function Shop() {
       price: 100, 
       bonus: 0, 
       popular: false,
-      icon: Coins,
-      color: "bg-blue-500"
+      icon: "🪙",
+      gradient: "from-blue-400 to-blue-600",
+      emoji: "💎"
     },
     { 
       coins: 2500, 
       price: 200, 
       bonus: 500, 
       popular: false,
-      icon: Star,
-      color: "bg-green-500"
+      icon: "💰",
+      gradient: "from-green-400 to-green-600",
+      emoji: "💚"
     },
     { 
       coins: 5000, 
       price: 400, 
       bonus: 1500, 
       popular: true,
-      icon: Zap,
-      color: "bg-purple-500"
+      icon: "🔥",
+      gradient: "from-purple-400 to-purple-600",
+      emoji: "🔥"
     },
     { 
       coins: 10000, 
       price: 750, 
       bonus: 4000, 
       popular: false,
-      icon: Crown,
-      color: "bg-yellow-500"
+      icon: "👑",
+      gradient: "from-yellow-400 to-yellow-600",
+      emoji: "👑"
     },
   ];
 
@@ -242,213 +246,229 @@ export default function Shop() {
   const currentCoins = typeof balance === 'object' ? (balance.coins || 0) : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
       <Navigation />
 
-      {/* Mobile-first design */}
-      <div className="max-w-md mx-auto md:max-w-7xl px-4 py-6">
-
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ShoppingCart className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+      {/* TikTok-style shop design */}
+      <div className="relative max-w-md mx-auto md:max-w-2xl px-4 py-6">
+        
+        {/* Header with floating effect */}
+        <div className="text-center mb-8">
+          <div className="relative inline-block">
+            <div className="w-20 h-20 bg-gradient-to-r from-pink-500 to-violet-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <Sparkles className="w-10 h-10 text-white" />
+            </div>
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center animate-bounce">
+              <span className="text-xs">✨</span>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Coin Shop 🪙
+          <h1 className="text-3xl font-bold text-white mb-2 bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">
+            Coin Shop
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
-            Buy coins to bet in events and challenges
+          <p className="text-purple-200 text-sm">
+            Power up your betting game! 🚀
           </p>
         </div>
 
-        {/* Balance Display */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <Card className="bg-white dark:bg-gray-800 rounded-2xl border-0 shadow-sm">
-            <CardContent className="p-4 text-center">
-              <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center mx-auto mb-2">
-                <i className="fas fa-naira-sign text-green-600 dark:text-green-400"></i>
+        {/* Balance Cards with glassmorphism */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-4 border border-white/20">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <span className="text-2xl">💰</span>
               </div>
-              <p className="text-xs text-gray-500 mb-1">Naira Balance</p>
-              <p className="text-lg font-bold text-gray-900 dark:text-white">
+              <p className="text-xs text-purple-200 mb-1">Naira Balance</p>
+              <p className="text-lg font-bold text-white">
                 {formatBalance(currentBalance)}
               </p>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="bg-white dark:bg-gray-800 rounded-2xl border-0 shadow-sm">
-            <CardContent className="p-4 text-center">
-              <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900 rounded-xl flex items-center justify-center mx-auto mb-2">
-                <Coins className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+          <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-4 border border-white/20">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <span className="text-2xl">🪙</span>
               </div>
-              <p className="text-xs text-gray-500 mb-1">Coins Balance</p>
-              <p className="text-lg font-bold text-gray-900 dark:text-white">
+              <p className="text-xs text-purple-200 mb-1">Coins</p>
+              <p className="text-lg font-bold text-white">
                 {currentCoins.toLocaleString()}
               </p>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
-        {/* Coin Packages */}
-        <Card className="bg-white dark:bg-gray-800 rounded-3xl border-0 shadow-sm mb-6">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-              Coin Packages
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {coinPackages.map((pkg, index) => {
-              const IconComponent = pkg.icon;
-              return (
-                <div
-                  key={index}
-                  className={`relative p-4 rounded-2xl border-2 ${
-                    pkg.popular 
-                      ? 'border-purple-300 bg-purple-50 dark:bg-purple-900/20' 
-                      : 'border-gray-200 dark:border-gray-700'
-                  }`}
-                >
-                  {pkg.popular && (
-                    <Badge className="absolute -top-2 left-4 bg-purple-500 text-white">
-                      Most Popular
-                    </Badge>
-                  )}
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-10 h-10 ${pkg.color} rounded-xl flex items-center justify-center`}>
-                        <IconComponent className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
-                          {pkg.coins.toLocaleString()} coins
-                        </h3>
-                        {pkg.bonus > 0 && (
-                          <p className="text-xs text-green-600 dark:text-green-400">
-                            +{pkg.bonus.toLocaleString()} bonus coins!
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-gray-900 dark:text-white">
-                        {formatBalance(pkg.price)}
-                      </p>
-                      <Button
-                        onClick={() => handlePurchasePackage(pkg)}
-                        disabled={purchaseCoinsMutation.isPending || currentBalance < pkg.price}
-                        className="mt-2 h-8 text-xs bg-blue-600 text-white rounded-xl"
-                      >
-                        {purchaseCoinsMutation.isPending ? "..." : "Buy"}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-
-        {/* Custom Purchase */}
-        <Card className="bg-white dark:bg-gray-800 rounded-3xl border-0 shadow-sm mb-6">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-              Custom Purchase
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Input
-                  type="number"
-                  placeholder="Enter Naira amount (min ₦50)"
-                  value={customAmount}
-                  onChange={(e) => setCustomAmount(e.target.value)}
-                  className="h-12 text-center border-gray-200 rounded-xl"
-                  min="50"
-                />
-                <p className="text-xs text-gray-500 text-center mt-2">
-                  Exchange rate: ₦1 = 10 coins
-                </p>
-                {customAmount && (
-                  <p className="text-sm text-center mt-1 font-medium text-blue-600">
-                    You'll receive: {(parseFloat(customAmount) * 10).toLocaleString()} coins
-                  </p>
-                )}
-              </div>
-              
-              <AnimatedButton
-                onClick={handleCustomPurchase}
-                disabled={!customAmount || purchaseCoinsMutation.isPending}
-                isLoading={purchaseCoinsMutation.isPending}
-                loadingText="Processing..."
-                className="w-full h-12 bg-blue-600 text-white rounded-xl font-medium"
+        {/* Coin Packages - TikTok Gift Style Grid */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/20 mb-6">
+          <h2 className="text-xl font-bold text-white mb-4 text-center">
+            Choose Your Power-Up 🔥
+          </h2>
+          
+          <div className="grid grid-cols-2 gap-4">
+            {coinPackages.map((pkg, index) => (
+              <div
+                key={index}
+                className={`relative group cursor-pointer transition-all duration-300 hover:scale-105 ${
+                  pkg.popular ? 'ring-2 ring-pink-400 ring-opacity-60' : ''
+                }`}
+                onClick={() => handlePurchasePackage(pkg)}
               >
-                Purchase Coins
-              </AnimatedButton>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Gift Coins */}
-        <Card className="bg-white dark:bg-gray-800 rounded-3xl border-0 shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-              <Gift className="w-5 h-5 mr-2 text-pink-500" />
-              Gift Coins
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Dialog open={isGiftDialogOpen} onOpenChange={setIsGiftDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full h-12 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-medium">
-                  <Gift className="w-4 h-4 mr-2" />
-                  Send Gift
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="mx-4 rounded-3xl">
-                <DialogHeader>
-                  <DialogTitle className="text-center text-xl">Gift Coins 🎁</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 pt-4">
-                  <div>
-                    <Input
-                      type="text"
-                      placeholder="Enter username or user ID"
-                      value={giftRecipient}
-                      onChange={(e) => setGiftRecipient(e.target.value)}
-                      className="h-12 border-gray-200 rounded-xl"
-                    />
+                {pkg.popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                    <Badge className="bg-gradient-to-r from-pink-500 to-violet-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                      🔥 HOT
+                    </Badge>
+                  </div>
+                )}
+                
+                <div className={`bg-gradient-to-br ${pkg.gradient} rounded-3xl p-4 text-center text-white relative overflow-hidden`}>
+                  {/* Background pattern */}
+                  <div className="absolute inset-0 bg-white/10 rounded-3xl"></div>
+                  
+                  {/* Content */}
+                  <div className="relative z-10">
+                    <div className="text-4xl mb-2">{pkg.icon}</div>
+                    <div className="text-lg font-bold mb-1">
+                      {pkg.coins.toLocaleString()}
+                    </div>
+                    <div className="text-xs opacity-80 mb-2">coins</div>
+                    
+                    {pkg.bonus > 0 && (
+                      <div className="bg-white/20 rounded-full px-2 py-1 text-xs font-medium mb-2">
+                        +{pkg.bonus.toLocaleString()} bonus!
+                      </div>
+                    )}
+                    
+                    <div className="bg-white/20 rounded-2xl px-3 py-2">
+                      <div className="text-sm font-bold">
+                        {formatBalance(pkg.price)}
+                      </div>
+                    </div>
                   </div>
                   
-                  <div>
-                    <Input
-                      type="number"
-                      placeholder="Enter coin amount (min 100)"
-                      value={giftAmount}
-                      onChange={(e) => setGiftAmount(e.target.value)}
-                      className="h-12 text-center border-gray-200 rounded-xl"
-                      min="100"
-                    />
-                    <p className="text-xs text-gray-500 text-center mt-2">
-                      Your balance: {currentCoins.toLocaleString()} coins
-                    </p>
-                  </div>
-
-                  <AnimatedButton
-                    onClick={handleGiftCoins}
-                    disabled={!giftAmount || !giftRecipient || giftCoinsMutation.isPending}
-                    isLoading={giftCoinsMutation.isPending}
-                    loadingText="Sending..."
-                    className="w-full h-12 bg-pink-500 text-white rounded-xl font-medium"
-                  >
-                    Send Gift
-                  </AnimatedButton>
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-all duration-1000"></div>
                 </div>
-              </DialogContent>
-            </Dialog>
-          </CardContent>
-        </Card>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Custom Amount Section */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/20 mb-6">
+          <h3 className="text-lg font-bold text-white mb-4 text-center">
+            Custom Amount 💎
+          </h3>
+          
+          <div className="space-y-4">
+            <div className="relative">
+              <Input
+                type="number"
+                placeholder="Enter amount (min ₦50)"
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
+                className="bg-white/20 border-white/30 text-white placeholder-purple-200 rounded-2xl h-12 text-center backdrop-blur"
+                min="50"
+              />
+            </div>
+            
+            {customAmount && (
+              <div className="text-center">
+                <div className="bg-purple-500/30 rounded-2xl p-3 border border-purple-400/50">
+                  <p className="text-purple-100 text-sm mb-1">You'll receive:</p>
+                  <p className="text-white font-bold text-lg">
+                    {(parseFloat(customAmount) * 10).toLocaleString()} coins 🪙
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <Button
+              onClick={handleCustomPurchase}
+              disabled={!customAmount || purchaseCoinsMutation.isPending}
+              className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-2xl font-bold text-lg shadow-lg"
+            >
+              {purchaseCoinsMutation.isPending ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Buy Coins
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Gift Section */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/20">
+          <h3 className="text-lg font-bold text-white mb-4 text-center flex items-center justify-center">
+            <Gift className="w-5 h-5 mr-2 text-pink-400" />
+            Send Gifts 🎁
+          </h3>
+          
+          <Dialog open={isGiftDialogOpen} onOpenChange={setIsGiftDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full h-12 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-2xl font-bold shadow-lg">
+                <Gift className="w-5 h-5 mr-2" />
+                Send Gift to Friend
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-gradient-to-br from-purple-900 to-indigo-900 border border-purple-400/50 text-white rounded-3xl">
+              <DialogHeader>
+                <DialogTitle className="text-center text-xl flex items-center justify-center">
+                  <span className="text-2xl mr-2">🎁</span>
+                  Send Gift
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div>
+                  <Input
+                    type="text"
+                    placeholder="Enter username or user ID"
+                    value={giftRecipient}
+                    onChange={(e) => setGiftRecipient(e.target.value)}
+                    className="bg-white/20 border-white/30 text-white placeholder-purple-200 rounded-2xl h-12 backdrop-blur"
+                  />
+                </div>
+                
+                <div>
+                  <Input
+                    type="number"
+                    placeholder="Enter coin amount (min 100)"
+                    value={giftAmount}
+                    onChange={(e) => setGiftAmount(e.target.value)}
+                    className="bg-white/20 border-white/30 text-white placeholder-purple-200 rounded-2xl h-12 text-center backdrop-blur"
+                    min="100"
+                  />
+                  <p className="text-xs text-purple-200 text-center mt-2">
+                    Your balance: {currentCoins.toLocaleString()} coins
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleGiftCoins}
+                  disabled={!giftAmount || !giftRecipient || giftCoinsMutation.isPending}
+                  className="w-full h-12 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-2xl font-bold"
+                >
+                  {giftCoinsMutation.isPending ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Gift className="w-5 h-5 mr-2" />
+                      Send Gift
+                    </>
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <MobileNavigation />
