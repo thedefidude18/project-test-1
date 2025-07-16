@@ -95,12 +95,26 @@ export default function Settings() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition pb-20 md:pb-0">
       <Navigation />
       
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
+      {/* Mobile Header */}
+      <div className="md:hidden bg-white dark:bg-slate-800 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between px-4 py-3">
+          <button
+            onClick={() => window.history.back()}
+            className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600"
+          >
+            <i className="fas fa-arrow-left text-slate-600 dark:text-slate-300"></i>
+          </button>
+          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Settings</h1>
+          <div className="w-10"></div>
+        </div>
+      </div>
+      
+      <div className="max-w-4xl mx-auto px-3 md:px-6 lg:px-8 py-4 md:py-8">
+        {/* Desktop Header */}
+        <div className="hidden md:block mb-8">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
             Settings ⚙️
           </h1>
@@ -109,17 +123,20 @@ export default function Settings() {
           </p>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-4 md:space-y-8">
           {/* Notification Preferences */}
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm">
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="text-lg md:text-xl flex items-center">
+                <i className="fas fa-bell mr-2 text-blue-500"></i>
+                Notifications
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Email Notifications</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+            <CardContent className="space-y-3 md:space-y-6">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Email Notifications</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Receive notifications via email
                   </p>
                 </div>
@@ -130,10 +147,10 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Push Notifications</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Push Notifications</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Receive push notifications in your browser
                   </p>
                 </div>
@@ -144,12 +161,12 @@ export default function Settings() {
                 />
               </div>
 
-              <Separator />
+              <Separator className="md:block hidden" />
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Challenge Notifications</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Challenge Notifications</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Get notified about new challenges and results
                   </p>
                 </div>
@@ -160,10 +177,10 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Event Notifications</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Event Notifications</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Get notified about event updates and endings
                   </p>
                 </div>
@@ -174,10 +191,10 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Friend Notifications</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Friend Notifications</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Get notified about friend requests and activities
                   </p>
                 </div>
@@ -191,15 +208,18 @@ export default function Settings() {
           </Card>
 
           {/* Appearance */}
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardHeader>
-              <CardTitle>Appearance</CardTitle>
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm">
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="text-lg md:text-xl flex items-center">
+                <i className="fas fa-palette mr-2 text-purple-500"></i>
+                Appearance
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Dark Mode</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+            <CardContent className="space-y-3 md:space-y-6">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Dark Mode</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Toggle between light and dark themes
                   </p>
                 </div>
@@ -209,10 +229,10 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Compact View</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Compact View</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Use a more compact layout to fit more content
                   </p>
                 </div>
@@ -222,10 +242,10 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Language</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Language</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Choose your preferred language
                   </p>
                 </div>
@@ -233,7 +253,7 @@ export default function Settings() {
                   value={settings.language} 
                   onValueChange={(value) => handleSettingChange('language', value)}
                 >
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-24 md:w-32 text-xs md:text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -248,15 +268,18 @@ export default function Settings() {
           </Card>
 
           {/* Performance & Data */}
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardHeader>
-              <CardTitle>Performance & Data</CardTitle>
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm">
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="text-lg md:text-xl flex items-center">
+                <i className="fas fa-tachometer-alt mr-2 text-green-500"></i>
+                Performance
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Auto Refresh</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+            <CardContent className="space-y-3 md:space-y-6">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Auto Refresh</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Automatically refresh content every 30 seconds
                   </p>
                 </div>
@@ -266,10 +289,10 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Sound Effects</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Sound Effects</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Play sounds for notifications and actions
                   </p>
                 </div>
@@ -279,10 +302,10 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Data Usage</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Data Usage</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Control how much data the app uses
                   </p>
                 </div>
@@ -290,7 +313,7 @@ export default function Settings() {
                   value={settings.dataUsage} 
                   onValueChange={(value) => handleSettingChange('dataUsage', value)}
                 >
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-24 md:w-32 text-xs md:text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -301,32 +324,35 @@ export default function Settings() {
                 </Select>
               </div>
 
-              <Separator />
+              <Separator className="md:block hidden" />
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Clear Cache</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Clear Cache</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Clear stored data to free up space
                   </p>
                 </div>
-                <Button variant="outline" onClick={clearCache}>
-                  Clear Cache
+                <Button variant="outline" size="sm" onClick={clearCache} className="text-xs md:text-sm px-3 md:px-4">
+                  Clear
                 </Button>
               </div>
             </CardContent>
           </Card>
 
           {/* Privacy & Security */}
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardHeader>
-              <CardTitle>Privacy & Security</CardTitle>
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm">
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="text-lg md:text-xl flex items-center">
+                <i className="fas fa-shield-alt mr-2 text-red-500"></i>
+                Privacy & Security
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Show Online Status</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+            <CardContent className="space-y-3 md:space-y-6">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Show Online Status</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Let friends see when you're online
                   </p>
                 </div>
@@ -336,33 +362,35 @@ export default function Settings() {
                 />
               </div>
 
-              <Separator />
+              <Separator className="md:block hidden" />
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Export Data</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Export Data</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Download a copy of your data
                   </p>
                 </div>
-                <Button variant="outline" onClick={exportData}>
-                  <i className="fas fa-download mr-2"></i>
+                <Button variant="outline" size="sm" onClick={exportData} className="text-xs md:text-sm px-3 md:px-4">
+                  <i className="fas fa-download mr-1 md:mr-2 text-xs"></i>
                   Export
                 </Button>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Account Settings</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Account Settings</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Manage your account and profile
                   </p>
                 </div>
                 <Button 
                   variant="outline" 
+                  size="sm"
                   onClick={() => window.location.href = '/profile/settings'}
+                  className="text-xs md:text-sm px-3 md:px-4"
                 >
-                  <i className="fas fa-user-cog mr-2"></i>
+                  <i className="fas fa-user-cog mr-1 md:mr-2 text-xs"></i>
                   Manage
                 </Button>
               </div>
@@ -370,15 +398,18 @@ export default function Settings() {
           </Card>
 
           {/* Regional */}
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardHeader>
-              <CardTitle>Regional Settings</CardTitle>
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm">
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="text-lg md:text-xl flex items-center">
+                <i className="fas fa-globe mr-2 text-orange-500"></i>
+                Regional Settings
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">Currency</Label>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+            <CardContent className="space-y-3 md:space-y-6">
+              <div className="flex items-center justify-between py-1">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm md:text-base font-medium">Currency</Label>
+                  <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden md:block">
                     Your preferred currency for display
                   </p>
                 </div>
@@ -386,7 +417,7 @@ export default function Settings() {
                   value={settings.currency} 
                   onValueChange={(value) => handleSettingChange('currency', value)}
                 >
-                  <SelectTrigger className="w-24">
+                  <SelectTrigger className="w-20 md:w-24 text-xs md:text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -401,38 +432,41 @@ export default function Settings() {
           </Card>
 
           {/* About */}
-          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardHeader>
-              <CardTitle>About BetChat</CardTitle>
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm">
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="text-lg md:text-xl flex items-center">
+                <i className="fas fa-info-circle mr-2 text-indigo-500"></i>
+                About BetChat
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600 dark:text-slate-400">Version</span>
-                <span className="text-sm font-medium">1.0.0</span>
+            <CardContent className="space-y-3 md:space-y-4">
+              <div className="flex items-center justify-between py-1">
+                <span className="text-xs md:text-sm text-slate-600 dark:text-slate-400">Version</span>
+                <span className="text-xs md:text-sm font-medium">1.0.0</span>
               </div>
               
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600 dark:text-slate-400">Build</span>
-                <span className="text-sm font-medium">2024.01.15</span>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-xs md:text-sm text-slate-600 dark:text-slate-400">Build</span>
+                <span className="text-xs md:text-sm font-medium">2025.01.16</span>
               </div>
 
-              <Separator />
+              <Separator className="md:block hidden" />
 
-              <div className="space-y-2">
-                <Button variant="ghost" className="w-full justify-start">
-                  <i className="fas fa-file-alt mr-2"></i>
+              <div className="space-y-1 md:space-y-2">
+                <Button variant="ghost" className="w-full justify-start text-xs md:text-sm h-8 md:h-10 px-2 md:px-4">
+                  <i className="fas fa-file-alt mr-1 md:mr-2 text-xs"></i>
                   Terms of Service
                 </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <i className="fas fa-shield-alt mr-2"></i>
+                <Button variant="ghost" className="w-full justify-start text-xs md:text-sm h-8 md:h-10 px-2 md:px-4">
+                  <i className="fas fa-shield-alt mr-1 md:mr-2 text-xs"></i>
                   Privacy Policy
                 </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <i className="fas fa-question-circle mr-2"></i>
+                <Button variant="ghost" className="w-full justify-start text-xs md:text-sm h-8 md:h-10 px-2 md:px-4">
+                  <i className="fas fa-question-circle mr-1 md:mr-2 text-xs"></i>
                   Help & Support
                 </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <i className="fas fa-bug mr-2"></i>
+                <Button variant="ghost" className="w-full justify-start text-xs md:text-sm h-8 md:h-10 px-2 md:px-4">
+                  <i className="fas fa-bug mr-1 md:mr-2 text-xs"></i>
                   Report a Bug
                 </Button>
               </div>

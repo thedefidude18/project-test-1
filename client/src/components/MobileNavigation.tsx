@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useQuery } from "@tanstack/react-query";
 import { formatBalance } from "@/utils/currencyUtils";
+import { createAvatar } from '@dicebear/core';
+import { avataaars } from '@dicebear/collection';
 
 export function MobileNavigation() {
   const { user } = useAuth();
@@ -19,6 +21,13 @@ export function MobileNavigation() {
   });
 
   const [location, navigate] = useLocation();
+
+  // Generate user avatar for profile nav item
+  const userAvatar = user ? createAvatar(avataaars, {
+    seed: user.email || user.claims?.email || 'default',
+    backgroundColor: ['b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf'],
+    scale: 85,
+  }).toDataUri() : null;
 
   const navItems = [
     { 
@@ -61,7 +70,8 @@ export function MobileNavigation() {
       iconPath: "/assets/user.svg",
       label: "Profile",
       isActive: location === "/profile",
-      tourId: "profile"
+      tourId: "profile",
+      isProfileIcon: true
     },
   ];
 
@@ -90,15 +100,27 @@ export function MobileNavigation() {
             )}
             data-tour={item.tourId}
           >
-            <img 
-              src={item.iconPath}
-              alt={item.label}
-              className={cn(
-                "w-5 h-5 mb-1 transition-transform duration-200",
-                item.isActive && "scale-110",
-                item.isActive ? "opacity-100" : "opacity-70"
-              )}
-            />
+            {item.isProfileIcon && userAvatar ? (
+              <img 
+                src={userAvatar}
+                alt={item.label}
+                className={cn(
+                  "w-5 h-5 mb-1 transition-transform duration-200 rounded-full",
+                  item.isActive && "scale-110",
+                  item.isActive ? "opacity-100 ring-2 ring-primary" : "opacity-70"
+                )}
+              />
+            ) : (
+              <img 
+                src={item.iconPath}
+                alt={item.label}
+                className={cn(
+                  "w-5 h-5 mb-1 transition-transform duration-200",
+                  item.isActive && "scale-110",
+                  item.isActive ? "opacity-100" : "opacity-70"
+                )}
+              />
+            )}
             <span className={cn(
               "text-[10px] font-medium transition-all duration-200 leading-none",
               item.isActive && "font-semibold"
