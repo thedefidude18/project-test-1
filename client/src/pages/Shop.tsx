@@ -246,27 +246,22 @@ export default function Shop() {
   const currentCoins = typeof balance === 'object' ? (balance.coins || 0) : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation />
 
-      {/* TikTok-style shop design */}
-      <div className="relative max-w-md mx-auto md:max-w-2xl px-4 py-6">
+      {/* Clean shop design */}
+      <div className="relative max-w-4xl mx-auto px-4 py-6">
         
-        {/* Header with floating effect */}
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="relative inline-block">
-            <div className="w-20 h-20 bg-gradient-to-r from-pink-500 to-violet-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-              <Sparkles className="w-10 h-10 text-white" />
-            </div>
-            <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center animate-bounce">
-              <span className="text-xs">✨</span>
-            </div>
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Coins className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2 bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Coin Shop
           </h1>
-          <p className="text-purple-200 text-sm">
-            Power up your betting game! 🚀
+          <p className="text-gray-600 dark:text-gray-300">
+            Purchase coins to participate in challenges and eventse! 🚀
           </p>
         </div>
 

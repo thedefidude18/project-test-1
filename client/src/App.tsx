@@ -74,10 +74,6 @@ function Router() {
 
   return (
     <div className="min-h-screen transition-all duration-300 ease-in-out">
-      {/* Mobile Splash Screen */}
-      {isMobile && showMobileSplash && (
-        <MobileSplashScreen onComplete={() => setShowMobileSplash(false)} />
-      )}
 
       <Switch>
       {/* Admin Login Route - Always Available */}
@@ -93,8 +89,9 @@ function Router() {
         </>
       ) : (
         <>
-          <Route path="/" component={Home} />
+          <Route path="/" component={Events} />
           <Route path="/events" component={Events} />
+          <Route path="/home" component={Home} />
           <Route path="/events/create" component={EventCreate} />
           <Route path="/challenges" component={Challenges} />
           <Route path="/challenges/:id" component={ChallengeDetail} />

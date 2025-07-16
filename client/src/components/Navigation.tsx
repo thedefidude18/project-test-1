@@ -87,14 +87,7 @@ export function Navigation() {
             >
               Friends
             </button>
-            <button
-              onClick={() => handleNavigation("/leaderboard")}
-              className="flex items-center space-x-1 p-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-              data-tour="leaderboard"
-              title="Leaderboard"
-            >
-              <Trophy className="w-5 h-5" />
-            </button>
+
             <button
               onClick={() => handleNavigation("/admin")}
               className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
@@ -122,6 +115,16 @@ export function Navigation() {
               </span>
             </button>
 
+            {/* Leaderboard */}
+            <button
+              onClick={() => handleNavigation("/leaderboard")}
+              className="flex items-center space-x-1 p-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+              data-tour="leaderboard"
+              title="Leaderboard"
+            >
+              <Trophy className="w-5 h-5" />
+            </button>
+
             {/* Notifications */}
             <button
               onClick={() => handleNavigation("/notifications")}
@@ -136,18 +139,7 @@ export function Navigation() {
               )}
             </button>
 
-            {/* Tour Button */}
-            <button
-              onClick={() => {
-                // Add tour functionality
-                const event = new CustomEvent("start-tour");
-                window.dispatchEvent(event);
-              }}
-              className="p-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-              title="Start Website Tour"
-            >
-              <i className="fas fa-question-circle"></i>
-            </button>
+
 
             {/* Profile */}
             <DropdownMenu>
@@ -200,6 +192,16 @@ export function Navigation() {
                 >
                   <i className="fas fa-share-alt mr-2"></i>
                   Referrals
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    const event = new CustomEvent("start-tour");
+                    window.dispatchEvent(event);
+                  }}
+                >
+                  <i className="fas fa-question-circle mr-2"></i>
+                  Website Tour
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

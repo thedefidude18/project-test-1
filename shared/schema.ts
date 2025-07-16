@@ -178,7 +178,7 @@ export const challenges = pgTable("challenges", {
   result: varchar("result"), // challenger_won, challenged_won, draw
   dueDate: timestamp("due_date"),
   createdAt: timestamp("created_at").defaultNow(),
-  completedAt: timestamp("completedAt"),
+  completedAt: timestamp("completed_at"),
 });
 
 // Real-time chat in challenges

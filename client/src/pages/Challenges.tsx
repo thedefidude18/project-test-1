@@ -20,6 +20,7 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { UserAvatar } from "@/components/UserAvatar";
 import { MessageCircle, Clock, Trophy, TrendingUp, Zap, Users, Shield } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -436,9 +437,26 @@ export default function Challenges() {
 
           <TabsContent value="pending" className="space-y-4">
             {isLoading ? (
-              <div className="text-center py-12">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-slate-600 dark:text-slate-400">Loading challenges...</p>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse"></div>
+                        <div className="space-y-2">
+                          <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-32 animate-pulse"></div>
+                          <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-24 animate-pulse"></div>
+                        </div>
+                      </div>
+                      <div className="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse"></div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-3/4 animate-pulse"></div>
+                      <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full animate-pulse"></div>
+                      <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2 animate-pulse"></div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : pendingChallenges.length === 0 ? (
               <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
@@ -513,9 +531,19 @@ export default function Challenges() {
             </div>
 
             {usersLoading ? (
-              <div className="text-center py-12">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-slate-600 dark:text-slate-400">Loading users...</p>
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse"></div>
+                      <div className="space-y-2">
+                        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24 animate-pulse"></div>
+                        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-16 animate-pulse"></div>
+                      </div>
+                    </div>
+                    <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded-full animate-pulse"></div>
+                  </div>
+                ))}
               </div>
             ) : usersError ? (
               <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
@@ -568,10 +596,15 @@ export default function Challenges() {
                     return (
                       <div key={userItem.id} className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
                         <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold relative">
-                            {(userItem.firstName?.[0] || userItem.username?.[0] || 'U').toUpperCase()}
+                          <div className="relative">
+                            <UserAvatar
+                              userId={userItem.id}
+                              username={userItem.username}
+                              size={48}
+                              className="h-12 w-12"
+                            />
                             {isFriend && (
-                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-slate-800"></div>
                             )}
                           </div>
                           <div>
