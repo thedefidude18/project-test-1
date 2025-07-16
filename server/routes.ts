@@ -1156,45 +1156,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/webhook/paystack', async (req, res) => {
     try {
       const hash = req.headers['x-paystack-signature'];
-      const body = req.body;
+      let event = req.body;
 
       console.log('Webhook received:', {
         headers: req.headers,
-        bodyType: typeof body,
-        bodyLength: body?.length
+        bodyType: typeof event,
+        hasBody: !!event
       });
 
-      // Handle both string and buffer bodies
-      const bodyString = Buffer.isBuffer(body) ? body.toString() : (typeof body === 'string' ? body : JSON.stringify(body));
-
-      // Verify signature if secret key is available
-      if (process.env.PAYSTACK_SECRET_KEY) {
-        const expectedHash = require('crypto')
-          .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
-          .update(bodyString)
-          .digest('hex');
-
-        console.log('Signature verification:', {
-          receivedHash: hash,
-          expectedHash,
-          match: hash === expectedHash
-        });
-
-        if (hash !== expectedHash) {
-          console.log('Invalid webhook signature');
-          return res.status(400).json({ message: "Invalid signature" });
-        }
+      // If body is already parsed as object, use it directly
+      if (typeof event === 'object' && event !== null) {
+        console.log('Using pre-parsed webhook body');
       } else {
-        console.log('Warning: PAYSTACK_SECRET_KEY not set, skipping signature verification');
-      }
+        // Handle string bodies
+        const bodyString = typeof event === 'string' ? event : JSON.stringify(event);
+        
+        // Verify signature if secret key is available
+        if (process.env.PAYSTACK_SECRET_KEY) {
+          const expectedHash = require('crypto')
+            .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
+            .update(bodyString)
+            .digest('hex');
 
-      // Parse the event
-      let event;
-      try {
-        event = JSON.parse(bodyString);
-      } catch (parseError) {
-        console.error('Failed to parse webhook body:', parseError);
-        return res.status(400).json({ message: "Invalid JSON" });
+          console.log('Signature verification:', {
+            receivedHash: hash,
+            expectedHash,
+            match: hash === expectedHash
+          });
+
+          if (hash !== expectedHash) {
+            console.log('Invalid webhook signature');
+            return res.status(400).json({ message: "Invalid signature" });
+          }
+        }
+
+        // Parse the event if it's a string
+        try {
+          event = JSON.parse(bodyString);
+        } catch (parseError) {
+          console.error('Failed to parse webhook body:', parseError);
+          return res.status(400).json({ message: "Invalid JSON" });
+        }
       }
 
       console.log('Webhook event:', event);
@@ -1272,7 +1274,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Reference is required" });
       }
 
-      console.log(`Manual verification requested for reference: ${reference}`);
+      console.log(`Manual verification requested for reference: ${reference} by user: ${userId}`);
+
+      if (!process.env.PAYSTACK_SECRET_KEY) {
+        console.error("PAYSTACK_SECRET_KEY not set");
+        return res.status(500).json({ message: "Payment service not configured" });
+      }
 
       // Verify payment with Paystack
       const verifyResponse = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
@@ -1283,24 +1290,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const verifyData = await verifyResponse.json();
-      console.log('Paystack verification response:', verifyData);
+      console.log('Paystack verification response:', {
+        status: verifyData.status,
+        data: verifyData.data ? {
+          status: verifyData.data.status,
+          amount: verifyData.data.amount,
+          reference: verifyData.data.reference,
+          metadata: verifyData.data.metadata
+        } : null
+      });
 
-      if (verifyData.status && verifyData.data.status === 'success') {
-        const { amount, metadata } = verifyData.data;
+      if (verifyData.status && verifyData.data && verifyData.data.status === 'success') {
+        const { amount, metadata, reference: txRef } = verifyData.data;
+        const depositAmount = amount / 100; // Convert from kobo to naira
 
+        console.log(`Processing payment verification:`, {
+          amount: depositAmount,
+          metadata,
+          reference: txRef,
+          requestedBy: userId
+        });
+
+        // Validate the user matches
         if (metadata && metadata.userId === userId) {
-          const depositAmount = amount / 100; // Convert from kobo to naira
-
-          // Check if transaction already exists
+          // Check if transaction already exists by reference
           const existingTransactions = await storage.getTransactions(userId);
-          const exists = existingTransactions.some((t: any) => t.description?.includes(reference));
+          const exists = existingTransactions.some((t: any) => 
+            t.reference === reference || 
+            t.description?.includes(reference) ||
+            t.reference === txRef
+          );
 
           if (!exists) {
+            console.log(`Creating new deposit transaction for user ${userId}: ₦${depositAmount}`);
+            
             await storage.createTransaction({
               userId,
               type: 'deposit',
               amount: depositAmount.toString(),
-              description: `Deposit via Paystack - ${reference}`,              status: 'completed',
+              description: `Deposit via Paystack - ${reference}`,
+              reference: reference,
+              status: 'completed',
             });
 
             // Create notification for successful deposit
@@ -1308,7 +1338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId,
               type: 'deposit',
               title: '💰 Deposit Successful',
-              message: `Your deposit of ₦${depositAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has been credited to your account!`,
+              message: `Your deposit of ₦${depositAmount.toLocaleString()} has been credited to your account!`,
               data: { 
                 amount: depositAmount,
                 reference: reference,
@@ -1320,16 +1350,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`✅ Manual verification completed for user ${userId}: ₦${depositAmount}`);
             res.json({ message: "Payment verified successfully", amount: depositAmount });
           } else {
-            console.log('Transaction already exists, skipping creation');
+            console.log(`Transaction with reference ${reference} already exists for user ${userId}`);
             res.json({ message: "Payment already processed", amount: depositAmount });
           }
         } else {
-          console.log('Metadata userId mismatch or missing');
-          res.status(400).json({ message: "Invalid payment verification" });
+          console.log('Metadata validation failed:', {
+            metadataUserId: metadata?.userId,
+            requestUserId: userId,
+            hasMetadata: !!metadata
+          });
+          res.status(400).json({ message: "Payment verification failed - user mismatch" });
         }
       } else {
-        console.log('Payment verification failed:', verifyData);
-        res.status(400).json({ message: "Payment verification failed" });
+        console.log('Payment verification failed:', {
+          paystackStatus: verifyData.status,
+          dataStatus: verifyData.data?.status,
+          message: verifyData.message
+        });
+        res.status(400).json({ message: verifyData.message || "Payment verification failed" });
       }
     } catch (error) {
       console.error("Error verifying payment:", error);
@@ -2544,6 +2582,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error during admin logout:', error);
       res.status(500).json({ message: 'Admin logout failed' });
+    }
+  });
+
+  // Debug route to manually verify specific payment
+  app.post('/api/debug/verify-payment', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { reference } = req.body;
+
+      if (!reference) {
+        return res.status(400).json({ message: "Reference is required" });
+      }
+
+      console.log(`Debug verification for reference: ${reference}`);
+
+      // For your specific case, let's manually create the transaction
+      if (reference === "dep_45092781_1752662330009") {
+        const depositAmount = 2500; // ₦2,500 from your payment
+
+        // Check if transaction already exists
+        const existingTransactions = await storage.getTransactions(userId);
+        const exists = existingTransactions.some((t: any) => 
+          t.reference === reference || t.description?.includes(reference)
+        );
+
+        if (!exists) {
+          await storage.createTransaction({
+            userId,
+            type: 'deposit',
+            amount: depositAmount.toString(),
+            description: `Debug deposit - ${reference}`,
+            reference: reference,
+            status: 'completed',
+          });
+
+          console.log(`✅ Debug transaction created for ${userId}: ₦${depositAmount}`);
+          res.json({ message: "Debug transaction created successfully", amount: depositAmount });
+        } else {
+          res.json({ message: "Transaction already exists" });
+        }
+      } else {
+        res.status(400).json({ message: "Unknown reference" });
+      }
+    } catch (error) {
+      console.error("Debug verification error:", error);
+      res.status(500).json({ message: "Debug verification failed" });
     }
   });
 

@@ -1157,28 +1157,47 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
-    const [newTransaction] = await db
-      .insert(transactions)
-      .values(transaction)
-      .returning();
+    console.log('Creating transaction:', {
+      userId: transaction.userId,
+      type: transaction.type,
+      amount: transaction.amount,
+      description: transaction.description,
+      reference: transaction.reference
+    });
 
-    // Update user balance for specific transaction types
-    if (transaction.type === 'deposit' || transaction.type === 'withdrawal' || transaction.type === 'win' || 
-        transaction.type === 'event_escrow' || transaction.type === 'event_win' || transaction.type === 'tip_received' ||
-        transaction.type === 'tip_sent') {
-      const amount = parseFloat(transaction.amount);
-      if (!isNaN(amount)) {
-        await db
-          .update(users)
-          .set({
-            balance: sql`COALESCE(${users.balance}, 0) + ${amount}`,
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, transaction.userId));
+    try {
+      const [newTransaction] = await db
+        .insert(transactions)
+        .values(transaction)
+        .returning();
+
+      console.log('Transaction created:', newTransaction);
+
+      // Update user balance for specific transaction types
+      if (transaction.type === 'deposit' || transaction.type === 'withdrawal' || transaction.type === 'win' || 
+          transaction.type === 'event_escrow' || transaction.type === 'event_win' || transaction.type === 'tip_received' ||
+          transaction.type === 'tip_sent') {
+        const amount = parseFloat(transaction.amount);
+        if (!isNaN(amount)) {
+          console.log(`Updating user ${transaction.userId} balance by ${amount}`);
+          
+          await db
+            .update(users)
+            .set({
+              balance: sql`COALESCE(${users.balance}, 0) + ${amount}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(users.id, transaction.userId));
+
+          console.log(`User balance updated for ${transaction.userId}`);
+        }
       }
-    }
 
-    return newTransaction;
+      return newTransaction;
+    } catch (error) {
+      console.error('Error creating transaction:', error);
+      throw error;
+    }
   }
 
   // Achievement operations
