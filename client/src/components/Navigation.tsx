@@ -89,11 +89,11 @@ export function Navigation() {
             </button>
             <button
               onClick={() => handleNavigation("/leaderboard")}
-              className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+              className="flex items-center space-x-1 p-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
               data-tour="leaderboard"
+              title="Leaderboard"
             >
-              <i className="fas fa-trophy mr-1"></i>
-              Leaderboard
+              <Trophy className="w-5 h-5" />
             </button>
             <button
               onClick={() => handleNavigation("/admin")}

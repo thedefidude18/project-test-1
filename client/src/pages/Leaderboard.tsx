@@ -154,77 +154,80 @@ export default function Leaderboard() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     <input
                       type="text"
                       placeholder="Search players..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full px-4 py-2 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:ring-primary focus:border-primary"
+                      className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 mb-4"
                     />
-                    {filteredUsers.slice(0, 50).map((player: any, index: number) => {
-                      const rank = index + 1;
-                      const isCurrentUser = player.id === user.id;
+                    {filteredUsers.map((player: any, index: number) => (
+                      <div
+                        key={player.id}
+                        className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+                        onClick={() => setSelectedProfileUserId(player.id)}
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="w-8 h-8 flex items-center justify-center">
+                            <span className="text-lg font-bold text-slate-600 dark:text-slate-400">
+                              {index + 1}
+                            </span>
+                          </div>
 
-                      return (
-                        <div
-                          key={player.id}
-                          className={`flex items-center justify-between p-4 rounded-lg border ${
-                            isCurrentUser
-                              ? 'border-primary bg-primary/5 dark:bg-primary/10'
-                              : 'border-slate-200 dark:border-slate-600'
-                          } ${rank <= 3 ? 'bg-gradient-to-r from-slate-50 to-white dark:from-slate-800 dark:to-slate-700' : ''}`}
-                        >
-                          <div className="flex items-center space-x-4">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
-                              rank === 1 ? 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400' :
-                              rank === 2 ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400' :
-                              rank === 3 ? 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-400' :
-                              'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                            }`}>
-                              {getRankIcon(rank)}
-                            </div>
-                            <div
-                              className="cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all rounded-full"
-                              onClick={() => setSelectedProfileUserId(player.id)}
-                            >
-                              <UserAvatar
-                                userId={player.id}
-                                username={player.username}
-                                size={48}
-                                className="w-12 h-12"
-                              />
-                            </div>
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <h3 className={`font-semibold ${isCurrentUser ? 'text-primary' : 'text-slate-900 dark:text-slate-100'}`}>
-                                  {player.firstName || player.username}
-                                  {isCurrentUser && <span className="text-sm text-primary ml-2">(You)</span>}
-                                </h3>
-                                {rank <= 3 && (
-                                  <Badge className={
-                                    rank === 1 ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300' :
-                                    rank === 2 ? 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300' :
-                                    'bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300'
-                                  }>
-                                    {rank === 1 ? 'Champion' : rank === 2 ? 'Runner-up' : 'Third Place'}
-                                  </Badge>
-                                )}
+                          <div className="relative">
+                            <UserAvatar
+                              userId={player.id}
+                              username={player.username}
+                              size={40}
+                              className="h-10 w-10"
+                            />
+                            {index === 0 && (
+                              <div className="absolute -top-1 -left-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                                <span className="text-xs">⭐</span>
                               </div>
-                              <p className="text-sm text-slate-600 dark:text-slate-400">
-                                Level {player.level} • {player.xp} XP
-                              </p>
+                            )}
+                            {index === 1 && (
+                              <div className="absolute -top-1 -left-1 w-5 h-5 bg-blue-400 rounded-full flex items-center justify-center">
+                                <span className="text-xs">⭐</span>
+                              </div>
+                            )}
+                            {index === 2 && (
+                              <div className="absolute -top-1 -left-1 w-5 h-5 bg-orange-400 rounded-full flex items-center justify-center">
+                                <span className="text-xs">⭐</span>
+                              </div>
+                            )}
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-pink-400 rounded-full flex items-center justify-center">
+                              <span className="text-xs">💎</span>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className={`text-xl font-bold ${getRankColor(rank)}`}>
-                              {player.points.toLocaleString()}
+
+                          <div>
+                            <p className="font-semibold text-slate-900 dark:text-slate-100">
+                              {player.firstName ? `${player.firstName} ${player.lastName || ''}`.trim() : player.username}
                             </p>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">points</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                              {player.username}
+                            </p>
                           </div>
                         </div>
-                      );
-                    })}
+
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <p className="font-bold text-lg text-slate-900 dark:text-slate-100">
+                              {player.points}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center space-x-1">
+                            <span className="text-sm text-red-500">🔥</span>
+                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                              NO
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>

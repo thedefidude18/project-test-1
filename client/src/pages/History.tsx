@@ -3,516 +3,300 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MobileLayout } from "@/components/MobileLayout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { isUnauthorizedError } from "@/lib/authUtils";
+import { UserAvatar } from "@/components/UserAvatar";
 import { formatDistanceToNow } from "date-fns";
+import { formatBalance } from "@/utils/currencyUtils";
+import { Star, Clock, MessageCircle, Trophy, AlertTriangle } from "lucide-react";
 
 export default function History() {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
 
-  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
-    queryKey: ["/api/transactions"],
+  const { data: events = [], isLoading: eventsLoading } = useQuery({
+    queryKey: ["/api/events/user"],
     retry: false,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      }
-    },
+    enabled: !!user,
   });
 
   const { data: challenges = [], isLoading: challengesLoading } = useQuery({
-    queryKey: ["/api/challenges"],
+    queryKey: ["/api/challenges/user"],
     retry: false,
+    enabled: !!user,
   });
 
-  const { data: events = [], isLoading: eventsLoading } = useQuery({
-    queryKey: ["/api/events"],
+  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
+    queryKey: ["/api/wallet/transactions"],
     retry: false,
+    enabled: !!user,
   });
-
-  // Get user's created events
-  const { data: createdEvents = [], isLoading: createdEventsLoading } = useQuery({
-    queryKey: ["/api/user/created-events"],
-    retry: false,
-  });
-
-  // Get user's joined events (participated in)
-  const { data: joinedEvents = [], isLoading: joinedEventsLoading } = useQuery({
-    queryKey: ["/api/user/joined-events"],
-    retry: false,
-  });
-
-  // Get user's created challenges
-  const createdChallenges = challenges.filter((c: any) => c.challenger === user?.id);
-  
-  // Get user's received challenges
-  const receivedChallenges = challenges.filter((c: any) => c.challenged === user?.id);
-
-  const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case 'deposit': return 'fas fa-plus-circle';
-      case 'withdrawal': return 'fas fa-minus-circle';
-      case 'bet': return 'fas fa-dice';
-      case 'win': return 'fas fa-trophy';
-      case 'challenge': return 'fas fa-swords';
-      case 'referral': return 'fas fa-gift';
-      default: return 'fas fa-circle';
-    }
-  };
-
-  const getTransactionColor = (type: string) => {
-    switch (type) {
-      case 'deposit':
-      case 'win':
-      case 'referral':
-        return 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900';
-      case 'withdrawal':
-      case 'bet':
-      case 'challenge':
-        return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900';
-      default:
-        return 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700';
-    }
-  };
-
-  const getTransactionPrefix = (type: string) => {
-    switch (type) {
-      case 'deposit':
-      case 'win':
-      case 'referral':
-        return '+';
-      case 'withdrawal':
-      case 'bet':
-      case 'challenge':
-        return '-';
-      default:
-        return '';
-    }
-  };
-
-  const filteredTransactions = transactions.filter((transaction: any) => {
-    const matchesSearch = transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.type.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "all" || transaction.type === typeFilter;
-    return matchesSearch && matchesType;
-  });
-
-  const completedChallenges = challenges.filter((c: any) => c.status === "completed");
 
   if (!user) return null;
 
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
-      <Navigation />
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            History 📊
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400">
-            View your transaction history and past activities
-          </p>
-        </div>
+  // Combine and categorize all activities
+  const allActivities = [
+    ...events.map((event: any) => ({ ...event, type: 'event' })),
+    ...challenges.map((challenge: any) => ({ ...challenge, type: 'challenge' })),
+  ];
 
-        {/* Filters */}
-        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 mb-8">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search transactions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-slate-50 dark:bg-slate-700"
-                />
-              </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="All Types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="deposit">Deposits</SelectItem>
-                  <SelectItem value="withdrawal">Withdrawals</SelectItem>
-                  <SelectItem value="bet">Bets</SelectItem>
-                  <SelectItem value="win">Wins</SelectItem>
-                  <SelectItem value="challenge">Challenges</SelectItem>
-                  <SelectItem value="referral">Referrals</SelectItem>
-                </SelectContent>
-              </Select>
+  const createdActivities = allActivities.filter(activity => 
+    activity.createdBy === user.id
+  );
+
+  const activeActivities = allActivities.filter(activity => 
+    activity.status === 'active' || activity.status === 'live'
+  );
+
+  const discussActivities = allActivities.filter(activity => 
+    activity.chatEnabled || activity.type === 'challenge'
+  );
+
+  const wonActivities = transactions.filter((tx: any) => 
+    tx.type === 'win' || tx.type === 'prize'
+  );
+
+  const lostActivities = transactions.filter((tx: any) => 
+    tx.type === 'bet' || tx.type === 'challenge_bet'
+  );
+
+  const getActivityImage = (activity: any) => {
+    if (activity.type === 'event') {
+      return activity.image || '/assets/events-icon.png';
+    }
+    return '/assets/challenge-notification.mp3'; // Default challenge image
+  };
+
+  const getStatusBadge = (activity: any) => {
+    const status = activity.status || 'pending';
+    const colors = {
+      active: 'bg-purple-500 text-white',
+      live: 'bg-green-500 text-white',
+      pending: 'bg-yellow-500 text-white',
+      completed: 'bg-blue-500 text-white',
+      settled: 'bg-gray-500 text-white',
+    };
+    return colors[status] || 'bg-gray-500 text-white';
+  };
+
+  const ActivityCard = ({ activity }: { activity: any }) => (
+    <Card className="mb-4 hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4 flex-1">
+            <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100">
+              <img 
+                src={getActivityImage(activity)} 
+                alt={activity.title || activity.description}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = '/assets/events-icon.png';
+                }}
+              />
             </div>
-          </CardContent>
-        </Card>
 
-        {/* History Tabs */}
-        <Tabs defaultValue="transactions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="transactions">
-              Transactions ({transactions.length})
-            </TabsTrigger>
-            <TabsTrigger value="events-created">
-              Events Created ({createdEvents.length})
-            </TabsTrigger>
-            <TabsTrigger value="events-joined">
-              Events Joined ({joinedEvents.length})
-            </TabsTrigger>
-            <TabsTrigger value="challenges-created">
-              Challenges Created ({createdChallenges.length})
-            </TabsTrigger>
-            <TabsTrigger value="challenges-received">
-              Challenges Received ({receivedChallenges.length})
-            </TabsTrigger>
-          </TabsList>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center space-x-2 mb-1">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  {activity.title || activity.description}
+                </h3>
+                <Badge className={`text-xs ${getStatusBadge(activity)}`}>
+                  {activity.status || 'pending'}
+                </Badge>
+              </div>
 
-          <TabsContent value="transactions" className="space-y-4">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle>Transaction History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {transactionsLoading ? (
+              <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center space-x-1">
+                  <span>By</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Clock className="w-3 h-3" />
+                  <span>{formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Trophy className="w-3 h-3" />
+                  <span>{activity.participantsCount || 0}</span>
+                </div>
+              </div>
+
+              <div className="mt-2">
+                <span className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+                  {formatBalance(activity.entryFee || activity.betAmount || 0)} Pool
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <Button 
+            className="ml-4"
+            style={{ backgroundColor: '#7440ff', color: 'white' }}
+            size="sm"
+          >
+            <MessageCircle className="w-4 h-4 mr-1" />
+            Chat
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const TransactionCard = ({ transaction }: { transaction: any }) => (
+    <Card className="mb-4 hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+              {transaction.type === 'win' || transaction.type === 'prize' ? (
+                <Trophy className="w-6 h-6 text-green-500" />
+              ) : (
+                <AlertTriangle className="w-6 h-6 text-red-500" />
+              )}
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                {transaction.description || `${transaction.type} transaction`}
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {formatDistanceToNow(new Date(transaction.createdAt), { addSuffix: true })}
+              </p>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <span className={`font-semibold text-lg ${
+              transaction.type === 'win' || transaction.type === 'prize' 
+                ? 'text-green-600' 
+                : 'text-red-600'
+            }`}>
+              {transaction.type === 'win' || transaction.type === 'prize' ? '+' : '-'}
+              {formatBalance(transaction.amount)}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <MobileLayout>
+      <Navigation />
+
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+            Activity History
+          </h1>
+
+          <Tabs defaultValue="created" className="w-full">
+            <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="created" className="flex items-center space-x-1">
+                <Star className="w-4 h-4" />
+                <span className="hidden sm:inline">Created</span>
+              </TabsTrigger>
+              <TabsTrigger value="active" className="flex items-center space-x-1">
+                <Clock className="w-4 h-4" />
+                <span className="hidden sm:inline">Active</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="discuss" 
+                className="flex items-center space-x-1"
+                style={{ backgroundColor: '#7440ff', color: 'white' }}
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Discuss</span>
+              </TabsTrigger>
+              <TabsTrigger value="won" className="flex items-center space-x-1">
+                <Trophy className="w-4 h-4" />
+                <span className="hidden sm:inline">Won</span>
+              </TabsTrigger>
+              <TabsTrigger value="lost" className="flex items-center space-x-1">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="hidden sm:inline">Lost</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="created">
+              <div>
+                {createdActivities.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-600 dark:text-slate-400">Loading transactions...</p>
-                  </div>
-                ) : filteredTransactions.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="fas fa-receipt text-4xl text-slate-400 mb-4"></i>
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                      {searchTerm || typeFilter !== "all" ? "No matching transactions" : "No transactions yet"}
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      {searchTerm || typeFilter !== "all" 
-                        ? "Try adjusting your filters to see more transactions."
-                        : "Your transaction history will appear here once you start using your wallet."
-                      }
-                    </p>
+                    <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">No created activities yet</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {filteredTransactions.map((transaction: any) => (
-                      <div
-                        key={transaction.id}
-                        className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getTransactionColor(transaction.type)}`}>
-                            <i className={`${getTransactionIcon(transaction.type)} text-sm`}></i>
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-slate-900 dark:text-slate-100 capitalize">
-                              {transaction.type}
-                            </h4>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
-                              {transaction.description || `${transaction.type} transaction`}
-                            </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-500">
-                              {formatDistanceToNow(new Date(transaction.createdAt), { addSuffix: true })}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className={`text-lg font-semibold ${
-                            transaction.type === 'deposit' || transaction.type === 'win' || transaction.type === 'referral'
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-red-600 dark:text-red-400'
-                          }`}>
-                            {getTransactionPrefix(transaction.type)}₦{Math.abs(parseFloat(transaction.amount)).toLocaleString()}
-                          </p>
-                          <Badge
-                            className={
-                              transaction.status === 'completed'
-                                ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
-                                : transaction.status === 'pending'
-                                ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
-                                : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
-                            }
-                          >
-                            {transaction.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  createdActivities.map((activity: any) => (
+                    <ActivityCard key={`${activity.type}-${activity.id}`} activity={activity} />
+                  ))
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </TabsContent>
 
-          <TabsContent value="events-created" className="space-y-4">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle>Events You Created</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {createdEventsLoading ? (
+            <TabsContent value="active">
+              <div>
+                {activeActivities.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-600 dark:text-slate-400">Loading events...</p>
-                  </div>
-                ) : createdEvents.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="fas fa-calendar-plus text-4xl text-slate-400 mb-4"></i>
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                      No events created yet
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Events you create will appear here.
-                    </p>
+                    <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">No active activities</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {createdEvents.map((event: any) => (
-                      <div
-                        key={event.id}
-                        className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <h4 className="font-medium text-slate-900 dark:text-slate-100">
-                            {event.title}
-                          </h4>
-                          <p className="text-sm text-slate-600 dark:text-slate-400 capitalize">
-                            {event.category} • Pool: ₦{parseFloat(event.eventPool || "0").toLocaleString()}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500">
-                            Created {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">₦{parseFloat(event.entryFee).toLocaleString()}</p>
-                          <Badge
-                            className={
-                              event.status === 'completed'
-                                ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
-                                : event.status === 'active'
-                                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                                : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
-                            }
-                          >
-                            {event.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  activeActivities.map((activity: any) => (
+                    <ActivityCard key={`${activity.type}-${activity.id}`} activity={activity} />
+                  ))
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </TabsContent>
 
-          <TabsContent value="events-joined" className="space-y-4">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle>Events You Joined</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {joinedEventsLoading ? (
+            <TabsContent value="discuss">
+              <div>
+                {discussActivities.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-600 dark:text-slate-400">Loading events...</p>
-                  </div>
-                ) : joinedEvents.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="fas fa-calendar-check text-4xl text-slate-400 mb-4"></i>
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                      No events joined yet
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Events you participate in will appear here.
-                    </p>
+                    <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">No discussions available</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {joinedEvents.map((event: any) => (
-                      <div
-                        key={event.id}
-                        className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <h4 className="font-medium text-slate-900 dark:text-slate-100">
-                            {event.title}
-                          </h4>
-                          <p className="text-sm text-slate-600 dark:text-slate-400 capitalize">
-                            {event.category} • Predicted: {event.prediction ? 'Yes' : 'No'}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500">
-                            Joined {formatDistanceToNow(new Date(event.joinedAt), { addSuffix: true })}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">₦{parseFloat(event.amount).toLocaleString()}</p>
-                          <Badge
-                            className={
-                              event.status === 'won'
-                                ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
-                                : event.status === 'lost'
-                                ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
-                                : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
-                            }
-                          >
-                            {event.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  discussActivities.map((activity: any) => (
+                    <ActivityCard key={`${activity.type}-${activity.id}`} activity={activity} />
+                  ))
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </TabsContent>
 
-          <TabsContent value="challenges-created" className="space-y-4">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle>Challenges You Created</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {challengesLoading ? (
+            <TabsContent value="won">
+              <div>
+                {wonActivities.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-600 dark:text-slate-400">Loading challenges...</p>
-                  </div>
-                ) : createdChallenges.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="fas fa-sword text-4xl text-slate-400 mb-4"></i>
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                      No challenges created
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Challenges you create will appear here.
-                    </p>
+                    <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">No winnings yet</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {createdChallenges.map((challenge: any) => (
-                      <div
-                        key={challenge.id}
-                        className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <h4 className="font-medium text-slate-900 dark:text-slate-100">
-                            {challenge.title}
-                          </h4>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            vs {challenge.challengedUser?.firstName || challenge.challengedUser?.username || 'Unknown'}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500">
-                            Created {formatDistanceToNow(new Date(challenge.createdAt), { addSuffix: true })}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">₦{parseFloat(challenge.amount).toLocaleString()}</p>
-                          <Badge
-                            className={
-                              challenge.result === 'challenger_won'
-                                ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
-                                : challenge.result === 'challenged_won'
-                                ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
-                                : challenge.result === 'draw'
-                                ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
-                                : challenge.status === 'completed'
-                                ? 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
-                                : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                            }
-                          >
-                            {challenge.result || challenge.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  wonActivities.map((transaction: any) => (
+                    <TransactionCard key={transaction.id} transaction={transaction} />
+                  ))
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </TabsContent>
 
-          <TabsContent value="challenges-received" className="space-y-4">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle>Challenges You Received</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {challengesLoading ? (
+            <TabsContent value="lost">
+              <div>
+                {lostActivities.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-600 dark:text-slate-400">Loading challenges...</p>
-                  </div>
-                ) : receivedChallenges.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="fas fa-swords text-4xl text-slate-400 mb-4"></i>
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                      No challenges received
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Challenges sent to you will appear here.
-                    </p>
+                    <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">No losses recorded</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {receivedChallenges.map((challenge: any) => (
-                      <div
-                        key={challenge.id}
-                        className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <h4 className="font-medium text-slate-900 dark:text-slate-100">
-                            {challenge.title}
-                          </h4>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            from {challenge.challengerUser?.firstName || challenge.challengerUser?.username || 'Unknown'}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500">
-                            Received {formatDistanceToNow(new Date(challenge.createdAt), { addSuffix: true })}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">₦{parseFloat(challenge.amount).toLocaleString()}</p>
-                          <Badge
-                            className={
-                              challenge.result === 'challenged_won'
-                                ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
-                                : challenge.result === 'challenger_won'
-                                ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
-                                : challenge.result === 'draw'
-                                ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
-                                : challenge.status === 'completed'
-                                ? 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
-                                : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                            }
-                          >
-                            {challenge.result || challenge.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  lostActivities.map((transaction: any) => (
+                    <TransactionCard key={transaction.id} transaction={transaction} />
+                  ))
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-
-        </Tabs>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
 
       <MobileNavigation />
-    </div>
+    </MobileLayout>
   );
 }
