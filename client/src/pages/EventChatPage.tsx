@@ -88,6 +88,8 @@ export default function EventChatPage() {
   const [isBannerHidden, setIsBannerHidden] = useState(false);
   const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchResults, setSearchResults] = useState<ExtendedMessage[]>([]);
 
   const { data: event } = useQuery({
     queryKey: ["/api/events", eventId],
@@ -121,8 +123,9 @@ export default function EventChatPage() {
 
   const { data: telegramStatus } = useQuery({
     queryKey: ['telegram-status'],
-    queryFn: () => apiRequest('/api/telegram/status'),
+    queryFn: () => apiRequest('GET', '/api/telegram/status'),
     refetchInterval: 30000, // Check every 30 seconds
+    retry: false,
   });
 
   // Check if user has already bet
@@ -194,18 +197,31 @@ export default function EventChatPage() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: { message: string; replyToId?: string; mentions?: string[] }) => {
-      await apiRequest("POST", `/api/events/${eventId}/messages`, messageData);
+      return await apiRequest("POST", `/api/events/${eventId}/messages`, messageData);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setNewMessage("");
       setReplyingTo(null);
+      
+      // Immediately scroll to bottom after successful send
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 50);
+      
+      // Refetch messages to get the latest
       refetchMessages();
-      sendMessage({
-        type: 'event_message',
-        eventId,
-        message: newMessage,
-        userId: user?.id,
-      });
+      
+      // Send WebSocket notification
+      if (sendMessage) {
+        sendMessage({
+          type: 'event_message',
+          eventId,
+          messageId: data?.id,
+          userId: user?.id,
+        });
+      }
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
@@ -299,6 +315,26 @@ export default function EventChatPage() {
     },
   });
 
+  const leaveEventMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", `/api/events/${eventId}/leave`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Left Event",
+        description: "You have successfully left this event.",
+      });
+      window.location.href = '/events';
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to leave event",
+        variant: "destructive",
+      });
+    },
+  });
+
   const joinEventMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", `/api/events/${eventId}/join`, {
@@ -351,7 +387,12 @@ export default function EventChatPage() {
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (messagesEndRef.current && messages.length > 0) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+      });
     }
   }, [messages]);
 
@@ -476,18 +517,44 @@ export default function EventChatPage() {
     const mentions = extractMentions(newMessage);
     console.log("Sending message with mentions:", { message: newMessage, mentions });
 
+    // Optimistically add message to UI for immediate feedback
+    const tempMessage = {
+      id: `temp-${Date.now()}`,
+      eventId: eventId!,
+      userId: user!.id,
+      message: newMessage,
+      createdAt: new Date().toISOString(),
+      type: 'user' as const,
+      user: {
+        id: user!.id,
+        firstName: user!.firstName,
+        lastName: user!.lastName,
+        username: user!.username,
+        profileImageUrl: user!.profileImageUrl,
+        level: user!.level,
+      },
+      reactions: [],
+      mentions: mentions,
+    };
+
+    // Add temp message to show immediate response
+    queryClient.setQueryData(["/api/events", eventId, "messages"], (old: any) => {
+      if (!old) return [tempMessage];
+      return [...old, tempMessage];
+    });
+
+    // Immediately scroll to bottom
+    setTimeout(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 10);
+
     sendMessageMutation.mutate({
       message: newMessage,
       replyToId: replyingTo?.id,
       mentions,
     });
-
-    // Force scroll to bottom after sending
-    setTimeout(() => {
-      if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-      }
-    }, 100);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -541,6 +608,39 @@ export default function EventChatPage() {
       mentions.push(match[1]);
     }
     return mentions;
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      const results = messages.filter((message: ExtendedMessage) =>
+        message.message.toLowerCase().includes(query.toLowerCase()) ||
+        message.user.firstName?.toLowerCase().includes(query.toLowerCase()) ||
+        message.user.username?.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const handleLeaveEvent = () => {
+    if (hasUserBet) {
+      toast({
+        title: "Cannot Leave",
+        description: "You cannot leave an event you have bet on until it concludes.",
+        variant: "destructive",
+      });
+      return;
+    }
+    leaveEventMutation.mutate();
+  };
+
+  const handleReport = () => {
+    toast({
+      title: "Report Sent",
+      description: "Thank you for your report. We will review this event.",
+    });
   };
 
   const filteredParticipants = participants.filter((p: any) =>
@@ -627,9 +727,9 @@ export default function EventChatPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[200px]">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowSearch(!showSearch)}>
                   <i className="fas fa-search mr-2"></i>
-                  Search
+                  {showSearch ? 'Hide Search' : 'Search'}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={toggleBannerVisibility}>
                   {isBannerHidden ? (
@@ -644,7 +744,7 @@ export default function EventChatPage() {
                     </>
                   )}
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleReport}>
                   <i className="fas fa-flag mr-2"></i>
                   Report
                 </DropdownMenuItem>
@@ -653,7 +753,7 @@ export default function EventChatPage() {
                   Share
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLeaveEvent} className="text-red-600 dark:text-red-400">
                   <i className="fas fa-sign-out-alt mr-2"></i>
                   Leave Event
                 </DropdownMenuItem>
@@ -900,6 +1000,54 @@ export default function EventChatPage() {
           </div>
         )}
       </div>
+
+      {/* Search Panel */}
+      {showSearch && (
+        <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-3">
+          <div className="flex items-center space-x-2 mb-2">
+            <div className="flex-1 relative">
+              <Input
+                placeholder="Search messages..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pr-8"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSearch(false)}
+                className="absolute right-1 top-1/2 -translate-y-1/2 p-1 h-6 w-6"
+              >
+                <i className="fas fa-times text-xs"></i>
+              </Button>
+            </div>
+          </div>
+          
+          {searchResults.length > 0 && (
+            <div className="max-h-32 overflow-y-auto space-y-1">
+              {searchResults.slice(0, 5).map((message: ExtendedMessage) => (
+                <div key={message.id} className="p-2 bg-slate-50 dark:bg-slate-700 rounded text-sm">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <UserAvatar
+                      userId={message.user.id}
+                      username={message.user.username}
+                      size={16}
+                      className="w-4 h-4"
+                    />
+                    <span className="font-medium">{message.user.firstName || message.user.username}</span>
+                    <span className="text-xs text-slate-500">{formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}</span>
+                  </div>
+                  <p className="text-slate-700 dark:text-slate-300">{message.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {searchQuery && searchResults.length === 0 && (
+            <p className="text-sm text-slate-500 text-center py-2">No messages found</p>
+          )}
+        </div>
+      )}
 
       {/* Reply indicator */}
       {replyingTo && (

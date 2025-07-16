@@ -22,6 +22,7 @@ import {
   walletTransactions,
   followers,
   dailyLogins,
+  eventParticipants,
 } from "../shared/schema";
 import { sql } from "drizzle-orm";
 import crypto from "crypto";
@@ -194,6 +195,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Failed to create event" });
       }
+    }
+  });
+
+  app.post('/api/events/:id/leave', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+
+      // Check if user has joined the event
+      const participant = await db
+        .select()
+        .from(eventParticipants)
+        .where(and(
+          eq(eventParticipants.eventId, eventId),
+          eq(eventParticipants.userId, userId)
+        ))
+        .limit(1);
+
+      if (participant.length === 0) {
+        return res.status(400).json({ message: "You haven't joined this event" });
+      }
+
+      // Check if user has bet (prevent leaving if they have bet)
+      if (participant[0].prediction !== null) {
+        return res.status(400).json({ message: "Cannot leave event after placing a bet" });
+      }
+
+      // Remove participant
+      await db
+        .delete(eventParticipants)
+        .where(and(
+          eq(eventParticipants.eventId, eventId),
+          eq(eventParticipants.userId, userId)
+        ));
+
+      res.json({ message: "Successfully left the event" });
+    } catch (error) {
+      console.error("Error leaving event:", error);
+      res.status(500).json({ message: "Failed to leave event" });
     }
   });
 
