@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigation } from "@/components/Navigation";
-import { MobileNavigation } from "@/components/MobileNavigation";
 import MobileLayout, { MobileCard, MobileButton } from "@/components/MobileLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,17 +98,6 @@ export default function EventCreate() {
       <Navigation />
 
       <div className="max-w-2xl mx-auto">
-        {/* Mobile Header */}
-        <div className="flex items-center justify-between mb-4 md:hidden">
-          <button
-            onClick={() => window.history.back()}
-            className="p-2 rounded-full bg-slate-100 dark:bg-slate-700"
-          >
-            <i className="fas fa-arrow-left text-slate-600 dark:text-slate-300"></i>
-          </button>
-          <div className="w-10"></div>
-        </div>
-
         {/* Desktop Header */}
         <div className="hidden md:block mb-8">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Create New Event</h1>
