@@ -86,29 +86,64 @@
     @apply rounded-xl border-slate-200 dark:border-slate-700;
   }
 
+  /* Remove black borders from all UI elements */
+  [role="dialog"],
+  [role="alertdialog"],
+  .toast,
+  [role="listbox"],
+  [role="tooltip"],
+  [data-radix-popper-content-wrapper],
+  input,
+  textarea,
+  select,
+  button,
+  .form-control,
+  .form-input {
+    border-color: hsl(var(--border)) !important;
+  }
+
   /* Remove black borders from modals, dialogs, toasts */
   [role="dialog"] {
     @apply border-slate-200 dark:border-slate-700 shadow-lg;
+    border-color: hsl(var(--border)) !important;
   }
 
   [role="alertdialog"] {
     @apply border-slate-200 dark:border-slate-700 shadow-lg;
+    border-color: hsl(var(--border)) !important;
   }
 
   /* Toast styling */
   .toast {
     @apply border-slate-200 dark:border-slate-700 shadow-lg;
+    border-color: hsl(var(--border)) !important;
   }
 
   /* Select dropdown styling */
   [role="listbox"] {
     @apply border-slate-200 dark:border-slate-700 shadow-lg;
+    border-color: hsl(var(--border)) !important;
   }
 
   /* Popover styling */
   [role="tooltip"],
   [data-radix-popper-content-wrapper] {
     @apply border-slate-200 dark:border-slate-700 shadow-lg;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Form elements styling */
+  input,
+  textarea,
+  select {
+    border-color: hsl(var(--border)) !important;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    border-color: hsl(var(--primary)) !important;
+    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2) !important;
   }
 
   /* Mobile button styles */
@@ -219,5 +254,31 @@
   body {
     @apply antialiased bg-background text-foreground;
     font-family: 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  /* Global form input styling to remove black borders */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  textarea,
+  select {
+    border-color: hsl(var(--border)) !important;
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="number"]:focus,
+  input[type="tel"]:focus,
+  input[type="url"]:focus,
+  input[type="search"]:focus,
+  textarea:focus,
+  select:focus {
+    border-color: hsl(var(--primary)) !important;
+    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2) !important;
   }
 }
