@@ -86,7 +86,7 @@ export default function Leaderboard() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="hidden md:block text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
@@ -160,27 +160,27 @@ export default function Leaderboard() {
                       placeholder="Search players..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 mb-4"
+                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 mb-3"
                     />
                     {filteredUsers.map((player: any, index: number) => (
                       <div
                         key={player.id}
-                        className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+                        className="flex items-center justify-between p-3 md:p-4 bg-white dark:bg-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
                         onClick={() => setSelectedProfileUserId(player.id)}
                       >
-                        <div className="flex items-center space-x-4">
-                          <div className="w-8 h-8 flex items-center justify-center">
-                            <span className="text-lg font-bold text-slate-600 dark:text-slate-400">
+                        <div className="flex items-center space-x-2 md:space-x-4 flex-1 min-w-0">
+                          <div className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center flex-shrink-0">
+                            <span className="text-sm md:text-lg font-bold text-slate-600 dark:text-slate-400">
                               {index + 1}
                             </span>
                           </div>
 
-                          <div className="relative">
+                          <div className="relative flex-shrink-0">
                             <UserAvatar
                               userId={player.id}
                               username={player.username}
-                              size={40}
-                              className="h-10 w-10"
+                              size={32}
+                              className="h-8 w-8 md:h-10 md:w-10"
                             />
                             {index === 0 && (
                               <div className="absolute -top-1 -left-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
@@ -202,24 +202,24 @@ export default function Leaderboard() {
                             </div>
                           </div>
 
-                          <div>
-                            <p className="font-semibold text-slate-900 dark:text-slate-100">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-sm md:text-base text-slate-900 dark:text-slate-100 truncate">
                               {player.firstName ? `${player.firstName} ${player.lastName || ''}`.trim() : player.username}
                             </p>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                            <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 truncate">
                               {player.username}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
                           <div className="text-right">
-                            <p className="font-bold text-lg text-slate-900 dark:text-slate-100">
+                            <p className="font-bold text-base md:text-lg text-slate-900 dark:text-slate-100">
                               {player.points}
                             </p>
                           </div>
 
-                          <div className="flex items-center space-x-1">
+                          <div className="hidden md:flex items-center space-x-1">
                             <span className="text-sm text-red-500">🔥</span>
                             <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
                               NO

@@ -63,11 +63,11 @@ export default function History() {
     (activity) => activity.chatEnabled || activity.type === "challenge",
   );
 
-  const wonActivities = transactions.filter(
+  const wonActivities = (transactions || []).filter(
     (tx: any) => tx.type === "win" || tx.type === "prize",
   );
 
-  const lostActivities = transactions.filter(
+  const lostActivities = (transactions || []).filter(
     (tx: any) => tx.type === "bet" || tx.type === "challenge_bet",
   );
 

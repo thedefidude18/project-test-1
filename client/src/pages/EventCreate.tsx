@@ -104,37 +104,37 @@ export default function EventCreate() {
           <p className="text-slate-600 dark:text-slate-400">Set up a new prediction event for the community</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-          <MobileCard className="space-y-4">
-            <div>
-              <Label htmlFor="title" className="text-sm font-medium text-slate-700 dark:text-slate-300">Event Title *</Label>
+        <form onSubmit={handleSubmit} className="mobile-form-container">
+          <MobileCard className="mobile-compact-card">
+            <div className="mobile-form-field">
+              <Label htmlFor="title" className="mobile-form-label">Event Title *</Label>
               <Input
                 id="title"
                 type="text"
                 placeholder="What will people predict?"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="mt-1"
+                className="mobile-form-input"
                 required
               />
             </div>
 
-            <div>
-              <Label htmlFor="description" className="text-sm font-medium text-slate-700 dark:text-slate-300">Description *</Label>
+            <div className="mobile-form-field">
+              <Label htmlFor="description" className="mobile-form-label">Description *</Label>
               <Textarea
                 id="description"
                 placeholder="Provide details about the event..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="mt-1 min-h-[80px]"
+                className="mobile-form-textarea"
                 required
               />
             </div>
 
-            <div>
-              <Label htmlFor="category" className="text-sm font-medium text-slate-700 dark:text-slate-300">Category *</Label>
+            <div className="mobile-form-field">
+              <Label htmlFor="category" className="mobile-form-label">Category *</Label>
               <Select value={category} onValueChange={setCategory} required>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mobile-form-select">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -149,38 +149,36 @@ export default function EventCreate() {
                 </SelectContent>
               </Select>
             </div>
-          </MobileCard>
 
-          <MobileCard className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="endDate" className="text-sm font-medium text-slate-700 dark:text-slate-300">End Date *</Label>
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              <div className="mobile-form-field">
+                <Label htmlFor="endDate" className="mobile-form-label">End Date *</Label>
                 <Input
                   id="endDate"
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="mt-1"
+                  className="mobile-form-input"
                   min={new Date().toISOString().split('T')[0]}
                   required
                 />
               </div>
 
-              <div>
-                <Label htmlFor="endTime" className="text-sm font-medium text-slate-700 dark:text-slate-300">End Time *</Label>
+              <div className="mobile-form-field">
+                <Label htmlFor="endTime" className="mobile-form-label">End Time *</Label>
                 <Input
                   id="endTime"
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="mt-1"
+                  className="mobile-form-input"
                   required
                 />
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="entryFee" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <div className="mobile-form-field">
+              <Label htmlFor="entryFee" className="mobile-form-label">
                 Entry Fee (₦) *
               </Label>
               <Input
@@ -189,7 +187,7 @@ export default function EventCreate() {
                 placeholder="100"
                 value={entryFee}
                 onChange={(e) => setEntryFee(e.target.value)}
-                className="mt-1"
+                className="mobile-form-input"
                 min="1"
                 step="1"
                 required
