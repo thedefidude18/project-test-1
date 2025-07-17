@@ -133,7 +133,7 @@ export default function Leaderboard() {
           </TabsList>
 
           <TabsContent value="points">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-2xl">
               <CardHeader>
                 <CardTitle>Top Players by Points</CardTitle>
               </CardHeader>
@@ -235,7 +235,7 @@ export default function Leaderboard() {
           </TabsContent>
 
           <TabsContent value="level">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-2xl">
               <CardHeader>
                 <CardTitle>Top Players by Level</CardTitle>
               </CardHeader>
@@ -254,7 +254,7 @@ export default function Leaderboard() {
           </TabsContent>
 
           <TabsContent value="wins">
-            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-2xl">
               <CardHeader>
                 <CardTitle>Top Players by Wins</CardTitle>
               </CardHeader>

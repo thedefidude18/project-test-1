@@ -14,7 +14,7 @@
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     font-feature-settings: 'kern' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -23,7 +23,7 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Remove any existing font references and use SF Pro */
+  /* Remove any existing font references and use SF Pro Rounded */
   * {
     font-family: inherit;
   }
@@ -57,8 +57,26 @@
     @apply bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 mb-3;
   }
 
-  .app-section-compact {
-    @apply bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-3 mb-2;
+  /* Global rounded corners for all UI elements */
+  .rounded-lg {
+    border-radius: 1rem !important;
+  }
+
+  .rounded-md {
+    border-radius: 0.75rem !important;
+  }
+
+  .rounded-sm {
+    border-radius: 0.5rem !important;
+  }
+
+  /* Tab styling with increased radius */
+  [role="tablist"] {
+    @apply rounded-2xl;
+  }
+
+  [role="tab"] {
+    @apply rounded-xl;
   }
 
   /* Mobile button styles */
@@ -115,7 +133,7 @@
   }
 }
 
-:root {
+::root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);
   --muted: hsl(60, 4.8%, 95.9%);
@@ -168,6 +186,6 @@
 
   body {
     @apply antialiased bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   }
 }

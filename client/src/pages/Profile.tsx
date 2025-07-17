@@ -101,69 +101,74 @@ export default function Profile() {
       <MobileHeader />
 
       {/* Mobile Profile Header */}
-      <MobileCard className="mb-3 md:hidden">
+      <MobileCard className="mb-3 md:hidden rounded-3xl">
         <div className="flex items-center space-x-3 mb-3">
-          <Avatar className="w-16 h-16">
+          <Avatar className="w-12 h-12">
             <AvatarImage 
               src={getAvatarUrl(user.id, user.profileImageUrl, user.firstName || user.username)} 
               alt={user.firstName || user.username || 'User'} 
             />
-            <AvatarFallback className="text-lg">
+            <AvatarFallback className="text-sm">
               {(user.firstName?.[0] || user.username?.[0] || 'U').toUpperCase()}
             </AvatarFallback>
           </Avatar>
 
           <div className="flex-1">
-            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            <h1 className="text-base font-bold text-slate-900 dark:text-slate-100">
               {user.firstName || user.username}
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400">Level {user.level}</p>
-            <div className="flex items-center space-x-4 mt-1">
-              <span className="text-xs text-primary font-semibold">{formatBalance(user.points || 0)} pts</span>
-              <span className="text-xs text-emerald-600 font-semibold">{userStats?.wins || 0} wins</span>
-            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Level {user.level}</p>
           </div>
 
           <Button 
             onClick={() => window.location.href = '/profile/settings'}
             size="sm"
-            className="bg-primary text-white hover:bg-primary/90"
+            className="bg-primary text-white hover:bg-primary/90 rounded-2xl p-2"
           >
-            <i className="fas fa-edit"></i>
+            <i className="fas fa-edit text-xs"></i>
           </Button>
         </div>
 
-        {/* Compact Level Progress */}
-        <div className="mb-3">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
-              Level {user.level}
-            </span>
-            <span className="text-xs text-slate-600 dark:text-slate-400">
-              {user.xp} / {nextLevelXP} XP
-            </span>
-          </div>
-          <Progress value={levelProgress} className="h-1.5" />
-        </div>
-
         {/* Compact Stats Grid */}
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-2 mb-3">
           <div className="text-center">
-            <p className="text-lg font-bold text-primary">{formatBalance(user.points || 0)}</p>
+            <p className="text-sm font-bold text-primary">{formatBalance(user.points || 0)}</p>
             <p className="text-xs text-slate-600 dark:text-slate-400">Points</p>
           </div>
           <div className="text-center">
-            <p className="text-lg font-bold text-emerald-600">{userStats?.wins || 0}</p>
+            <p className="text-sm font-bold text-emerald-600">{userStats?.wins || 0}</p>
             <p className="text-xs text-slate-600 dark:text-slate-400">Wins</p>
           </div>
           <div className="text-center">
-            <p className="text-lg font-bold text-amber-600">{user.streak}</p>
+            <p className="text-sm font-bold text-amber-600">{user.streak}</p>
             <p className="text-xs text-slate-600 dark:text-slate-400">Streak</p>
           </div>
           <div className="text-center">
-            <p className="text-lg font-bold text-cyan-600">{achievements.length}</p>
+            <p className="text-sm font-bold text-cyan-600">{achievements.length}</p>
             <p className="text-xs text-slate-600 dark:text-slate-400">Badges</p>
           </div>
+        </div>
+
+        {/* Quick Actions Menu */}
+        <div className="grid grid-cols-2 gap-2">
+          <Button 
+            onClick={() => window.location.href = '/wallet'}
+            variant="outline"
+            size="sm"
+            className="rounded-2xl text-xs py-1 h-8"
+          >
+            <i className="fas fa-wallet mr-1"></i>
+            Wallet
+          </Button>
+          <Button 
+            onClick={() => window.location.href = '/settings'}
+            variant="outline"
+            size="sm"
+            className="rounded-2xl text-xs py-1 h-8"
+          >
+            <i className="fas fa-cog mr-1"></i>
+            Settings
+          </Button>
         </div>
       </MobileCard>
 
@@ -245,11 +250,11 @@ export default function Profile() {
 
         {/* Profile Tabs */}
         <Tabs defaultValue="level" className="space-y-3 md:space-y-6">
-          <TabsList className="grid w-full grid-cols-4 h-8 md:h-10">
-            <TabsTrigger value="level" className="text-xs md:text-sm">Level</TabsTrigger>
-            <TabsTrigger value="achievements" className="text-xs md:text-sm">Badges</TabsTrigger>
-            <TabsTrigger value="activity" className="text-xs md:text-sm">Activity</TabsTrigger>
-            <TabsTrigger value="stats" className="text-xs md:text-sm">Stats</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 h-8 md:h-10 rounded-2xl">
+            <TabsTrigger value="level" className="text-xs md:text-sm rounded-xl">Level</TabsTrigger>
+            <TabsTrigger value="achievements" className="text-xs md:text-sm rounded-xl">Badges</TabsTrigger>
+            <TabsTrigger value="activity" className="text-xs md:text-sm rounded-xl">Activity</TabsTrigger>
+            <TabsTrigger value="stats" className="text-xs md:text-sm rounded-xl">Stats</TabsTrigger>
           </TabsList>
 
           <TabsContent value="level" className="space-y-3 md:space-y-6">

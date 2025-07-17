@@ -75,29 +75,7 @@ export function MobileNavigation() {
   return (
     <>
       {/* Mobile Wallet Display */}
-      <div className="fixed bottom-16 right-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg p-2 md:hidden z-40">
-        <button
-          onClick={() => navigate("/wallet")}
-          className="flex items-center space-x-2 text-xs"
-        >
-          <div className="flex items-center space-x-1">
-            <i className="fas fa-wallet text-emerald-500"></i>
-            <span className="font-medium text-slate-900 dark:text-slate-100">
-              {formatBalance(
-                typeof balance === "object"
-                  ? balance.balance || 0
-                  : balance || 0,
-              )}
-            </span>
-          </div>
-          <div className="flex items-center space-x-1 border-l border-slate-200 dark:border-slate-600 pl-2">
-            <i className="fas fa-coins text-yellow-500"></i>
-            <span className="font-medium text-slate-900 dark:text-slate-100">
-              {typeof balance === "object" ? (balance.coins || 0).toLocaleString() : '0'}
-            </span>
-          </div>
-        </button>
-      </div>
+      
 
       {/* Mobile Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 md:hidden z-50 shadow-lg">

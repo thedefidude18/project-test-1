@@ -195,7 +195,7 @@ export default function Events() {
           <div className="flex overflow-x-auto pb-2 gap-3 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <button className="flex-shrink-0 flex flex-col items-center p-3 rounded-xl transition-all bg-primary text-white shadow-lg hover:bg-primary/90">
+                <button className="flex-shrink-0 flex flex-col items-center p-3 rounded-2xl transition-all bg-primary text-white shadow-lg hover:bg-primary/90">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-2">
                     <i className="fas fa-plus text-white text-lg"></i>
                   </div>
@@ -367,7 +367,7 @@ export default function Events() {
 
             <button
               onClick={() => setCategoryFilter("all")}
-              className={`flex-shrink-0 flex flex-col items-center p-3 rounded-xl transition-all ${
+              className={`flex-shrink-0 flex flex-col items-center p-3 rounded-2xl transition-all ${
                 categoryFilter === "all" 
                   ? "bg-primary text-white shadow-lg" 
                   : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
@@ -383,7 +383,7 @@ export default function Events() {
               <button
                 key={category.value}
                 onClick={() => setCategoryFilter(category.value)}
-                className={`flex-shrink-0 flex flex-col items-center p-3 rounded-xl transition-all ${
+                className={`flex-shrink-0 flex flex-col items-center p-3 rounded-2xl transition-all ${
                   categoryFilter === category.value 
                     ? "bg-primary text-white shadow-lg" 
                     : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
@@ -448,7 +448,7 @@ export default function Events() {
                 />
               ))}
             </div>
-            
+
             {/* Load More Button */}
             {hasMoreEvents && (
               <div className="flex justify-center mt-8">
