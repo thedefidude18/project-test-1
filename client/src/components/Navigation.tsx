@@ -164,78 +164,80 @@ export function Navigation() {
 
 
 
-            {/* Profile */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex items-center space-x-2 p-2"
-                  data-tour="profile"
-                >
-                  <UserAvatar
-                    userId={user.id}
-                    username={user.username}
-                    size={32}
-                    className="h-8 w-8"
-                  />
-                  <span className="hidden sm:block text-sm font-medium">
-                    {user.firstName || user.username}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem onClick={() => handleNavigation("/profile")}>
-                  <i className="fas fa-user mr-2"></i>
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleNavigation("/profile/settings")}
-                >
-                  <i className="fas fa-cog mr-2"></i>
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation("/wallet")}>
-                  <i className="fas fa-wallet mr-2"></i>
-                  Wallet
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation("/friends")}>
-                  <i className="fas fa-users mr-2"></i>
-                  Friends
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation("/shop")}>
-                  <i className="fas fa-shopping-cart mr-2"></i>
-                  Shop
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation("/history")}>
-                  <i className="fas fa-history mr-2"></i>
-                  History
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleNavigation("/referrals")}
-                >
-                  <i className="fas fa-share-alt mr-2"></i>
-                  Referrals
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    const event = new CustomEvent("start-tour");
-                    window.dispatchEvent(event);
-                  }}
-                >
-                  <i className="fas fa-question-circle mr-2"></i>
-                  Website Tour
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => (window.location.href = "/api/logout")}
-                  className="text-red-600 dark:text-red-400"
-                >
-                  <i className="fas fa-sign-out-alt mr-2"></i>
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Profile - Desktop Only */}
+            <div className="hidden md:block">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center space-x-2 p-2"
+                    data-tour="profile"
+                  >
+                    <UserAvatar
+                      userId={user.id}
+                      username={user.username}
+                      size={32}
+                      className="h-8 w-8"
+                    />
+                    <span className="hidden sm:block text-sm font-medium">
+                      {user.firstName || user.username}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => handleNavigation("/profile")}>
+                    <i className="fas fa-user mr-2"></i>
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleNavigation("/profile/settings")}
+                  >
+                    <i className="fas fa-cog mr-2"></i>
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation("/wallet")}>
+                    <i className="fas fa-wallet mr-2"></i>
+                    Wallet
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation("/friends")}>
+                    <i className="fas fa-users mr-2"></i>
+                    Friends
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation("/shop")}>
+                    <i className="fas fa-shopping-cart mr-2"></i>
+                    Shop
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation("/history")}>
+                    <i className="fas fa-history mr-2"></i>
+                    History
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleNavigation("/referrals")}
+                  >
+                    <i className="fas fa-share-alt mr-2"></i>
+                    Referrals
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const event = new CustomEvent("start-tour");
+                      window.dispatchEvent(event);
+                    }}
+                  >
+                    <i className="fas fa-question-circle mr-2"></i>
+                    Website Tour
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => (window.location.href = "/api/logout")}
+                    className="text-red-600 dark:text-red-400"
+                  >
+                    <i className="fas fa-sign-out-alt mr-2"></i>
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>

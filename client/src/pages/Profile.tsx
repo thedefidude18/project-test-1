@@ -101,73 +101,89 @@ export default function Profile() {
       <MobileHeader />
 
       {/* Mobile Profile Header */}
-      <MobileCard className="mb-3 md:hidden rounded-3xl">
-        <div className="flex items-center space-x-3 mb-3">
-          <Avatar className="w-12 h-12">
-            <AvatarImage 
-              src={getAvatarUrl(user.id, user.profileImageUrl, user.firstName || user.username)} 
-              alt={user.firstName || user.username || 'User'} 
-            />
-            <AvatarFallback className="text-sm">
-              {(user.firstName?.[0] || user.username?.[0] || 'U').toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="flex-1">
-            <h1 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              {user.firstName || user.username}
-            </h1>
-            <p className="text-xs text-slate-600 dark:text-slate-400">Level {user.level}</p>
+      <div className="md:hidden bg-gradient-to-br from-primary via-primary/90 to-purple-600 text-white p-6 mb-4">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <Avatar className="w-16 h-16 ring-4 ring-white/20">
+              <AvatarImage 
+                src={getAvatarUrl(user.id, user.profileImageUrl, user.firstName || user.username)} 
+                alt={user.firstName || user.username || 'User'} 
+              />
+              <AvatarFallback className="text-lg bg-white/20 text-white">
+                {(user.firstName?.[0] || user.username?.[0] || 'U').toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-xl font-bold">
+                {user.firstName || user.username}
+              </h1>
+              <p className="text-white/80 text-sm">@{user.username}</p>
+              <div className="flex items-center space-x-2 mt-1">
+                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">Level {user.level}</span>
+                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">{user.xp} XP</span>
+              </div>
+            </div>
           </div>
-
           <Button 
             onClick={() => window.location.href = '/profile/settings'}
             size="sm"
-            className="bg-primary text-white hover:bg-primary/90 rounded-2xl p-2"
+            variant="outline"
+            className="border-white/30 text-white hover:bg-white/20 rounded-xl"
           >
-            <i className="fas fa-edit text-xs"></i>
+            <i className="fas fa-edit text-sm"></i>
           </Button>
         </div>
 
-        {/* Compact Stats Grid */}
-        <div className="grid grid-cols-4 gap-2 mb-3">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-4 gap-4">
           <div className="text-center">
-            <p className="text-sm font-bold text-primary">{formatBalance(user.points || 0)}</p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">Points</p>
+            <p className="text-lg font-bold">{formatBalance(user.points || 0)}</p>
+            <p className="text-xs text-white/70">Points</p>
           </div>
           <div className="text-center">
-            <p className="text-sm font-bold text-emerald-600">{userStats?.wins || 0}</p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">Wins</p>
+            <p className="text-lg font-bold">{userStats?.wins || 0}</p>
+            <p className="text-xs text-white/70">Wins</p>
           </div>
           <div className="text-center">
-            <p className="text-sm font-bold text-amber-600">{user.streak}</p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">Streak</p>
+            <p className="text-lg font-bold">{user.streak}</p>
+            <p className="text-xs text-white/70">Streak</p>
           </div>
           <div className="text-center">
-            <p className="text-sm font-bold text-cyan-600">{achievements.length}</p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">Badges</p>
+            <p className="text-lg font-bold">{achievements.length}</p>
+            <p className="text-xs text-white/70">Badges</p>
           </div>
         </div>
+      </div>
 
-        {/* Quick Actions Menu */}
-        <div className="grid grid-cols-2 gap-2">
+      {/* Quick Actions Menu */}
+      <MobileCard className="mb-4 md:hidden">
+        <div className="grid grid-cols-3 gap-3">
           <Button 
             onClick={() => window.location.href = '/wallet'}
             variant="outline"
             size="sm"
-            className="rounded-2xl text-xs py-1 h-8"
+            className="rounded-2xl text-xs py-3 flex flex-col space-y-1 h-auto"
           >
-            <i className="fas fa-wallet mr-1"></i>
-            Wallet
+            <i className="fas fa-wallet text-lg text-primary"></i>
+            <span>Wallet</span>
           </Button>
           <Button 
             onClick={() => window.location.href = '/settings'}
             variant="outline"
             size="sm"
-            className="rounded-2xl text-xs py-1 h-8"
+            className="rounded-2xl text-xs py-3 flex flex-col space-y-1 h-auto"
           >
-            <i className="fas fa-cog mr-1"></i>
-            Settings
+            <i className="fas fa-cog text-lg text-primary"></i>
+            <span>Settings</span>
+          </Button>
+          <Button 
+            onClick={() => window.location.href = '/history'}
+            variant="outline"
+            size="sm"
+            className="rounded-2xl text-xs py-3 flex flex-col space-y-1 h-auto"
+          >
+            <i className="fas fa-history text-lg text-primary"></i>
+            <span>History</span>
           </Button>
         </div>
       </MobileCard>
@@ -250,11 +266,11 @@ export default function Profile() {
 
         {/* Profile Tabs */}
         <Tabs defaultValue="level" className="space-y-3 md:space-y-6">
-          <TabsList className="grid w-full grid-cols-4 h-8 md:h-10 rounded-2xl">
-            <TabsTrigger value="level" className="text-xs md:text-sm rounded-xl">Level</TabsTrigger>
-            <TabsTrigger value="achievements" className="text-xs md:text-sm rounded-xl">Badges</TabsTrigger>
-            <TabsTrigger value="activity" className="text-xs md:text-sm rounded-xl">Activity</TabsTrigger>
-            <TabsTrigger value="stats" className="text-xs md:text-sm rounded-xl">Stats</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 h-10 md:h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 mx-3 md:mx-0">
+            <TabsTrigger value="level" className="text-xs md:text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Level</TabsTrigger>
+            <TabsTrigger value="achievements" className="text-xs md:text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Badges</TabsTrigger>
+            <TabsTrigger value="activity" className="text-xs md:text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Activity</TabsTrigger>
+            <TabsTrigger value="stats" className="text-xs md:text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Stats</TabsTrigger>
           </TabsList>
 
           <TabsContent value="level" className="space-y-3 md:space-y-6">
