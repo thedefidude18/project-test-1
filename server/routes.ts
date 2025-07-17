@@ -2099,6 +2099,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public profile routes (no authentication required)
+  app.get('/api/public/profile/:username', async (req, res) => {
+    try {
+      const { username } = req.params;
+      
+      // Get user by username
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get user stats
+      const stats = await storage.getUserStats(user.id);
+
+      // Return public profile data (excluding sensitive information)
+      const publicProfile = {
+        id: user.id,
+        username: user.username,
+        firstName: user.firstName,
+        profileImageUrl: user.profileImageUrl,
+        level: user.level,
+        xp: user.xp,
+        streak: user.streak,
+        createdAt: user.createdAt,
+        stats: {
+          wins: stats.wins || 0,
+          activeChallenges: stats.activeChallenges || 0,
+          totalEarnings: stats.totalEarnings || 0,
+        }
+      };
+
+      res.json(publicProfile);
+    } catch (error) {
+      console.error("Error fetching public profile:", error);
+      res.status(500).json({ message: "Failed to fetch public profile" });
+    }
+  });
+
+  app.get('/api/public/achievements/:username', async (req, res) => {
+    try {
+      const { username } = req.params;
+      
+      // Get user by username
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get user achievements
+      const achievements = await storage.getUserAchievements(user.id);
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching public achievements:", error);
+      res.status(500).json({ message: "Failed to fetch public achievements" });
+    }
+  });
+
+  app.get('/api/public/events/:username', async (req, res) => {
+    try {
+      const { username } = req.params;
+      
+      // Get user by username
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get user's public events (recent 10)
+      const events = await storage.getUserCreatedEvents(user.id);
+      
+      // Filter out private events and return only public data
+      const publicEvents = events
+        .filter((event: any) => !event.isPrivate)
+        .slice(0, 10)
+        .map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          category: event.category,
+          status: event.status,
+          createdAt: event.createdAt,
+          endDate: event.endDate,
+        }));
+
+      res.json(publicEvents);
+    } catch (error) {
+      console.error("Error fetching public events:", error);
+      res.status(500).json({ message: "Failed to fetch public events" });
+    }
+  });
+
   // Temporary debug route to check admin status (remove after use)
   app.get('/api/debug/admin-check', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {

@@ -42,7 +42,7 @@ import MobileSplashScreen from "@/components/MobileSplashScreen";
 import TelegramTest from "./pages/TelegramTest";
 import Bantzz from "./pages/Bantzz";
 import NotificationTest from "./pages/NotificationTest";
-
+import PublicProfile from "@/pages/PublicProfile";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -119,6 +119,8 @@ function Router() {
           <Route path="/bantzz" component={Bantzz} />
           <Route path="/notifications/test" component={NotificationTest} />
           <Route path="/ref/:code" component={Landing} />
+          <Route path="/@:username" component={PublicProfile} />
+          <Route path="/u/:username" component={PublicProfile} />
         </>
       )}
       <Route component={NotFound} />

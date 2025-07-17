@@ -2356,6 +2356,41 @@ export class DatabaseStorage implements IStorage {
   async removePushSubscription(endpoint: string): Promise<void> {
     await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
   }
+
+  async getUserByUsernameOrEmail(usernameOrEmail: string): Promise<User | undefined> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(
+          or(
+            eq(users.username, usernameOrEmail),
+            eq(users.email, usernameOrEmail)
+          )
+        )
+        .limit(1);
+
+      return user;
+    } catch (error) {
+      console.error("Error fetching user by username or email:", error);
+      throw new Error("Failed to fetch user");
+    }
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, username))
+        .limit(1);
+
+      return user;
+    } catch (error) {
+      console.error("Error fetching user by username:", error);
+      throw new Error("Failed to fetch user");
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
