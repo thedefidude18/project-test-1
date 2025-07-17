@@ -1,4 +1,11 @@
-/* SF Pro Font Configuration */
+/* SF Pro Rounded Font Configuration */
+@font-face {
+  font-family: 'SF Pro Rounded';
+  src: url('/fonts/sf-pro-rounded/SF-Pro-Rounded.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* Mobile Compact Design Styles */
 @import './styles/mobile-compact.css';
