@@ -225,7 +225,6 @@ export default function History() {
               <TabsTrigger
                 value="discuss"
                 className="flex items-center space-x-1"
-                style={{ backgroundColor: "#7440ff", color: "white" }}
               >
                 <MessageCircle className="w-4 h-4" />
                 <span className="hidden sm:inline">Discuss</span>

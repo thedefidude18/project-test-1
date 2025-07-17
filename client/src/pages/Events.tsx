@@ -47,6 +47,8 @@ const createEventSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long"),
   description: z.string().optional(),
   category: z.string().min(1, "Category is required"),
+  eventType: z.string().min(1, "Event type is required"),
+  bannerUrl: z.string().optional(),
   entryFee: z.string().min(1, "Entry fee is required"),
   endDate: z.string().min(1, "End date is required"),
   isPrivate: z.boolean().default(false),
@@ -88,6 +90,8 @@ export default function Events() {
       title: "",
       description: "",
       category: "",
+      eventType: "",
+      bannerUrl: "",
       entryFee: "",
       endDate: "",
       isPrivate: false,
@@ -198,7 +202,6 @@ export default function Events() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
-      <MobileHeader />
 
       <div className="max-w-7xl mx-auto px-3 md:px-4 sm:px-6 lg:px-8 py-3 md:py-8">
         {/* Category Navigation Bar */}
@@ -306,6 +309,53 @@ export default function Events() {
                               ))}
                             </SelectContent>
                           </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="eventType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Event Type</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select event type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="prediction">Prediction</SelectItem>
+                              <SelectItem value="poll">Poll</SelectItem>
+                              <SelectItem value="quiz">Quiz</SelectItem>
+                              <SelectItem value="tournament">Tournament</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="bannerUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Event Banner (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter banner image URL..."
+                              {...field}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Add an image URL to make your event more attractive
+                          </p>
                           <FormMessage />
                         </FormItem>
                       )}

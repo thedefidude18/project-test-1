@@ -11,10 +11,10 @@ interface MobileHeaderProps {
 export function MobileHeader({ title, onBack, rightContent }: MobileHeaderProps) {
   const [location, navigate] = useLocation();
   
-  // Show logo only on home page
+  // Only show header for pages that need back navigation
+  // Home and Events pages have their own headers with logo
   const isHomePage = location === "/" || location === "/events" || location === "/home";
   
-  // Don't show header on home page as it has its own hero section
   if (isHomePage) {
     return null;
   }
