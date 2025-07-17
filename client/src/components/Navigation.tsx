@@ -133,6 +133,21 @@ export function Navigation() {
               <Trophy className="w-5 h-5" />
             </button>
 
+            {/* Gemini AI - Bantzz */}
+            <button
+              onClick={() => handleNavigation("/bantzz")}
+              className="flex items-center space-x-1 p-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+              title="Bantzz AI Assistant"
+            >
+              <div className="w-5 h-5 relative">
+                <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-pulse"></div>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-spin opacity-50"></div>
+                <div className="absolute inset-1 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center">
+                  <span className="text-xs font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">AI</span>
+                </div>
+              </div>
+            </button>
+
             {/* Notifications */}
             <button
               onClick={() => handleNavigation("/notifications")}
