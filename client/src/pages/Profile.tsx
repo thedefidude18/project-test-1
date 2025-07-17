@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
@@ -100,93 +101,100 @@ export default function Profile() {
       <Navigation />
       <MobileHeader />
 
-      {/* Mobile Profile Header */}
-      <div className="md:hidden bg-gradient-to-br from-primary via-primary/90 to-purple-600 text-white p-6 mb-4">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <Avatar className="w-16 h-16 ring-4 ring-white/20">
+      {/* Mobile Profile Header - Cleaner Design */}
+      <div className="md:hidden">
+        {/* Profile Avatar and Name Section */}
+        <div className="bg-white dark:bg-slate-800 p-6 mb-6 rounded-b-3xl">
+          <div className="flex flex-col items-center text-center">
+            <Avatar className="w-24 h-24 mb-4 ring-4 ring-primary/20">
               <AvatarImage 
                 src={getAvatarUrl(user.id, user.profileImageUrl, user.firstName || user.username)} 
                 alt={user.firstName || user.username || 'User'} 
               />
-              <AvatarFallback className="text-lg bg-white/20 text-white">
+              <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                 {(user.firstName?.[0] || user.username?.[0] || 'U').toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <h1 className="text-xl font-bold">
-                {user.firstName || user.username}
-              </h1>
-              <p className="text-white/80 text-sm">@{user.username}</p>
-              <div className="flex items-center space-x-2 mt-1">
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">Level {user.level}</span>
-                <span className="text-xs bg-white/20 px-2 py-1 rounded-full">{user.xp} XP</span>
-              </div>
+            
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+              {user.firstName || user.username}
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 mb-4">@{user.username}</p>
+            
+            <div className="flex items-center space-x-3">
+              <Badge className="bg-primary/10 text-primary border-primary/20">
+                Level {user.level}
+              </Badge>
+              <Badge variant="outline" className="text-slate-600">
+                {user.xp} XP
+              </Badge>
             </div>
           </div>
-          <Button 
-            onClick={() => window.location.href = '/profile/settings'}
-            size="sm"
-            variant="outline"
-            className="border-white/30 text-white hover:bg-white/20 rounded-xl"
-          >
-            <i className="fas fa-edit text-sm"></i>
-          </Button>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-4 gap-4">
-          <div className="text-center">
-            <p className="text-lg font-bold">{formatBalance(user.points || 0)}</p>
-            <p className="text-xs text-white/70">Points</p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-bold">{userStats?.wins || 0}</p>
-            <p className="text-xs text-white/70">Wins</p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-bold">{user.streak}</p>
-            <p className="text-xs text-white/70">Streak</p>
-          </div>
-          <div className="text-center">
-            <p className="text-lg font-bold">{achievements.length}</p>
-            <p className="text-xs text-white/70">Badges</p>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 gap-4 mb-6 px-4">
+          <MobileCard className="text-center py-6">
+            <div className="text-2xl font-bold text-primary mb-1">
+              {formatBalance(user.points || 0)}
+            </div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">Points</div>
+          </MobileCard>
+          
+          <MobileCard className="text-center py-6">
+            <div className="text-2xl font-bold text-emerald-600 mb-1">
+              {userStats?.wins || 0}
+            </div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">Wins</div>
+          </MobileCard>
+          
+          <MobileCard className="text-center py-6">
+            <div className="text-2xl font-bold text-amber-600 mb-1">
+              {user.streak}
+            </div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">Streak</div>
+          </MobileCard>
+          
+          <MobileCard className="text-center py-6">
+            <div className="text-2xl font-bold text-cyan-600 mb-1">
+              {achievements.length}
+            </div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">Badges</div>
+          </MobileCard>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="px-4 mb-6">
+          <div className="grid grid-cols-3 gap-3">
+            <Button 
+              onClick={() => window.location.href = '/wallet'}
+              className="flex flex-col items-center space-y-2 h-16 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
+              variant="outline"
+            >
+              <i className="fas fa-wallet text-xl"></i>
+              <span className="text-sm">Wallet</span>
+            </Button>
+            
+            <Button 
+              onClick={() => window.location.href = '/settings'}
+              className="flex flex-col items-center space-y-2 h-16 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-300"
+              variant="outline"
+            >
+              <i className="fas fa-cog text-xl"></i>
+              <span className="text-sm">Settings</span>
+            </Button>
+            
+            <Button 
+              onClick={() => window.location.href = '/history'}
+              className="flex flex-col items-center space-y-2 h-16 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-300"
+              variant="outline"
+            >
+              <i className="fas fa-history text-xl"></i>
+              <span className="text-sm">History</span>
+            </Button>
           </div>
         </div>
       </div>
-
-      {/* Quick Actions Menu */}
-      <MobileCard className="mb-4 md:hidden">
-        <div className="grid grid-cols-3 gap-3">
-          <Button 
-            onClick={() => window.location.href = '/wallet'}
-            variant="outline"
-            size="sm"
-            className="rounded-2xl text-xs py-3 flex flex-col space-y-1 h-auto"
-          >
-            <i className="fas fa-wallet text-lg text-primary"></i>
-            <span>Wallet</span>
-          </Button>
-          <Button 
-            onClick={() => window.location.href = '/settings'}
-            variant="outline"
-            size="sm"
-            className="rounded-2xl text-xs py-3 flex flex-col space-y-1 h-auto"
-          >
-            <i className="fas fa-cog text-lg text-primary"></i>
-            <span>Settings</span>
-          </Button>
-          <Button 
-            onClick={() => window.location.href = '/history'}
-            variant="outline"
-            size="sm"
-            className="rounded-2xl text-xs py-3 flex flex-col space-y-1 h-auto"
-          >
-            <i className="fas fa-history text-lg text-primary"></i>
-            <span>History</span>
-          </Button>
-        </div>
-      </MobileCard>
 
       {/* Desktop Profile Header */}
       <div className="hidden md:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -264,17 +272,18 @@ export default function Profile() {
         </Card>
       </div>
 
-        {/* Profile Tabs */}
-        <Tabs defaultValue="level" className="space-y-3 md:space-y-6">
-          <TabsList className="grid w-full grid-cols-4 h-10 md:h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 mx-3 md:mx-0">
-            <TabsTrigger value="level" className="text-xs md:text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Level</TabsTrigger>
-            <TabsTrigger value="achievements" className="text-xs md:text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Badges</TabsTrigger>
-            <TabsTrigger value="activity" className="text-xs md:text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Activity</TabsTrigger>
-            <TabsTrigger value="stats" className="text-xs md:text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Stats</TabsTrigger>
+      {/* Profile Tabs */}
+      <div className="px-4 md:px-0">
+        <Tabs defaultValue="level" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800">
+            <TabsTrigger value="level" className="text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Level</TabsTrigger>
+            <TabsTrigger value="achievements" className="text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Badges</TabsTrigger>
+            <TabsTrigger value="activity" className="text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Activity</TabsTrigger>
+            <TabsTrigger value="stats" className="text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Stats</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="level" className="space-y-3 md:space-y-6">
-            <MobileCard className="md:p-6">
+          <TabsContent value="level" className="space-y-6">
+            <MobileCard>
               <LevelProgress 
                 level={user.level}
                 currentXP={user.xp}
@@ -284,209 +293,178 @@ export default function Profile() {
             </MobileCard>
           </TabsContent>
 
-          <TabsContent value="achievements" className="space-y-3 md:space-y-6">
+          <TabsContent value="achievements" className="space-y-6">
             <MobileCard>
-              <div className="md:hidden mb-3">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Badges ({achievements.length})</h3>
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                  Your Badges
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400">
+                  {achievements.length} badges earned
+                </p>
               </div>
-              <div className="hidden md:block">
-                <CardHeader>
-                  <CardTitle>Achievements ({achievements.length})</CardTitle>
-                </CardHeader>
-              </div>
-              <CardContent>
-                {achievements.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="fas fa-trophy text-4xl text-slate-400 mb-4"></i>
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                      No achievements yet
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Start participating to unlock achievements!
-                    </p>
+              
+              {achievements.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i className="fas fa-trophy text-2xl text-slate-400"></i>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {achievements.map((achievement: any) => (
-                      <div
-                        key={achievement.id}
-                        className={`p-4 rounded-lg ${getAchievementColor(achievement.category)}`}
-                      >
-                        <div className="flex items-center space-x-3 mb-3">
-                          <div className="w-10 h-10 bg-current rounded-full flex items-center justify-center opacity-20">
-                            <i className={`${getAchievementIcon(achievement.icon, achievement.category)} text-current text-lg opacity-100`}></i>
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold">{achievement.name}</h3>
-                            <p className="text-sm opacity-80">{achievement.description}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs opacity-60">
-                            Unlocked {formatDistanceToNow(new Date(achievement.unlockedAt), { addSuffix: true })}
-                          </p>
-                          <div className="flex space-x-1">
-                            {achievement.xpReward > 0 && (
-                              <Badge variant="secondary" className="text-xs">
-                                +{achievement.xpReward} XP
-                              </Badge>
-                            )}
-                            {achievement.pointsReward > 0 && (
-                              <Badge variant="secondary" className="text-xs">
-                                +{achievement.pointsReward} pts
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                    No badges yet
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    Start participating to unlock your first badge!
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {achievements.map((achievement: any) => (
+                    <div
+                      key={achievement.id}
+                      className="flex items-center space-x-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50"
+                    >
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                        <i className={`${getAchievementIcon(achievement.icon, achievement.category)} text-primary text-lg`}></i>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-slate-900 dark:text-white">
+                          {achievement.name}
+                        </h4>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                          {achievement.description}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                          {formatDistanceToNow(new Date(achievement.unlockedAt), { addSuffix: true })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </MobileCard>
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-6">
-            <MobileCard className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {recentTransactions.length === 0 ? (
-                  <div className="text-center py-12">
-                    <i className="fas fa-history text-4xl text-slate-400 mb-4"></i>
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                      No recent activity
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      Your recent activities will appear here.
-                    </p>
+            <MobileCard>
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                  Recent Activity
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400">
+                  Your latest transactions
+                </p>
+              </div>
+              
+              {recentTransactions.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i className="fas fa-history text-2xl text-slate-400"></i>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {recentTransactions.map((transaction: any) => (
-                      <div
-                        key={transaction.id}
-                        className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-600 rounded-lg"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            transaction.type === 'deposit' || transaction.type === 'win' || transaction.type === 'referral'
-                              ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400'
-                              : 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400'
-                          }`}>
-                            <i className={`fas ${
-                              transaction.type === 'deposit' ? 'fa-plus' :
-                              transaction.type === 'withdrawal' ? 'fa-minus' :
-                              transaction.type === 'bet' ? 'fa-dice' :
-                              transaction.type === 'win' ? 'fa-trophy' :
-                              transaction.type === 'challenge' ? 'fa-swords' :
-                              transaction.type === 'referral' ? 'fa-gift' :
-                              'fa-circle'
-                            } text-xs`}></i>
-                          </div>
-                          <div>
-                            <p className="font-medium text-slate-900 dark:text-slate-100 capitalize">
-                              {transaction.type}
-                            </p>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
-                              {transaction.description}
-                            </p>
-                          </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                    No activity yet
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    Your activities will appear here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentTransactions.map((transaction: any) => (
+                    <div
+                      key={transaction.id}
+                      className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          transaction.type === 'deposit' || transaction.type === 'win' || transaction.type === 'referral'
+                            ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400'
+                            : 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400'
+                        }`}>
+                          <i className={`fas ${
+                            transaction.type === 'deposit' ? 'fa-plus' :
+                            transaction.type === 'withdrawal' ? 'fa-minus' :
+                            transaction.type === 'bet' ? 'fa-dice' :
+                            transaction.type === 'win' ? 'fa-trophy' :
+                            transaction.type === 'challenge' ? 'fa-swords' :
+                            transaction.type === 'referral' ? 'fa-gift' :
+                            'fa-circle'
+                          } text-sm`}></i>
                         </div>
-                        <div className="text-right">
-                          <p className={`font-semibold ${
-                            transaction.type === 'deposit' || transaction.type === 'win' || transaction.type === 'referral'
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-red-600 dark:text-red-400'
-                          }`}>
-                            {transaction.type === 'deposit' || transaction.type === 'win' || transaction.type === 'referral' ? '+' : '-'}
-                            ₦{Math.abs(parseFloat(transaction.amount)).toLocaleString()}
+                        <div>
+                          <p className="font-medium text-slate-900 dark:text-slate-100 capitalize">
+                            {transaction.type}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500">
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
                             {formatDistanceToNow(new Date(transaction.createdAt), { addSuffix: true })}
                           </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
+                      <div className="text-right">
+                        <p className={`font-bold ${
+                          transaction.type === 'deposit' || transaction.type === 'win' || transaction.type === 'referral'
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}>
+                          {transaction.type === 'deposit' || transaction.type === 'win' || transaction.type === 'referral' ? '+' : '-'}
+                          ₦{Math.abs(parseFloat(transaction.amount)).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </MobileCard>
           </TabsContent>
 
           <TabsContent value="stats" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <MobileCard className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-lg">Performance</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Total Wins</span>
-                      <span className="font-semibold">{userStats?.wins || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Active Challenges</span>
-                      <span className="font-semibold">{userStats?.activeChallenges || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Current Streak</span>
-                      <span className="font-semibold">{user.streak} days</span>
-                    </div>
+            <div className="grid grid-cols-1 gap-6">
+              <MobileCard>
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                    Performance Stats
+                  </h3>
+                </div>
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">Total Wins</span>
+                    <span className="text-2xl font-bold text-emerald-600">{userStats?.wins || 0}</span>
                   </div>
-                </CardContent>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">Current Streak</span>
+                    <span className="text-2xl font-bold text-amber-600">{user.streak}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">Active Challenges</span>
+                    <span className="text-2xl font-bold text-cyan-600">{userStats?.activeChallenges || 0}</span>
+                  </div>
+                </div>
               </MobileCard>
 
-              <MobileCard className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-lg">Progress</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Current Level</span>
-                      <span className="font-semibold">Level {user.level}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Total XP</span>
-                      <span className="font-semibold">{user.xp} XP</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Points Balance</span>
-                      <span className="font-semibold">{user.points} pts</span>
-                    </div>
+              <MobileCard>
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                    Account Info
+                  </h3>
+                </div>
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">Member Since</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">
+                      {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
+                    </span>
                   </div>
-                </CardContent>
-              </MobileCard>
-
-              <MobileCard className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-lg">Social</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Friends Online</span>
-                      <span className="font-semibold">{userStats?.friendsOnline || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Achievements</span>
-                      <span className="font-semibold">{achievements.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600 dark:text-slate-400">Referral Code</span>
-                      <span className="font-mono text-sm bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
-                        {user.referralCode || 'NONE'}
-                      </span>
-                    </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">Referral Code</span>
+                    <span className="font-mono text-sm bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-lg">
+                      {user.referralCode || 'NONE'}
+                    </span>
                   </div>
-                </CardContent>
+                </div>
               </MobileCard>
             </div>
           </TabsContent>
         </Tabs>
+      </div>
 
       <MobileNavigation />
     </MobileLayout>
