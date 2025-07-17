@@ -55,6 +55,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByUsernameOrEmail(usernameOrEmail: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  createUser(user: any): Promise<User>;
   updateUserProfile(id: string, updates: Partial<User>): Promise<User>;
   updateNotificationPreferences(userId: string, preferences: any): Promise<void>;
   getUserStats(userId: string): Promise<any>;
@@ -85,6 +86,7 @@ export interface IStorage {
   toggleMessageReaction(messageId: string, userId: string, emoji: string): Promise<any>;
   getMessageReactions(messageId: string): Promise<any[]>;
   getEventParticipantsWithUsers(eventId: number): Promise<any[]>;
+  searchEventsByTitle(query: string): Promise<Event[]>;
 
   // Event Pool operations
   adminSetEventResult(eventId: number, result: boolean): Promise<Event>;
@@ -232,6 +234,19 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async createUser(userData: any): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...userData,
+        referralCode: userData.referralCode || this.generateReferralCode(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return user;
+  }
+
   async updateUserProfile(id: string, updates: Partial<User>): Promise<User> {
     const [user] = await db
       .update(users)
@@ -268,6 +283,20 @@ export class DatabaseStorage implements IStorage {
   async getEventById(id: number): Promise<Event | undefined> {
     const [event] = await db.select().from(events).where(eq(events.id, id));
     return event;
+  }
+
+  async searchEventsByTitle(query: string): Promise<Event[]> {
+    return await db
+      .select()
+      .from(events)
+      .where(
+        or(
+          sql`LOWER(${events.title}) LIKE LOWER(${'%' + query + '%'})`,
+          sql`LOWER(${events.description}) LIKE LOWER(${'%' + query + '%'})`
+        )
+      )
+      .orderBy(desc(events.createdAt))
+      .limit(10);
   }
 
   async createEvent(event: InsertEvent): Promise<Event> {

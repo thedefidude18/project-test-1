@@ -68,6 +68,16 @@ Preferred communication style: Simple, everyday language.
   - Coin Shop redesign with cleaner, more professional appearance
   - Verified leaderboard uses real database data (users table with points, XP, level)
   - Replaced loading spinners with skeleton loading states throughout the application
+✓ **Telegram Webhook & Chrome Extension (January 2025)** - Complete bidirectional integration:
+  - Implemented Telegram webhook endpoint for receiving messages from Telegram groups
+  - Added automatic Telegram user creation with dedicated fields (telegram_id, telegram_username, is_telegram_user)
+  - Created hashtag-based message targeting system (#event123 format) for event-specific chat sync
+  - Built comprehensive Chrome extension with popup interface, content scripts, and background service worker
+  - Extension features: balance display, notifications, event creation from web pages, Telegram sharing
+  - Added support for 10+ popular websites (news, social, crypto, sports) with floating action buttons
+  - Real-time message broadcasting via Pusher for seamless Telegram → BetChat synchronization
+  - Comprehensive testing suite for webhook functionality with multiple scenarios
+  - Complete database schema updates with new Telegram user fields
 
 ## System Architecture
 

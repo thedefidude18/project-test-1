@@ -147,66 +147,116 @@ export class TelegramSyncService {
       const eventId = parseInt(eventMatch[1]);
       
       try {
-        // Create message in event chat
-        const virtualUserId = `telegram_${senderId}`;
+        // Create or find telegram user in database
+        const telegramUser = await this.getOrCreateTelegramUser(senderId, senderName);
         
-        await storage.createEventMessage(eventId, virtualUserId, messageText, null, [], {
-          id: virtualUserId,
-          firstName: senderName,
-          username: senderName,
-          profileImageUrl: null,
-          isTelegramUser: true,
-        });
+        // Create message in event chat
+        const newMessage = await storage.createEventMessage(eventId, telegramUser.id, messageText, null, []);
+
+        // Get message with user info for real-time broadcast
+        const messageWithUser = {
+          ...newMessage,
+          user: telegramUser,
+          source: 'telegram'
+        };
 
         // Broadcast to event participants via Pusher
         await this.pusher.trigger(`event-${eventId}`, 'new-message', {
-          type: 'event_message',
+          message: messageWithUser,
           eventId: eventId,
-          source: 'telegram',
-          sender: senderName
+          userId: telegramUser.id,
+          source: 'telegram'
         });
 
         console.log(`✅ Telegram message synced to Event ${eventId}`);
         
       } catch (error) {
         console.error(`❌ Failed to sync message to event ${eventId}:`, error);
-        // Fall back to global chat
-        await this.syncToGlobalChat(senderId, senderName, messageText, timestamp);
       }
       
     } else {
-      // Route to global chat
-      await this.syncToGlobalChat(senderId, senderName, messageText, timestamp);
+      // Check if message contains event title for smart routing
+      const eventId = await this.findEventByTitle(messageText);
+      if (eventId) {
+        try {
+          const telegramUser = await this.getOrCreateTelegramUser(senderId, senderName);
+          const newMessage = await storage.createEventMessage(eventId, telegramUser.id, messageText, null, []);
+          
+          const messageWithUser = {
+            ...newMessage,
+            user: telegramUser,
+            source: 'telegram'
+          };
+
+          await this.pusher.trigger(`event-${eventId}`, 'new-message', {
+            message: messageWithUser,
+            eventId: eventId,
+            userId: telegramUser.id,
+            source: 'telegram'
+          });
+
+          console.log(`✅ Telegram message auto-routed to Event ${eventId} based on title`);
+        } catch (error) {
+          console.error(`❌ Failed to auto-route message to event ${eventId}:`, error);
+        }
+      }
     }
   }
 
-  private async syncToGlobalChat(senderId: string, senderName: string, messageText: string, timestamp: string): Promise<void> {
-    const virtualUserId = `telegram_${senderId}`;
+  private async getOrCreateTelegramUser(telegramId: string, senderName: string): Promise<any> {
+    const telegramUserId = `telegram_${telegramId}`;
     
-    // Store message in BetChat database
-    const chatMessage = await storage.createGlobalChatMessage({
-      id: `tg_${Date.now()}`,
-      userId: virtualUserId,
-      user: {
-        id: virtualUserId,
-        firstName: senderName,
-        username: senderName,
-        profileImageUrl: null,
-        isTelegramUser: true,
-      },
-      message: messageText,
-      createdAt: timestamp,
-      source: 'telegram'
-    });
+    try {
+      // Check if user already exists
+      let user = await storage.getUser(telegramUserId);
+      
+      if (!user) {
+        // Create new telegram user
+        user = await storage.createUser({
+          id: telegramUserId,
+          firstName: senderName,
+          username: senderName.toLowerCase().replace(/[^a-z0-9]/g, ''),
+          email: `${telegramUserId}@telegram.betchat.local`,
+          profileImageUrl: null,
+          isTelegramUser: true,
+          telegramId: telegramId,
+          coins: 0,
+          points: 0,
+          level: 1,
+          xp: 0
+        });
+        
+        console.log(`✅ Created new Telegram user: ${senderName} (${telegramUserId})`);
+      }
+      
+      return user;
+    } catch (error) {
+      console.error(`❌ Error getting/creating Telegram user:`, error);
+      throw error;
+    }
+  }
 
-    // Broadcast to all BetChat users via Pusher
-    await this.pusher.trigger('global-chat', 'new-message', {
-      type: 'chat_message',
-      message: chatMessage,
-      source: 'telegram'
-    });
-
-    console.log("✅ Telegram message synced to Global Chat");
+  private async findEventByTitle(messageText: string): Promise<number | null> {
+    try {
+      // Extract potential event titles from message
+      const words = messageText.split(' ').filter(word => word.length > 3);
+      
+      for (const word of words) {
+        const events = await storage.searchEventsByTitle(word);
+        if (events.length > 0) {
+          // Return the most recent active event
+          const activeEvent = events.find(e => e.status === 'active');
+          if (activeEvent) {
+            return activeEvent.id;
+          }
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error finding event by title:', error);
+      return null;
+    }
   }
 
   private async getSenderName(message: any): Promise<string> {

@@ -3484,6 +3484,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Telegram webhook for bot messages
+  app.post('/api/telegram/webhook', async (req, res) => {
+    try {
+      const update = req.body;
+      
+      // Verify webhook token if set
+      const webhookToken = process.env.TELEGRAM_WEBHOOK_TOKEN;
+      if (webhookToken && req.query.token !== webhookToken) {
+        return res.status(401).json({ error: 'Invalid webhook token' });
+      }
+      
+      // Handle incoming message
+      if (update.message && update.message.text) {
+        const messageText = update.message.text;
+        const chatId = update.message.chat.id;
+        const userId = update.message.from.id;
+        const username = update.message.from.username || update.message.from.first_name || 'Telegram User';
+        
+        console.log(`📨 Telegram Bot → BetChat: ${username}: ${messageText}`);
+        
+        // Check if message is for a specific event (hashtag format: #event123)
+        const eventMatch = messageText.match(/#event(\d+)/);
+        
+        if (eventMatch) {
+          const eventId = parseInt(eventMatch[1]);
+          
+          try {
+            // Create or get telegram user
+            const telegramUserId = `telegram_${userId}`;
+            let telegramUser = await storage.getUser(telegramUserId);
+            
+            if (!telegramUser) {
+              telegramUser = await storage.createUser({
+                id: telegramUserId,
+                firstName: username,
+                username: username.toLowerCase().replace(/[^a-z0-9]/g, ''),
+                email: `${telegramUserId}@telegram.betchat.local`,
+                profileImageUrl: null,
+                isTelegramUser: true,
+                telegramId: userId.toString(),
+                coins: 0,
+                points: 0,
+                level: 1,
+                xp: 0
+              });
+            }
+            
+            // Create message in event chat
+            const newMessage = await storage.createEventMessage(eventId, telegramUser.id, messageText, null, []);
+            
+            // Broadcast to event participants via Pusher
+            await pusher.trigger(`event-${eventId}`, 'new-message', {
+              message: {
+                ...newMessage,
+                user: telegramUser,
+                source: 'telegram'
+              },
+              eventId: eventId,
+              userId: telegramUser.id,
+              source: 'telegram'
+            });
+            
+            console.log(`✅ Telegram webhook message synced to Event ${eventId}`);
+            
+          } catch (error) {
+            console.error(`❌ Failed to sync webhook message to event ${eventId}:`, error);
+          }
+        }
+      }
+      
+      // Respond to Telegram
+      res.json({ ok: true });
+      
+    } catch (error) {
+      console.error('❌ Error processing Telegram webhook:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // Setup OG image generation routes
   setupOGImageRoutes(app, storage);
 

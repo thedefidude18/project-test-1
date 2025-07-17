@@ -45,6 +45,10 @@ export const users = pgTable("users", {
   streak: integer("streak").default(0),
   status: varchar("status").default("active"), // active, banned, suspended, inactive
   isAdmin: boolean("is_admin").default(false),
+  isTelegramUser: boolean("is_telegram_user").default(false),
+  telegramId: varchar("telegram_id"),
+  telegramUsername: varchar("telegram_username"),
+  coins: integer("coins").default(0), // For Telegram users
   lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
