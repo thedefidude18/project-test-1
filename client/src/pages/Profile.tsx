@@ -98,7 +98,6 @@ export default function Profile() {
 
   return (
     <MobileLayout>
-      <Navigation />
       <MobileHeader />
 
       {/* Mobile Profile Header - Cleaner Design */}

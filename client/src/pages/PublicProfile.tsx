@@ -122,7 +122,6 @@ export default function PublicProfile() {
 
   return (
     <MobileLayout>
-      <Navigation />
       <MobileHeader />
 
       {/* Public Profile Header */}
