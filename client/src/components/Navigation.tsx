@@ -16,7 +16,20 @@ import {
 import { formatBalance } from "@/utils/currencyUtils";
 import { getAvatarUrl } from "@/utils/avatarUtils";
 import { UserAvatar } from "@/components/UserAvatar";
-import { Bell, Settings, Users, Calendar, Trophy, Wallet, Home, Menu, X, Sun, Moon, ShoppingCart } from "lucide-react";
+import {
+  Bell,
+  Settings,
+  Users,
+  Calendar,
+  Trophy,
+  Wallet,
+  Home,
+  Menu,
+  X,
+  Sun,
+  Moon,
+  ShoppingCart,
+} from "lucide-react";
 import { Link } from "wouter"; // Import Link from wouter
 
 export function Navigation() {
@@ -102,7 +115,7 @@ export function Navigation() {
             <button
               onClick={() => handleNavigation("/wallet")}
               className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors"
-              style={{ backgroundColor: '#7440ff', color: 'white' }}
+              style={{ backgroundColor: "#7440ff", color: "white" }}
               data-tour="wallet"
             >
               <div className="flex items-center space-x-1">
@@ -118,7 +131,9 @@ export function Navigation() {
               <div className="flex items-center space-x-1 border-l border-white/20 pl-3">
                 <i className="fas fa-coins text-yellow-400"></i>
                 <span className="text-sm font-medium">
-                  {typeof balance === "object" ? (balance.coins || 0).toLocaleString() : '0'}
+                  {typeof balance === "object"
+                    ? (balance.coins || 0).toLocaleString()
+                    : "0"}
                 </span>
               </div>
             </button>
@@ -130,7 +145,11 @@ export function Navigation() {
               data-tour="leaderboard"
               title="Leaderboard"
             >
-              <Trophy className="w-5 h-5" />
+              <img
+                src="/assets/notify22.svg"
+                alt="Calendar"
+                className="w-7 h-7"
+              />
             </button>
 
             {/* Gemini AI - Bantzz */}
@@ -143,7 +162,9 @@ export function Navigation() {
                 <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-pulse"></div>
                 <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-spin opacity-50"></div>
                 <div className="absolute inset-1 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center">
-                  <span className="text-xs font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">AI</span>
+                  <span className="text-xs font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+                    AI
+                  </span>
                 </div>
               </div>
             </button>
@@ -154,15 +175,17 @@ export function Navigation() {
               className="relative p-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
               data-tour="notifications"
             >
-              <i className="fas fa-bell"></i>
+              <img
+                src="/assets/notify22.svg"
+                alt="Calendar"
+                className="w-7 h-7"
+              />
               {unreadCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </Badge>
               )}
             </button>
-
-
 
             {/* Profile - Desktop Only */}
             <div className="hidden md:block">
@@ -185,7 +208,9 @@ export function Navigation() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => handleNavigation("/profile")}>
+                  <DropdownMenuItem
+                    onClick={() => handleNavigation("/profile")}
+                  >
                     <i className="fas fa-user mr-2"></i>
                     Profile
                   </DropdownMenuItem>
@@ -199,7 +224,9 @@ export function Navigation() {
                     <i className="fas fa-wallet mr-2"></i>
                     Wallet
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigation("/friends")}>
+                  <DropdownMenuItem
+                    onClick={() => handleNavigation("/friends")}
+                  >
                     <i className="fas fa-users mr-2"></i>
                     Friends
                   </DropdownMenuItem>
@@ -207,7 +234,9 @@ export function Navigation() {
                     <i className="fas fa-shopping-cart mr-2"></i>
                     Shop
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigation("/history")}>
+                  <DropdownMenuItem
+                    onClick={() => handleNavigation("/history")}
+                  >
                     <i className="fas fa-history mr-2"></i>
                     History
                   </DropdownMenuItem>

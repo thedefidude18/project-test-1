@@ -9,9 +9,28 @@ import { OnboardingTooltip } from "@/components/OnboardingTooltip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
@@ -47,19 +66,19 @@ export default function Events() {
 
   // Check if user should see onboarding
   useEffect(() => {
-    const hasSeenOnboarding = localStorage.getItem('hasSeenEventsOnboarding');
+    const hasSeenOnboarding = localStorage.getItem("hasSeenEventsOnboarding");
     if (!hasSeenOnboarding && user) {
       setShowOnboarding(true);
     }
   }, [user]);
 
   const handleOnboardingComplete = () => {
-    localStorage.setItem('hasSeenEventsOnboarding', 'true');
+    localStorage.setItem("hasSeenEventsOnboarding", "true");
     setShowOnboarding(false);
   };
 
   const handleOnboardingClose = () => {
-    localStorage.setItem('hasSeenEventsOnboarding', 'true');
+    localStorage.setItem("hasSeenEventsOnboarding", "true");
     setShowOnboarding(false);
   };
 
@@ -76,7 +95,11 @@ export default function Events() {
     },
   });
 
-  const { data: events = [], isLoading, error: eventsError } = useQuery({
+  const {
+    data: events = [],
+    isLoading,
+    error: eventsError,
+  } = useQuery({
     queryKey: ["/api/events"],
     retry: false,
     onError: (error: Error) => {
@@ -144,11 +167,13 @@ export default function Events() {
   const filteredEvents = useMemo(() => {
     return events.filter((event: any) => {
       const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = !searchTerm || 
+      const matchesSearch =
+        !searchTerm ||
         event.title.toLowerCase().includes(searchLower) ||
-        (event.description || '').toLowerCase().includes(searchLower) ||
+        (event.description || "").toLowerCase().includes(searchLower) ||
         event.category.toLowerCase().includes(searchLower);
-      const matchesCategory = categoryFilter === "all" || event.category === categoryFilter;
+      const matchesCategory =
+        categoryFilter === "all" || event.category === categoryFilter;
       return matchesSearch && matchesCategory;
     });
   }, [events, searchTerm, categoryFilter]);
@@ -159,7 +184,7 @@ export default function Events() {
   const loadMoreEvents = () => {
     setIsLoadingMore(true);
     setTimeout(() => {
-      setVisibleEvents(prev => Math.min(prev + 12, filteredEvents.length));
+      setVisibleEvents((prev) => Math.min(prev + 12, filteredEvents.length));
       setIsLoadingMore(false);
     }, 500);
   };
@@ -176,12 +201,12 @@ export default function Events() {
       <MobileHeader />
 
       <div className="max-w-7xl mx-auto px-3 md:px-4 sm:px-6 lg:px-8 py-3 md:py-8">
-
-
         {/* Category Navigation Bar */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Categories</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Categories
+            </h3>
             <div className="flex-1 max-w-md ml-4">
               <Input
                 placeholder="Search events..."
@@ -193,7 +218,10 @@ export default function Events() {
           </div>
 
           <div className="flex overflow-x-auto pb-2 gap-3 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <Dialog
+              open={isCreateDialogOpen}
+              onOpenChange={setIsCreateDialogOpen}
+            >
               <DialogTrigger asChild>
                 <button className="flex-shrink-0 flex flex-col items-center p-3 rounded-2xl transition-all bg-primary text-white shadow-lg hover:bg-primary/90">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-2">
@@ -210,7 +238,10 @@ export default function Events() {
                   </p>
                 </DialogHeader>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-3"
+                  >
                     <FormField
                       control={form.control}
                       name="title"
@@ -218,7 +249,10 @@ export default function Events() {
                         <FormItem>
                           <FormLabel>Title</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter event title..." {...field} />
+                            <Input
+                              placeholder="Enter event title..."
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -232,10 +266,10 @@ export default function Events() {
                         <FormItem>
                           <FormLabel>Description (Optional)</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Describe your event..." 
+                            <Textarea
+                              placeholder="Describe your event..."
                               className="min-h-[60px]"
-                              {...field} 
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -249,7 +283,10 @@ export default function Events() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Category</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select category" />
@@ -257,7 +294,10 @@ export default function Events() {
                             </FormControl>
                             <SelectContent>
                               {categories.map((category) => (
-                                <SelectItem key={category.value} value={category.value}>
+                                <SelectItem
+                                  key={category.value}
+                                  value={category.value}
+                                >
                                   <div className="flex items-center space-x-2">
                                     <i className={category.icon}></i>
                                     <span>{category.label}</span>
@@ -279,7 +319,11 @@ export default function Events() {
                           <FormItem>
                             <FormLabel>Entry Fee (₦)</FormLabel>
                             <FormControl>
-                              <Input type="number" placeholder="100" {...field} />
+                              <Input
+                                type="number"
+                                placeholder="100"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -293,7 +337,13 @@ export default function Events() {
                           <FormItem>
                             <FormLabel>Max Participants</FormLabel>
                             <FormControl>
-                              <Input type="number" placeholder="100" min="2" max="1000" {...field} />
+                              <Input
+                                type="number"
+                                placeholder="100"
+                                min="2"
+                                max="1000"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -308,8 +358,8 @@ export default function Events() {
                         <FormItem>
                           <FormLabel>End Date</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="datetime-local" 
+                            <Input
+                              type="datetime-local"
                               {...field}
                               min={new Date().toISOString().slice(0, 16)}
                             />
@@ -368,8 +418,8 @@ export default function Events() {
             <button
               onClick={() => setCategoryFilter("all")}
               className={`flex-shrink-0 flex flex-col items-center p-3 rounded-2xl transition-all ${
-                categoryFilter === "all" 
-                  ? "bg-primary text-white shadow-lg" 
+                categoryFilter === "all"
+                  ? "bg-primary text-white shadow-lg"
                   : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
             >
@@ -384,19 +434,26 @@ export default function Events() {
                 key={category.value}
                 onClick={() => setCategoryFilter(category.value)}
                 className={`flex-shrink-0 flex flex-col items-center p-3 rounded-2xl transition-all ${
-                  categoryFilter === category.value 
-                    ? "bg-primary text-white shadow-lg" 
+                  categoryFilter === category.value
+                    ? "bg-primary text-white shadow-lg"
                     : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
                 }`}
               >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                  category.value === 'crypto' ? 'bg-gradient-to-br from-orange-400 to-yellow-500' :
-                  category.value === 'sports' ? 'bg-gradient-to-br from-green-400 to-blue-500' :
-                  category.value === 'gaming' ? 'bg-gradient-to-br from-purple-400 to-pink-500' :
-                  category.value === 'music' ? 'bg-gradient-to-br from-red-400 to-pink-500' :
-                  category.value === 'politics' ? 'bg-gradient-to-br from-blue-600 to-indigo-700' :
-                  'bg-gradient-to-br from-slate-400 to-slate-600'
-                }`}>
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                    category.value === "crypto"
+                      ? "bg-gradient-to-br from-orange-400 to-yellow-500"
+                      : category.value === "sports"
+                        ? "bg-gradient-to-br from-green-400 to-blue-500"
+                        : category.value === "gaming"
+                          ? "bg-gradient-to-br from-purple-400 to-pink-500"
+                          : category.value === "music"
+                            ? "bg-gradient-to-br from-red-400 to-pink-500"
+                            : category.value === "politics"
+                              ? "bg-gradient-to-br from-blue-600 to-indigo-700"
+                              : "bg-gradient-to-br from-slate-400 to-slate-600"
+                  }`}
+                >
                   <i className={`${category.icon} text-white text-lg`}></i>
                 </div>
                 <span className="text-xs font-medium">{category.label}</span>
@@ -407,24 +464,27 @@ export default function Events() {
 
         {/* Events Grid */}
         {isLoading ? (
-          <PlayfulLoading 
-            type="events" 
-            title="Loading Events" 
+          <PlayfulLoading
+            type="events"
+            title="Loading Events"
             description="Finding exciting prediction challenges..."
             className="py-12"
           />
         ) : filteredEvents.length === 0 ? (
           <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardContent className="text-center py-12">
-              <i className="fas fa-calendar-times text-4xl text-slate-400 mb-4"></i>
+            <CardContent className="text-center py-15">
+              <img
+                src="/assets/noti-lonely.svg"
+                alt="Calend"
+                className="w-10 h-10"
+              />
               <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
                 No events found
               </h3>
               <p className="text-slate-600 dark:text-slate-400 mb-6">
-                {searchTerm || categoryFilter !== "all" 
+                {searchTerm || categoryFilter !== "all"
                   ? "Try adjusting your filters to see more events."
-                  : "Be the first to create an event!"
-                }
+                  : "Be the first to create an event!"}
               </p>
               {!searchTerm && categoryFilter === "all" && (
                 <Button
@@ -439,13 +499,12 @@ export default function Events() {
           </Card>
         ) : (
           <>
-            <div id="events-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div
+              id="events-grid"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+            >
               {displayedEvents.map((event: any, index: number) => (
-                <EventCard 
-                  key={event.id} 
-                  event={event} 
-                  featured={false}
-                />
+                <EventCard key={event.id} event={event} featured={false} />
               ))}
             </div>
 
@@ -465,7 +524,9 @@ export default function Events() {
                   ) : (
                     <>
                       <i className="fas fa-plus mr-2"></i>
-                      Load More Events ({filteredEvents.length - visibleEvents} remaining)
+                      Load More Events ({filteredEvents.length -
+                        visibleEvents}{" "}
+                      remaining)
                     </>
                   )}
                 </Button>
