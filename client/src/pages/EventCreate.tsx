@@ -104,40 +104,41 @@ export default function EventCreate() {
           <p className="text-slate-600 dark:text-slate-400">Set up a new prediction event for the community</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mobile-form-container">
-          <MobileCard className="mobile-compact-card">
-            <div className="mobile-form-field">
-              <Label htmlFor="title" className="mobile-form-label">Event Title *</Label>
+        <form onSubmit={handleSubmit} className="mobile-form-container md:space-y-6">
+          {/* Desktop Card with proper styling */}
+          <div className="mobile-compact-card md:bg-white md:dark:bg-slate-800 md:rounded-xl md:shadow-lg md:border md:border-slate-200 md:dark:border-slate-700 md:p-8">
+            <div className="mobile-form-field md:mb-6">
+              <Label htmlFor="title" className="mobile-form-label md:text-base md:font-semibold md:text-slate-700 md:dark:text-slate-300">Event Title *</Label>
               <Input
                 id="title"
                 type="text"
                 placeholder="What will people predict?"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="mobile-form-input"
+                className="mobile-form-input md:h-12 md:text-base md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg"
                 required
               />
             </div>
 
-            <div className="mobile-form-field">
-              <Label htmlFor="description" className="mobile-form-label">Description *</Label>
+            <div className="mobile-form-field md:mb-6">
+              <Label htmlFor="description" className="mobile-form-label md:text-base md:font-semibold md:text-slate-700 md:dark:text-slate-300">Description *</Label>
               <Textarea
                 id="description"
                 placeholder="Provide details about the event..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="mobile-form-textarea"
+                className="mobile-form-textarea md:min-h-[100px] md:text-base md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg"
                 required
               />
             </div>
 
-            <div className="mobile-form-field">
-              <Label htmlFor="category" className="mobile-form-label">Category *</Label>
+            <div className="mobile-form-field md:mb-6">
+              <Label htmlFor="category" className="mobile-form-label md:text-base md:font-semibold md:text-slate-700 md:dark:text-slate-300">Category *</Label>
               <Select value={category} onValueChange={setCategory} required>
-                <SelectTrigger className="mobile-form-select">
+                <SelectTrigger className="mobile-form-select md:h-12 md:text-base md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg">
                   {categories.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>
                       <div className="flex items-center space-x-2">
@@ -150,35 +151,35 @@ export default function EventCreate() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-6 md:mb-6">
               <div className="mobile-form-field">
-                <Label htmlFor="endDate" className="mobile-form-label">End Date *</Label>
+                <Label htmlFor="endDate" className="mobile-form-label md:text-base md:font-semibold md:text-slate-700 md:dark:text-slate-300">End Date *</Label>
                 <Input
                   id="endDate"
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="mobile-form-input"
+                  className="mobile-form-input md:h-12 md:text-base md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg"
                   min={new Date().toISOString().split('T')[0]}
                   required
                 />
               </div>
 
               <div className="mobile-form-field">
-                <Label htmlFor="endTime" className="mobile-form-label">End Time *</Label>
+                <Label htmlFor="endTime" className="mobile-form-label md:text-base md:font-semibold md:text-slate-700 md:dark:text-slate-300">End Time *</Label>
                 <Input
                   id="endTime"
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="mobile-form-input"
+                  className="mobile-form-input md:h-12 md:text-base md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg"
                   required
                 />
               </div>
             </div>
 
-            <div className="mobile-form-field">
-              <Label htmlFor="entryFee" className="mobile-form-label">
+            <div className="mobile-form-field md:mb-6">
+              <Label htmlFor="entryFee" className="mobile-form-label md:text-base md:font-semibold md:text-slate-700 md:dark:text-slate-300">
                 Entry Fee (₦) *
               </Label>
               <Input
@@ -187,32 +188,32 @@ export default function EventCreate() {
                 placeholder="100"
                 value={entryFee}
                 onChange={(e) => setEntryFee(e.target.value)}
-                className="mobile-form-input"
+                className="mobile-form-input md:h-12 md:text-base md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg"
                 min="1"
                 step="1"
                 required
               />
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1 md:text-sm">
                 All participants will bet exactly this amount
               </p>
             </div>
-          </MobileCard>
+          </div>
 
-          {/* Fixed Button Container */}
-          <div className="sticky bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-4 -mx-4 mt-6">
-            <div className="flex space-x-3">
+          {/* Button Container - Fixed for mobile, static for desktop */}
+          <div className="sticky bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 p-4 -mx-4 mt-6 md:static md:bg-transparent md:dark:bg-transparent md:border-none md:p-0 md:mx-0 md:mt-8">
+            <div className="flex space-x-3 md:space-x-4 md:justify-center">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => window.history.back()}
-                className="flex-1 h-12 border-slate-300 dark:border-slate-600"
+                className="flex-1 h-12 border-slate-300 dark:border-slate-600 md:flex-none md:px-8 md:bg-white md:dark:bg-slate-700 md:hover:bg-slate-50 md:dark:hover:bg-slate-600"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={createEventMutation.isPending}
-                className="flex-1 h-12 bg-primary text-white hover:bg-primary/90 font-semibold"
+                className="flex-1 h-12 bg-primary text-white hover:bg-primary/90 font-semibold md:flex-none md:px-8"
               >
                 {createEventMutation.isPending ? (
                   <>

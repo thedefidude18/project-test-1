@@ -77,13 +77,38 @@
     border-radius: 0.5rem !important;
   }
 
-  /* Tab styling with increased radius */
+  /* Tab styling with increased radius and no black borders */
   [role="tablist"] {
-    @apply rounded-2xl;
+    @apply rounded-2xl border-slate-200 dark:border-slate-700;
   }
 
   [role="tab"] {
-    @apply rounded-xl;
+    @apply rounded-xl border-slate-200 dark:border-slate-700;
+  }
+
+  /* Remove black borders from modals, dialogs, toasts */
+  [role="dialog"] {
+    @apply border-slate-200 dark:border-slate-700 shadow-lg;
+  }
+
+  [role="alertdialog"] {
+    @apply border-slate-200 dark:border-slate-700 shadow-lg;
+  }
+
+  /* Toast styling */
+  .toast {
+    @apply border-slate-200 dark:border-slate-700 shadow-lg;
+  }
+
+  /* Select dropdown styling */
+  [role="listbox"] {
+    @apply border-slate-200 dark:border-slate-700 shadow-lg;
+  }
+
+  /* Popover styling */
+  [role="tooltip"],
+  [data-radix-popper-content-wrapper] {
+    @apply border-slate-200 dark:border-slate-700 shadow-lg;
   }
 
   /* Mobile button styles */
@@ -159,7 +184,7 @@
   --accent-foreground: hsl(24, 9.8%, 10%);
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
+  --ring: hsl(20, 5.9%, 90%);
   --radius: 0.5rem;
 }
 
@@ -182,7 +207,7 @@
   --accent-foreground: hsl(0, 0%, 98%);
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(240, 4.9%, 83.9%);
+  --ring: hsl(240, 3.7%, 15.9%);
   --radius: 0.5rem;
 }
 
