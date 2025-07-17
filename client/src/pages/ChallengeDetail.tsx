@@ -7,6 +7,7 @@ import { MobileNavigation } from "@/components/MobileNavigation";
 import { ChallengeIntentCard } from "@/components/ChallengeIntentCard";
 import { SocialMediaShare } from "@/components/SocialMediaShare";
 import { ChallengeChat } from "@/components/ChallengeChat";
+import { DynamicMetaTags } from "@/components/DynamicMetaTags";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -83,6 +84,12 @@ export default function ChallengeDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Dynamic Meta Tags for Social Sharing */}
+      <DynamicMetaTags 
+        challenge={challenge}
+        pageType="challenge"
+      />
+      
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         {/* Back Button */}

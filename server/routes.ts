@@ -29,6 +29,7 @@ import crypto from "crypto";
 import { createTelegramSync, getTelegramSync } from "./telegramSync";
 import { getTelegramBot } from "./telegramBot";
 import webpush from "web-push";
+import { setupOGImageRoutes } from "./ogImageGenerator";
 
 // Import formatBalance utility for coin operations
 function formatBalance(amount: number): string {
@@ -3482,6 +3483,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: 'Failed to handle notification action' });
     }
   });
+
+  // Setup OG image generation routes
+  setupOGImageRoutes(app, storage);
 
   return httpServer;
 }
