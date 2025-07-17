@@ -24,6 +24,23 @@ export function useNotifications() {
     },
   });
 
+  const handleNotificationActionMutation = useMutation({
+    mutationFn: ({ notificationId, action, targetUserId, eventId }: {
+      notificationId: number;
+      action: string;
+      targetUserId?: string;
+      eventId?: number;
+    }) => apiRequest('POST', '/api/notifications/handle-action', {
+      notificationId,
+      action,
+      targetUserId,
+      eventId,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+    },
+  });
+
   // Set up real-time notifications
   useEffect(() => {
     if (!user?.id) return;
@@ -45,7 +62,13 @@ export function useNotifications() {
       'tip-sent',
       'event-notification',
       'funds-locked',
-      'participant-joined'
+      'participant-joined',
+      'notification', // Generic notification from algorithm
+      'leaderboard_leader',
+      'winner_challenge',
+      'loser_encourage',
+      'event_joiner',
+      'streak_performer'
     ];
 
     notificationEvents.forEach(eventName => {
@@ -53,7 +76,10 @@ export function useNotifications() {
         console.log(`Received ${eventName}:`, data);
         
         // Show instant toast notification for receiving events (not sent events)
-        if (eventName === 'tip-received' || eventName === 'new-follower' || eventName === 'challenge-received' || eventName === 'friend-request') {
+        if (eventName === 'tip-received' || eventName === 'new-follower' || eventName === 'challenge-received' || 
+            eventName === 'friend-request' || eventName === 'notification' || eventName === 'leaderboard_leader' ||
+            eventName === 'winner_challenge' || eventName === 'loser_encourage' || eventName === 'event_joiner' ||
+            eventName === 'streak_performer') {
           // Play notification sound
           try {
             const audio = new Audio('/assets/message-notification.mp3');
@@ -88,6 +114,7 @@ export function useNotifications() {
     notifications: notifications || [],
     isLoading,
     markAsRead: markAsReadMutation.mutate,
+    handleNotificationAction: handleNotificationActionMutation.mutate,
     unreadCount: Array.isArray(notifications) ? notifications.filter((n: any) => !n.read).length : 0,
   };
 }

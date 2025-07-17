@@ -41,6 +41,7 @@ import { SplashScreen } from "@/components/SplashScreen"; //Import Splashscreen
 import MobileSplashScreen from "@/components/MobileSplashScreen";
 import TelegramTest from "./pages/TelegramTest";
 import Bantzz from "./pages/Bantzz";
+import NotificationTest from "./pages/NotificationTest";
 
 
 function Router() {
@@ -116,6 +117,7 @@ function Router() {
           <Route path="/admin/settings" component={AdminSettings} />
           <Route path="/telegram/test" component={TelegramTest} />
           <Route path="/bantzz" component={Bantzz} />
+          <Route path="/notifications/test" component={NotificationTest} />
           <Route path="/ref/:code" component={Landing} />
         </>
       )}

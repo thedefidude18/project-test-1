@@ -4,6 +4,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import "./eventScheduler"; // Start event lifecycle management
 import { addAuthTestRoutes } from "./authTest";
 import { createTelegramBot } from "./telegramBot";
+import { NotificationAlgorithmService } from "./notificationAlgorithm";
 
 const app = express();
 
@@ -70,6 +71,13 @@ app.use((req, res, next) => {
 
   const server = await registerRoutes(app);
   addAuthTestRoutes(app);
+
+  // Initialize notification algorithm service
+  const { storage } = await import('./storage');
+  const notificationAlgorithm = new NotificationAlgorithmService(storage);
+  console.log('🔔 Starting notification algorithm service...');
+  notificationAlgorithm.startNotificationScheduler();
+  console.log('✅ Notification algorithm service started');
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

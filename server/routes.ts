@@ -3312,5 +3312,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
+  // Notification Algorithm API endpoints
+  app.post('/api/notifications/trigger-algorithm', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { NotificationAlgorithmService } = await import('./notificationAlgorithm');
+      const notificationAlgorithm = new NotificationAlgorithmService(storage);
+      
+      await notificationAlgorithm.executeNotificationAlgorithm();
+      
+      res.json({ message: 'Notification algorithm executed successfully' });
+    } catch (error) {
+      console.error('Error executing notification algorithm:', error);
+      res.status(500).json({ message: 'Failed to execute notification algorithm' });
+    }
+  });
+
+  app.post('/api/notifications/handle-action', isAuthenticated, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { notificationId, action, targetUserId, eventId } = req.body;
+
+      if (!notificationId || !action) {
+        return res.status(400).json({ message: 'Notification ID and action are required' });
+      }
+
+      // Mark notification as read
+      await storage.markNotificationRead(notificationId);
+
+      // Handle different actions
+      switch (action) {
+        case 'challenge_user':
+          if (!targetUserId) {
+            return res.status(400).json({ message: 'Target user ID is required for challenge action' });
+          }
+          
+          // Create a challenge dialog response
+          const targetUser = await storage.getUser(targetUserId);
+          res.json({
+            message: 'Challenge action initiated',
+            action: 'open_challenge_dialog',
+            targetUser: {
+              id: targetUserId,
+              name: targetUser?.firstName || targetUser?.username,
+              username: targetUser?.username,
+              profileImageUrl: targetUser?.profileImageUrl,
+            },
+          });
+          break;
+
+        case 'join_event':
+          if (!eventId) {
+            return res.status(400).json({ message: 'Event ID is required for join event action' });
+          }
+          
+          res.json({
+            message: 'Join event action initiated',
+            action: 'navigate_to_event',
+            eventId: eventId,
+          });
+          break;
+
+        case 'create_challenges':
+          res.json({
+            message: 'Create challenges action initiated',
+            action: 'navigate_to_challenges',
+          });
+          break;
+
+        case 'view':
+        default:
+          res.json({
+            message: 'Notification viewed',
+            action: 'mark_read',
+          });
+          break;
+      }
+    } catch (error) {
+      console.error('Error handling notification action:', error);
+      res.status(500).json({ message: 'Failed to handle notification action' });
+    }
+  });
+
   return httpServer;
 }
