@@ -43,9 +43,10 @@ import TelegramTest from "./pages/TelegramTest";
 import Bantzz from "./pages/Bantzz";
 import NotificationTest from "./pages/NotificationTest";
 import PublicProfile from "@/pages/PublicProfile";
+import { HeaderWithAuth } from "@/components/HeaderWithAuth";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [showMobileSplash, setShowMobileSplash] = useState(true);
 
   // Initialize tour
@@ -76,6 +77,7 @@ function Router() {
 
   return (
     <div className="min-h-screen transition-all duration-300 ease-in-out">
+      <HeaderWithAuth />
 
       <Switch>
       {/* Admin Login Route - Always Available */}

@@ -48,11 +48,14 @@ import {
 import { db } from "./db";
 import { eq, desc, and, or, sql, count, sum, inArray, asc, isNull } from "drizzle-orm";
 import { nanoid } from 'nanoid';
+import session from "express-session";
+import connectPg from "connect-pg-simple";
 
 export interface IStorage {
-  // User operations - Required for Replit Auth
+  // User operations - Updated for email/password auth
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   getUserByUsernameOrEmail(usernameOrEmail: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   createUser(user: any): Promise<User>;
@@ -192,10 +195,23 @@ export interface IStorage {
   getAdminNotifications(limit: number): Promise<any[]>;
   broadcastNotification(data: any): Promise<any>;
   searchUsers(query: string, limit: number): Promise<any[]>;
+  
+  // Session store for authentication
+  sessionStore: any;
 }
 
 export class DatabaseStorage implements IStorage {
-  // User operations - Required for Replit Auth
+  sessionStore: any;
+
+  constructor() {
+    const PostgresSessionStore = connectPg(session);
+    this.sessionStore = new PostgresSessionStore({
+      pool: db,
+      createTableIfMissing: true,
+    });
+  }
+
+  // User operations - Updated for email/password auth
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
@@ -203,6 +219,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
   }
 

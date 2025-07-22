@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import Pusher from "pusher";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
+import { setupAuth, isAuthenticated, isAdmin } from "./auth";
 import { db } from "./db";
 import { insertEventSchema, insertChallengeSchema, insertNotificationSchema } from "@shared/schema";
 import { and, eq } from "drizzle-orm";
@@ -67,13 +67,12 @@ if (telegramSync) {
 
 interface AuthenticatedRequest extends Request {
   user: {
-    claims: {
-      sub: string;
-      email?: string;
-      first_name?: string;
-      last_name?: string;
-      profile_image_url?: string;
-    };
+    id: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    isAdmin?: boolean;
   };
 }
 
