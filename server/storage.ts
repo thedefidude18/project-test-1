@@ -45,11 +45,11 @@ import {
   type PlatformSettings,
   type InsertPlatformSettings,
 } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, desc, and, or, sql, count, sum, inArray, asc, isNull } from "drizzle-orm";
 import { nanoid } from 'nanoid';
 import session from "express-session";
-import connectPg from "connect-pg-simple";
+import createMemoryStore from "memorystore";
 
 export interface IStorage {
   // User operations - Updated for email/password auth
@@ -204,10 +204,9 @@ export class DatabaseStorage implements IStorage {
   sessionStore: any;
 
   constructor() {
-    const PostgresSessionStore = connectPg(session);
-    this.sessionStore = new PostgresSessionStore({
-      pool: db,
-      createTableIfMissing: true,
+    const MemoryStore = createMemoryStore(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
     });
   }
 
