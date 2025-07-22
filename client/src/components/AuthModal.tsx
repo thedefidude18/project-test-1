@@ -55,8 +55,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginRequest) => {
-      const res = await apiRequest("POST", "/api/login", data);
-      return await res.json();
+      return await apiRequest("POST", "/api/login", data);
     },
     onSuccess: (user) => {
       queryClient.setQueryData(["/api/auth/user"], user);
@@ -78,8 +77,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterRequest) => {
-      const res = await apiRequest("POST", "/api/register", data);
-      return await res.json();
+      return await apiRequest("POST", "/api/register", data);
     },
     onSuccess: (user) => {
       queryClient.setQueryData(["/api/auth/user"], user);
