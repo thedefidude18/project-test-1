@@ -1,7 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import MobileLayout, { MobileCard } from "@/components/MobileLayout";
 import { Button } from "@/components/ui/button";

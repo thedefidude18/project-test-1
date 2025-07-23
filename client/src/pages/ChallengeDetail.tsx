@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import { ChallengeIntentCard } from "@/components/ChallengeIntentCard";
 import { SocialMediaShare } from "@/components/SocialMediaShare";
@@ -46,7 +45,6 @@ export default function ChallengeDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <PlayfulLoading type="general" title="Loading Challenge" />
         </div>
@@ -58,7 +56,6 @@ export default function ChallengeDetail() {
   if (error || !challenge) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-2xl mx-auto">
             <CardContent className="p-8 text-center">
@@ -90,7 +87,6 @@ export default function ChallengeDetail() {
         pageType="challenge"
       />
       
-      <Navigation />
       <div className="container mx-auto px-4 py-8">
         {/* Back Button */}
         <Button

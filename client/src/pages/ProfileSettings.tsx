@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -132,7 +131,7 @@ export default function ProfileSettings() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
-      <Navigation />
+
 
       <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header - Removed title on mobile, more compact */}

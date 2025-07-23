@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { Navigation } from "@/components/Navigation";
+
 import { NotificationToast } from "@/components/NotificationToast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -92,7 +92,7 @@ export default function Home() {
 
   return (
     <MobileLayout>
-      <Navigation />
+
 
       {/* Mobile-optimized Hero Section */}
       <div className="relative overflow-hidden md:block">

@@ -3,7 +3,6 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Calendar, Trophy, Users, TrendingUp, Star, ExternalLink } from 'lucide-react';
-import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import MobileLayout, { MobileCard } from "@/components/MobileLayout";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,6 @@ export default function PublicProfile() {
   if (isLoading) {
     return (
       <MobileLayout>
-        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <PlayfulLoading type="general" title="Loading Profile" />
         </div>
@@ -53,7 +51,6 @@ export default function PublicProfile() {
   if (error || !profile) {
     return (
       <MobileLayout>
-        <Navigation />
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-2xl mx-auto">
             <CardContent className="p-8 text-center">

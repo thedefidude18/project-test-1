@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import MobileLayout from "@/components/MobileLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -202,7 +201,7 @@ export default function History() {
 
   return (
     <MobileLayout>
-      <Navigation />
+
 
       <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
         <div className="max-w-4xl mx-auto px-4 py-6">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Navigation } from '@/components/Navigation';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -87,7 +87,7 @@ export default function TelegramTest() {
   if (!user) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
-        <Navigation />
+
         <div className="max-w-4xl mx-auto px-4 py-8">
           <Card>
             <CardContent className="text-center py-12">
@@ -101,7 +101,6 @@ export default function TelegramTest() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
-      <Navigation />
       
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">

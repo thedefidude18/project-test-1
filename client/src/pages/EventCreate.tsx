@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigation } from "@/components/Navigation";
+
 import MobileLayout, { MobileCard, MobileButton } from "@/components/MobileLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,7 +95,7 @@ export default function EventCreate() {
 
   return (
     <MobileLayout>
-      <Navigation />
+
 
       <div className="max-w-2xl mx-auto">
         {/* Desktop Header */}
