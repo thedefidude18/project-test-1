@@ -558,7 +558,6 @@ export default function Notifications() {
         </Tabs>
       </div>
 
-      <MobileNavigation />
-    </div>
+      </div>
   );
 }

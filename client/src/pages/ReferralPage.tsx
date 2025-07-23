@@ -327,7 +327,6 @@ export default function ReferralPage() {
         </Card>
       </div>
 
-      <MobileNavigation />
-    </div>
+      </div>
   );
 }

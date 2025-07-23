@@ -436,7 +436,6 @@ export default function Friends() {
         </Tabs>
       </div>
 
-      <MobileNavigation />
-    </div>
+      </div>
   );
 }

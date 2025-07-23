@@ -282,7 +282,6 @@ export default function Home() {
         )}
       </div>
 
-      <MobileNavigation />
       <NotificationToast />
     </MobileLayout>
   );
