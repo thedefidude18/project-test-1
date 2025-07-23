@@ -84,7 +84,7 @@ interface AuthenticatedRequest extends Request {
 
 // Helper function to safely get user ID from request
 function getUserId(req: AuthenticatedRequest): string {
-  return req.user?.claims?.sub || req.user?.id;
+  return req.user?.id;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -94,7 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.claims?.sub || req.user?.id;
+      const userId = req.user?.id;
       if (!userId) {
         return res.status(401).json({ message: "User ID not found" });
       }

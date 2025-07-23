@@ -1162,12 +1162,12 @@ export class DatabaseStorage implements IStorage {
       const currentCoins = user[0]?.coins || 0;
 
       // Calculate Naira balance from transactions
-      const transactions = await db
+      const userTransactions = await db
         .select()
         .from(transactions)
         .where(eq(transactions.userId, userId));
 
-      console.log(`All transactions for user ${userId}:`, transactions.map(t => ({
+      console.log(`All transactions for user ${userId}:`, userTransactions.map(t => ({
         id: t.id,
         type: t.type,
         amount: t.amount,
@@ -1177,7 +1177,7 @@ export class DatabaseStorage implements IStorage {
       })));
 
       let balance = 0;
-      const completedTransactions = transactions.filter(t => t.status === 'completed');
+      const completedTransactions = userTransactions.filter(t => t.status === 'completed');
 
       console.log(`Completed transactions for user ${userId}:`, completedTransactions.map(t => ({
         type: t.type,
@@ -1196,8 +1196,8 @@ export class DatabaseStorage implements IStorage {
       }
 
       console.log(`Balance calculation for user ${userId}:`, {
-        totalTransactions: transactions.length,
-        completedTransactions: transactions.filter(t => t.status === 'completed').length,
+        totalTransactions: userTransactions.length,
+        completedTransactions: userTransactions.filter(t => t.status === 'completed').length,
         calculatedBalance: balance,
         currentCoins
       });
