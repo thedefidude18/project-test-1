@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
-import { MobileHeader } from "@/components/MobileHeader";
 import { EventCard } from "@/components/EventCard";
 import { OnboardingTooltip } from "@/components/OnboardingTooltip";
 import { Button } from "@/components/ui/button";

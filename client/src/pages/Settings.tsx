@@ -3,7 +3,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeProvider";
 import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
-import { MobileHeader } from "@/components/MobileHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -98,7 +97,6 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition pb-20 md:pb-0">
       <Navigation />
-      <MobileHeader />
       
       <div className="max-w-4xl mx-auto px-3 md:px-6 lg:px-8 py-4 md:py-8">
         {/* Desktop Header */}

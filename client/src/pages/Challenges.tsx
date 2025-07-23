@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
-import { MobileHeader } from "@/components/MobileHeader";
 import { ChallengeCard } from "@/components/ChallengeCard";
 import { ChallengeChat } from "@/components/ChallengeChat";
 import { Button } from "@/components/ui/button";
@@ -213,7 +212,6 @@ export default function Challenges() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
-      <MobileHeader />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

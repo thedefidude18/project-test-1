@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Calendar, Trophy, Users, TrendingUp, Star, ExternalLink } from 'lucide-react';
 import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
-import { MobileHeader } from "@/components/MobileHeader";
 import MobileLayout, { MobileCard } from "@/components/MobileLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +42,6 @@ export default function PublicProfile() {
     return (
       <MobileLayout>
         <Navigation />
-        <MobileHeader />
         <div className="container mx-auto px-4 py-8">
           <PlayfulLoading type="general" title="Loading Profile" />
         </div>
@@ -56,7 +54,6 @@ export default function PublicProfile() {
     return (
       <MobileLayout>
         <Navigation />
-        <MobileHeader />
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-2xl mx-auto">
             <CardContent className="p-8 text-center">
@@ -122,7 +119,6 @@ export default function PublicProfile() {
 
   return (
     <MobileLayout>
-      <MobileHeader />
 
       {/* Public Profile Header */}
       <MobileCard className="mb-3 md:hidden">

@@ -87,6 +87,11 @@ Preferred communication style: Simple, everyday language.
   - Real-time message broadcasting via Pusher for seamless Telegram → BetChat synchronization
   - Comprehensive testing suite for webhook functionality with multiple scenarios
   - Complete database schema updates with new Telegram user fields
+✓ **Header Duplication Fix (January 2025)** - Eliminated duplicate header issue across all pages:
+  - Removed all MobileHeader component imports and usages from 10+ pages (Events, Challenges, Shop, Settings, Profile, etc.)
+  - Standardized all authenticated pages to use only the main Navigation component
+  - Updated landing page sign-in buttons to trigger AuthModal instead of redirect for smoother UX
+  - Maintained consistent header design across the entire application
 
 ## System Architecture
 

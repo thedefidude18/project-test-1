@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
-import { MobileHeader } from "@/components/MobileHeader";
 import MobileLayout, { MobileCard } from "@/components/MobileLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,7 +97,6 @@ export default function Profile() {
 
   return (
     <MobileLayout>
-      <MobileHeader />
 
       {/* Mobile Profile Header - Cleaner Design */}
       <div className="md:hidden">
