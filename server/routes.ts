@@ -1173,7 +1173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: req.user.claims.email,
+          email: "dummy@betchat.com", // Dummy email for Paystack, not user email
           amount: amount * 100, // Paystack expects amount in kobo
           currency: 'NGN',
           reference: `dep_${userId}_${Date.now()}`,

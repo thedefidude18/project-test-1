@@ -206,7 +206,7 @@ export default function History() {
       <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <Tabs defaultValue="created" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsList className="grid w-full grid-cols-5 h-9 sm:h-10 mb-6">
               <TabsTrigger
                 value="created"
                 className="flex items-center space-x-1"

@@ -133,8 +133,7 @@ export default function Leaderboard() {
 
           <TabsContent value="points">
             <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-2xl">
-              <CardHeader>
-                <CardTitle>Top Players by Points</CardTitle>
+              <CardHeader> 
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -159,7 +158,7 @@ export default function Leaderboard() {
                       placeholder="Search players..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 mb-3"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 mb-3"
                     />
                     {filteredUsers.map((player: any, index: number) => (
                       <div

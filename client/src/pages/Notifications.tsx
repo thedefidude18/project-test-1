@@ -1,4 +1,5 @@
 import React from "react";
+import { MobileNavigation } from "@/components/MobileNavigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -213,14 +214,20 @@ export default function Notifications() {
         {/* Notifications Tabs - More compact on mobile */}
         <Tabs defaultValue="all" className="space-y-3 sm:space-y-6">
           <TabsList className="grid w-full grid-cols-3 h-9 sm:h-10">
-            <TabsTrigger value="all" className="text-xs sm:text-sm">
-              All ({Array.isArray(notifications) ? notifications.length : 0})
+            <TabsTrigger value="all" className="flex items-center space-x-1 text-xs sm:text-sm">
+              <i className="fas fa-bell"></i>
+              <span className="hidden sm:inline">All</span>
+              <span>({Array.isArray(notifications) ? notifications.length : 0})</span>
             </TabsTrigger>
-            <TabsTrigger value="unread" className="text-xs sm:text-sm">
-              Unread ({unreadNotifications.length})
+            <TabsTrigger value="unread" className="flex items-center space-x-1 text-xs sm:text-sm">
+              <i className="fas fa-envelope-open-text"></i>
+              <span className="hidden sm:inline">Unread</span>
+              <span>({unreadNotifications.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="read" className="text-xs sm:text-sm">
-              Read ({readNotifications.length})
+            <TabsTrigger value="read" className="flex items-center space-x-1 text-xs sm:text-sm">
+              <i className="fas fa-check"></i>
+              <span className="hidden sm:inline">Read</span>
+              <span>({readNotifications.length})</span>
             </TabsTrigger>
           </TabsList>
 
@@ -557,6 +564,8 @@ export default function Notifications() {
         </Tabs>
       </div>
 
-      </div>
+      {/* Mobile Footer Navigation */}
+      <MobileNavigation />
+    </div>
   );
 }

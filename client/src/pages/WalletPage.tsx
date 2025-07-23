@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MobileNavigation } from "@/components/MobileNavigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -71,7 +72,7 @@ export default function WalletPage() {
       if (data.authorization_url && data.access_code && data.publicKey) {
         const handler = (window as any).PaystackPop.setup({
           key: data.publicKey,
-          email: "user@betcity.com", // Use default email since we don't require user email
+          email: "dummy@betchat.com", // Dummy email for Paystack, not user email
           amount: parseFloat(depositAmount) * 100,
           currency: 'NGN',
           ref: data.reference,
@@ -278,7 +279,6 @@ export default function WalletPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-
 
       {/* Mobile-first design */}
       <div className="max-w-md mx-auto md:max-w-7xl px-4 py-6">
@@ -512,6 +512,9 @@ export default function WalletPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Mobile Footer Navigation */}
+      <MobileNavigation />
 
       </div>
   );
