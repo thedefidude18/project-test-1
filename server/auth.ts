@@ -211,7 +211,11 @@ export function setupAuth(app: Express) {
 
 // Middleware to check if user is authenticated
 export const isAuthenticated = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated()) {
+  if (req.isAuthenticated() && req.user) {
+    // Ensure user object has the expected structure for routes
+    if (!req.user.claims) {
+      req.user.claims = { sub: req.user.id };
+    }
     return next();
   }
   res.status(401).json({ message: "Authentication required" });

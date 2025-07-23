@@ -73,7 +73,18 @@ interface AuthenticatedRequest extends Request {
     lastName?: string;
     username?: string;
     isAdmin?: boolean;
+    claims?: {
+      sub: string;
+      email?: string;
+      first_name?: string;
+      last_name?: string;
+    };
   };
+}
+
+// Helper function to safely get user ID from request
+function getUserId(req: AuthenticatedRequest): string {
+  return req.user?.claims?.sub || req.user?.id;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -83,7 +94,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "User ID not found" });
+      }
       const user = await storage.getUser(userId);
 
       // Check and create daily login record
@@ -122,7 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/events', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       console.log("Creating event with data:", req.body);
       console.log("User ID:", userId);
 
@@ -1088,7 +1102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notification routes
   app.get('/api/notifications', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const notifications = await storage.getNotifications(userId);
       res.json(notifications);
     } catch (error) {
@@ -1111,7 +1125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Transaction routes
   app.get('/api/transactions', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const transactions = await storage.getTransactions(userId);
       res.json(transactions);
     } catch (error) {
@@ -1122,7 +1136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/wallet/balance', isAuthenticated, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       console.log(`Fetching balance for user: ${userId}`);
       
       const balance = await storage.getUserBalance(userId);
