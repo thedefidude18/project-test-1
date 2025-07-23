@@ -43,7 +43,7 @@ import TelegramTest from "./pages/TelegramTest";
 import Bantzz from "./pages/Bantzz";
 import NotificationTest from "./pages/NotificationTest";
 import PublicProfile from "@/pages/PublicProfile";
-import { HeaderWithAuth } from "@/components/HeaderWithAuth";
+import { Navigation } from "@/components/Navigation";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -78,7 +78,7 @@ function Router() {
   return (
     <div className="min-h-screen transition-all duration-300 ease-in-out">
       {/* Only show HeaderWithAuth for authenticated users, not on landing page */}
-      {isAuthenticated && <HeaderWithAuth />}
+      {isAuthenticated && <Navigation />}
 
       <Switch>
       {/* Admin Login Route - Always Available */}
