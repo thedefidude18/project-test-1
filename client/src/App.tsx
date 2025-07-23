@@ -77,7 +77,8 @@ function Router() {
 
   return (
     <div className="min-h-screen transition-all duration-300 ease-in-out">
-      <HeaderWithAuth />
+      {/* Only show HeaderWithAuth for authenticated users, not on landing page */}
+      {isAuthenticated && <HeaderWithAuth />}
 
       <Switch>
       {/* Admin Login Route - Always Available */}
