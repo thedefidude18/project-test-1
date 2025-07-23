@@ -220,7 +220,7 @@ export default function Profile() {
                       {user.email}
                     </p>
                     <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">
-                      Joined {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
+                      Joined {user.createdAt ? formatDistanceToNow(new Date(user.createdAt), { addSuffix: true }) : 'recently'}
                     </p>
                   </div>
 
@@ -333,7 +333,7 @@ export default function Profile() {
                           {achievement.description}
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-                          {formatDistanceToNow(new Date(achievement.unlockedAt), { addSuffix: true })}
+                          {achievement.unlockedAt ? formatDistanceToNow(new Date(achievement.unlockedAt), { addSuffix: true }) : 'recently'}
                         </p>
                       </div>
                     </div>
@@ -394,7 +394,7 @@ export default function Profile() {
                             {transaction.type}
                           </p>
                           <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {formatDistanceToNow(new Date(transaction.createdAt), { addSuffix: true })}
+                            {transaction.createdAt ? formatDistanceToNow(new Date(transaction.createdAt), { addSuffix: true }) : 'recently'}
                           </p>
                         </div>
                       </div>
@@ -449,7 +449,7 @@ export default function Profile() {
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600 dark:text-slate-400">Member Since</span>
                     <span className="font-semibold text-slate-900 dark:text-white">
-                      {formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}
+                      {user.createdAt ? formatDistanceToNow(new Date(user.createdAt), { addSuffix: true }) : 'recently'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
