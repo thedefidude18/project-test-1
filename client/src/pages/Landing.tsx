@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { AuthModal } from "@/components/AuthModal";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -16,6 +17,7 @@ export default function Landing() {
   const { theme } = useTheme();
   const [isVisible, setIsVisible] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
@@ -36,11 +38,15 @@ export default function Landing() {
   }, [isAuthenticated, setLocation, params.code, toast]);
 
   const handleGetStarted = () => {
-    // Store referral code before redirecting to signup
+    // Store referral code before showing auth modal
     if (referralCode) {
       localStorage.setItem('referralCode', referralCode);
     }
-    window.location.href = "/api/login";
+    setShowAuthModal(true);
+  };
+
+  const handleSignIn = () => {
+    setShowAuthModal(true);
   };
 
   // Mascot SVG Components
@@ -212,13 +218,17 @@ export default function Landing() {
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer transition-colors">
                 Pricing
               </span>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer transition-colors">
+              <span 
+                className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer transition-colors"
+                onClick={handleSignIn}
+              >
                 Sign in
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 className="text-sm font-medium border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800"
+                onClick={handleGetStarted}
               >
                 Try for free
               </Button>
@@ -227,7 +237,7 @@ export default function Landing() {
                 className="text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
                 onClick={handleGetStarted}
               >
-                Book a demo
+                Sign in
               </Button>
             </div>
 
@@ -239,7 +249,7 @@ export default function Landing() {
                 className="text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900"
                 onClick={handleGetStarted}
               >
-                Get Started
+                Sign in
               </Button>
             </div>
 
@@ -311,7 +321,7 @@ export default function Landing() {
                 className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 px-8 py-3 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={handleGetStarted}
               >
-                Book demo
+                {referralCode ? 'Sign Up with Bonus' : 'Sign in'}
               </Button>
             </motion.div>
           </motion.div>
@@ -399,6 +409,12 @@ export default function Landing() {
           </motion.div>
         </div>
       </div>
+      
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 }
