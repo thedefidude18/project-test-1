@@ -71,7 +71,7 @@ export default function WalletPage() {
       if (data.authorization_url && data.access_code && data.publicKey) {
         const handler = (window as any).PaystackPop.setup({
           key: data.publicKey,
-          email: user?.email,
+          email: "user@betcity.com", // Use default email since we don't require user email
           amount: parseFloat(depositAmount) * 100,
           currency: 'NGN',
           ref: data.reference,
