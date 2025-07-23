@@ -29,6 +29,7 @@ import {
   Sun,
   Moon,
   ShoppingCart,
+  ArrowLeft,
 } from "lucide-react";
 import { Link } from "wouter"; // Import Link from wouter
 
@@ -44,13 +45,39 @@ export function Navigation() {
     refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
   });
 
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
 
   const handleNavigation = (path: string) => {
     navigate(path);
   };
 
   if (!user) return null;
+
+    // Check if current page should show logo (events and home pages)
+    const shouldShowLogo = location === "/" || location === "/events" || location === "/home";
+
+    // Get page title for non-logo pages
+    const getPageTitle = () => {
+      if (location.startsWith("/events/create")) return "Create Event";
+      if (location.startsWith("/events/")) return "Event Chat";
+      if (location.startsWith("/challenges")) return "Challenges";
+      if (location.startsWith("/wallet")) return "Wallet";
+      if (location.startsWith("/profile")) return "Profile";
+      if (location.startsWith("/friends")) return "Friends";
+      if (location.startsWith("/leaderboard")) return "Leaderboard";
+      if (location.startsWith("/notifications")) return "Notifications";
+      if (location.startsWith("/settings")) return "Settings";
+      if (location.startsWith("/shop")) return "Coin Shop";
+      if (location.startsWith("/history")) return "History";
+      if (location.startsWith("/admin")) return "Admin";
+      if (location.startsWith("/referrals")) return "Referrals";
+      return "BetChat";
+    };
+  
+    const handleBack = () => {
+      // Navigate back to events page (main page for mobile)
+      navigate("/events");
+    };
 
   return (
     <nav className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 theme-transition sticky top-0 z-50">
