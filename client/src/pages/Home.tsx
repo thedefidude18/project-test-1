@@ -1,7 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { Navigation } from "@/components/Navigation";
-import { MobileNavigation } from "@/components/MobileNavigation";
 import { NotificationToast } from "@/components/NotificationToast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -123,12 +122,12 @@ export default function Home() {
               />
               <h1 className="text-2xl font-bold text-white">BetChat</h1>
             </div>
-            
+
             {/* Desktop title */}
             <h1 className="hidden md:block text-4xl md:text-6xl font-bold text-white mb-6">
               Find your betting community on BetChat
             </h1>
-            
+
             <p className="text-sm md:text-xl text-white/90 mb-6 md:mb-8 md:max-w-2xl md:mx-auto">
               From crypto predictions to sports betting, there's a place for you.
             </p>

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
-import { MobileNavigation } from "@/components/MobileNavigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -80,7 +79,7 @@ export default function ReferralPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -154,7 +153,7 @@ export default function ReferralPage() {
               <p className="text-primary-100 mb-6">
                 Share your unique link with friends and earn 100 points for each successful referral!
               </p>
-              
+
               <div className="bg-white/10 rounded-lg p-4 mb-6">
                 <div className="flex items-center space-x-2">
                   <Input
@@ -224,7 +223,7 @@ export default function ReferralPage() {
                   Share your unique referral link with friends via email, social media, or direct message.
                 </p>
               </div>
-              
+
               <div className="text-center">
                 <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <i className="fas fa-user-plus text-emerald-500 text-xl"></i>
@@ -234,7 +233,7 @@ export default function ReferralPage() {
                   Your friend creates an account using your referral link and verifies their email.
                 </p>
               </div>
-              
+
               <div className="text-center">
                 <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <i className="fas fa-gift text-amber-500 text-xl"></i>
@@ -302,7 +301,7 @@ export default function ReferralPage() {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-3">
                       <Badge
                         className={

@@ -2,7 +2,6 @@ import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigation } from "@/components/Navigation";
-import { MobileNavigation } from "@/components/MobileNavigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -179,7 +178,7 @@ export default function Notifications() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
       <Navigation />
-      
+
       <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
         <div className="flex justify-between items-start mb-4 sm:mb-8">
@@ -191,7 +190,7 @@ export default function Notifications() {
               Stay updated with your latest activities
             </p>
           </div>
-          
+
           <div className="flex gap-2">
             {unreadNotifications.length > 0 && (
               <Button
@@ -256,7 +255,7 @@ export default function Notifications() {
                       <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${getNotificationColor(notification.type)}`}>
                         <i className={`${getNotificationIcon(notification.type)} text-xs sm:text-sm`}></i>
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -270,7 +269,7 @@ export default function Notifications() {
                               {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                             </p>
                           </div>
-                          
+
                           <div className="flex items-center space-x-1 sm:space-x-2 ml-2 sm:ml-4">
                             {!notification.read && (
                               <>
@@ -288,7 +287,7 @@ export default function Notifications() {
                             )}
                           </div>
                         </div>
-                        
+
                         {/* Action buttons based on notification type */}
                         {(notification.type === 'challenge' || notification.type === 'challenge_received' || notification.type === 'challenge_sent' || notification.type === 'challenge_accepted' || notification.type === 'challenge_active') && (
                           <div className="mt-3 flex space-x-2">
@@ -323,7 +322,7 @@ export default function Notifications() {
                             )}
                           </div>
                         )}
-                        
+
                         {(notification.type === 'friend' || notification.type === 'friend_request' || notification.type === 'friend_accepted') && (
                           <div className="mt-3 flex space-x-2">
                             <Button
@@ -377,7 +376,7 @@ export default function Notifications() {
                             </Button>
                           </div>
                         )}
-                        
+
                         {(notification.type === 'event' || notification.type === 'event_starting' || notification.type === 'event_ending' || notification.type === 'funds_locked' || notification.type === 'participant_joined') && (
                           <div className="mt-3 flex space-x-2">
                             <Button
@@ -427,7 +426,7 @@ export default function Notifications() {
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getNotificationColor(notification.type)}`}>
                         <i className={`${getNotificationIcon(notification.type)} text-sm`}></i>
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -441,7 +440,7 @@ export default function Notifications() {
                               {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                             </p>
                           </div>
-                          
+
                           <div className="flex items-center space-x-2 ml-4">
                             <Badge className="bg-primary text-white">New</Badge>
                             <Button
@@ -454,7 +453,7 @@ export default function Notifications() {
                             </Button>
                           </div>
                         </div>
-                        
+
                         {/* Action buttons based on notification type */}
                         {notification.type === 'challenge' && notification.data?.challengeId && (
                           <div className="mt-3 flex space-x-2">
@@ -481,7 +480,7 @@ export default function Notifications() {
                             </Button>
                           </div>
                         )}
-                        
+
                         {notification.type === 'friend' && notification.data?.friendRequestId && (
                           <div className="mt-3 flex space-x-2">
                             <Button
@@ -493,7 +492,7 @@ export default function Notifications() {
                             </Button>
                           </div>
                         )}
-                        
+
                         {notification.type === 'event' && notification.data?.eventId && (
                           <div className="mt-3 flex space-x-2">
                             <Button
@@ -537,7 +536,7 @@ export default function Notifications() {
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getNotificationColor(notification.type)}`}>
                         <i className={`${getNotificationIcon(notification.type)} text-sm`}></i>
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-slate-900 dark:text-slate-100">
                           {notification.title}
