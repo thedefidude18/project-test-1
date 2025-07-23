@@ -38,16 +38,15 @@ import { useDailySignIn } from '@/hooks/useDailySignIn';
 import AdminLogin from "@/pages/AdminLogin"; // Assuming you have an AdminLogin component
 import { WebsiteTour, useTour } from "@/components/WebsiteTour";
 import { SplashScreen } from "@/components/SplashScreen"; //Import Splashscreen
-import MobileSplashScreen from "@/components/MobileSplashScreen";
 import TelegramTest from "./pages/TelegramTest";
 import Bantzz from "./pages/Bantzz";
 import NotificationTest from "./pages/NotificationTest";
 import PublicProfile from "@/pages/PublicProfile";
 import { Navigation } from "@/components/Navigation";
+import { ErrorBoundary } from "react-error-boundary";
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [showMobileSplash, setShowMobileSplash] = useState(true);
 
   // Initialize tour
   const tour = useTour();
@@ -72,13 +71,16 @@ function Router() {
   const dailySignIn = useDailySignIn();
   const { signInStatus, showModal, setShowModal } = dailySignIn;
 
-  // Show mobile splash screen only on mobile devices
-  const isMobile = window.innerWidth < 768;
+  
 
   return (
     <div className="min-h-screen transition-all duration-300 ease-in-out">
-      {/* Only show HeaderWithAuth for authenticated users, not on landing page */}
-      {isAuthenticated && <Navigation />}
+      {/* Only show Navigation for authenticated users, not on landing page */}
+      {isAuthenticated && (
+        <div className="sticky top-0 z-50">
+          <Navigation />
+        </div>
+      )}
 
       <Switch>
       {/* Admin Login Route - Always Available */}
@@ -173,12 +175,17 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
       <div className={`${isMobile ? 'mobile-app' : ''}`}>
-          {showSplash && isMobile ? (
+          {showSplash ? (
             <SplashScreen onComplete={handleSplashComplete} />
           ) : (
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <ErrorBoundary
+            fallback={<div className="p-4 text-center">Something went wrong. Please refresh the page.</div>}
+            onError={(error) => console.error("App Error:", error)}
+          >
+            <Router />
+          </ErrorBoundary>
         </TooltipProvider>
           )}
         </div>

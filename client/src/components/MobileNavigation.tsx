@@ -17,6 +17,11 @@ export function MobileNavigation() {
     queryKey: ["/api/wallet/balance"],
     retry: false,
     enabled: !!user,
+    staleTime: 60000, // 1 minute
+    refetchInterval: 60000, // Refetch every minute instead of constant polling
+    onError: (error) => {
+      console.error("Failed to fetch balance:", error);
+    },
   });
 
   const [location, navigate] = useLocation();
