@@ -95,10 +95,6 @@ export interface IStorage {
   adminSetEventResult(eventId: number, result: boolean): Promise<Event>;
   processEventPayout(eventId: number): Promise<{ winnersCount: number; totalPayout: number; creatorFee: number }>;
   getEventPoolStats(eventId: number): Promise<{ totalPool: number; yesPool: number; noPool: number; participantsCount: number }>;
-  getEventParticipantsWithUsers(eventId: number): Promise<(EventParticipant & { user: User })[]>;
-  getEventMessageById(messageId: number): Promise<EventMessage | undefined>;
-  createEventMessage(eventId: number, userId: string, message: string, replyToId?: number, mentions?: string[]): Promise<EventMessage>;
-  toggleMessageReaction(messageId: string, userId: string, emoji: string): Promise<any>;
 
   // Private event operations
   requestEventJoin(eventId: number, userId: string, prediction: boolean, amount: number): Promise<EventJoinRequest>;
@@ -134,7 +130,7 @@ export interface IStorage {
   // Transaction operations
   getTransactions(userId: string, limit?: number): Promise<Transaction[]>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
-  getUserBalance(userId: string): Promise<number>;
+  getUserBalance(userId: string): Promise<{ balance: number; coins: number }>;
   updateUserBalance(userId: string, amount: number): Promise<User>;
 
   // Achievement operations
