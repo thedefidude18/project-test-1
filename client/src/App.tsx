@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
+  import { EventsSearchProvider } from "./context/EventsSearchContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useEffect, useState } from "react";
@@ -174,21 +175,23 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-      <div className={`${isMobile ? 'mobile-app' : ''}`}>
-          {showSplash ? (
-            <SplashScreen onComplete={handleSplashComplete} />
-          ) : (
-        <TooltipProvider>
-          <Toaster />
-          <ErrorBoundary
-            fallback={<div className="p-4 text-center">Something went wrong. Please refresh the page.</div>}
-            onError={(error) => console.error("App Error:", error)}
-          >
-            <Router />
-          </ErrorBoundary>
-        </TooltipProvider>
-          )}
-        </div>
+        <EventsSearchProvider>
+          <div className={`${isMobile ? 'mobile-app' : ''}`}>
+            {showSplash ? (
+              <SplashScreen onComplete={handleSplashComplete} />
+            ) : (
+              <TooltipProvider>
+                <Toaster />
+                <ErrorBoundary
+                  fallback={<div className="p-4 text-center">Something went wrong. Please refresh the page.</div>}
+                  onError={(error) => console.error("App Error:", error)}
+                >
+                  <Router />
+                </ErrorBoundary>
+              </TooltipProvider>
+            )}
+          </div>
+        </EventsSearchProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

@@ -23,7 +23,7 @@ export default function Friends() {
   const [friendEmail, setFriendEmail] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const { data: friends = [], isLoading } = useQuery({
+  const { data: friends = [] as any[], isLoading } = useQuery({
     queryKey: ["/api/friends"],
     retry: false,
     onError: (error: Error) => {
@@ -37,7 +37,7 @@ export default function Friends() {
           window.location.href = "/api/login";
         }, 500);
       }
-    },
+    }
   });
 
   const sendFriendRequestMutation = useMutation({
@@ -101,7 +101,7 @@ export default function Friends() {
         description: error.message,
         variant: "destructive",
       });
-    },
+    }
   });
 
   const filteredFriends = friends.filter((friend: any) => {
@@ -135,7 +135,7 @@ export default function Friends() {
 
   if (!user) return null;
 
-    const { data: allUsers = [] } = useQuery({
+    const { data: allUsers = [] as any[] } = useQuery({
     queryKey: ["/api/users"],
     retry: false,
   });
@@ -172,13 +172,15 @@ export default function Friends() {
             </p>
           </div>
 
+          <Button 
+            className="bg-primary text-white hover:bg-primary/90 mt-4 sm:mt-0"
+            onClick={() => setIsAddDialogOpen(true)}
+          >
+            <i className="fas fa-user-plus mr-2"></i>
+            Add Friend
+          </Button>
+
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary text-white hover:bg-primary/90 mt-4 sm:mt-0">
-                <i className="fas fa-user-plus mr-2"></i>
-                Add Friend
-              </Button>
-            </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Add Friend</DialogTitle>

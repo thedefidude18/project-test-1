@@ -1,4 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
+import React, { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -16,6 +18,10 @@ import {
 import { formatBalance } from "@/utils/currencyUtils";
 import { getAvatarUrl } from "@/utils/avatarUtils";
 import { UserAvatar } from "@/components/UserAvatar";
+import { useEventsSearch } from "../context/EventsSearchContext"; // Corrected import
+
+  // Only show search bar on /events route and desktop
+  const showEventsSearch = location === "/events";
 import {
   Bell,
   Settings,
@@ -30,10 +36,14 @@ import {
   Moon,
   ShoppingCart,
   ArrowLeft,
+  User,
+  Clock,
+  LogOut,
 } from "lucide-react";
 import { Link } from "wouter"; // Import Link from wouter
 
 export function Navigation() {
+  const { searchTerm, setSearchTerm } = useEventsSearch();
   const { user } = useAuth();
 
   const { notifications, unreadCount } = useNotifications();
@@ -51,7 +61,61 @@ export function Navigation() {
     navigate(path);
   };
 
-  if (!user) return null;
+  const [showSignIn, setShowSignIn] = useState(false);
+
+  if (!user) {
+    return (
+      <nav className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 theme-transition sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <div className="flex items-center space-x-3">
+              <button className="flex items-center space-x-2 hover:opacity-80 transition-opacity" onClick={() => window.location.href = '/'}>
+                <img src="/assets/bantahblue.svg" alt="BetChat Logo" className="w-8 h-8" />
+                <span className="text-xl font-bold text-slate-900 dark:text-white">Bantah</span>
+              </button>
+            </div>
+            {/* Sign In Button */}
+            <div>
+              <button
+                onClick={() => setShowSignIn(true)}
+                className="bg-primary text-white px-5 py-2 rounded-lg font-semibold shadow hover:bg-primary/90 transition-colors"
+              >
+                Sign In
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* Sign In Modal */}
+        <Dialog open={showSignIn} onOpenChange={setShowSignIn}>
+          <DialogContent className="sm:max-w-sm rounded-3xl border-0 shadow-2xl overflow-hidden">
+            <DialogHeader className="pb-2">
+              <div className="flex flex-col items-center justify-center w-full">
+                <img
+                  src="/assets/bantahblue.svg"
+                  alt="Bantah Logo"
+                  className="w-16 h-16 mb-2 drop-shadow-lg"
+                  style={{ objectFit: 'contain' }}
+                />
+                <DialogTitle className="text-center text-lg font-bold text-gray-800 dark:text-gray-200">
+                  Sign in to Bantah
+                </DialogTitle>
+              </div>
+            </DialogHeader>
+            <div className="flex flex-col items-center space-y-4 py-2">
+              <button
+                onClick={() => { window.location.href = '/api/login'; }}
+                className="w-full bg-primary text-white py-2 rounded-lg font-semibold shadow hover:bg-primary/90 transition-colors"
+              >
+                Continue with Telegram
+              </button>
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">By signing in, you agree to our Terms and Privacy Policy.</p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </nav>
+    );
+  }
 
     // Check if current page should show logo (events and home pages)
     const shouldShowLogo = location === "/" || location === "/events" || location === "/home";
@@ -83,41 +147,47 @@ export function Navigation() {
     <nav className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 theme-transition sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Navigation Items */}
-          <div className="hidden md:flex items-center space-x-8">
-            <button
-              onClick={() => handleNavigation("/")}
-              className="text-primary font-medium hover:text-primary/80 transition-colors"
-            >
-              Home
+          {/* Logo */}
+          <div className="flex items-center space-x-3">
+            <button onClick={() => handleNavigation("/")} className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+              <img src="/assets/bantahblue.svg" alt="BetChat Logo" className="w-8 h-8" />
+              <span className="text-2xl font-black text-slate-900 dark:text-white">Bantah</span>
             </button>
+          </div>
+          {/* Navigation Items */}
+          <div className="hidden md:flex items-center space-x-4">
             <button
               onClick={() => handleNavigation("/events")}
-              className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+              className="text-slate-600 dark:text-slate-300 text-base font-semibold hover:text-primary dark:hover:text-primary transition-colors flex items-center gap-1.5"
               data-tour="events"
             >
+              <Calendar className="w-4 h-4" />
               Events
             </button>
             <button
               onClick={() => handleNavigation("/challenges")}
-              className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+              className="text-slate-600 dark:text-slate-300 text-base font-semibold hover:text-primary dark:hover:text-primary transition-colors flex items-center gap-1.5"
               data-tour="challenges"
             >
+              <Trophy className="w-4 h-4" />
               Challenges
             </button>
             <button
               onClick={() => handleNavigation("/friends")}
-              className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+              className="text-slate-600 dark:text-slate-300 text-base font-semibold hover:text-primary dark:hover:text-primary transition-colors flex items-center gap-1.5"
               data-tour="friends"
             >
+              <Users className="w-4 h-4" />
               Friends
             </button>
 
             <button
-              onClick={() => handleNavigation("/admin")}
-              className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+              onClick={() => handleNavigation("/leaderboard")}
+              className="text-slate-600 dark:text-slate-300 text-base font-semibold hover:text-primary dark:hover:text-primary transition-colors flex items-center gap-1.5"
+              data-tour="leaderboard"
             >
-              Admin
+              <Trophy className="w-4 h-4" />
+              Leaderboard
             </button>
           </div>
 
@@ -126,11 +196,11 @@ export function Navigation() {
             {/* Wallet Balance & Coins */}
             <button
               onClick={() => handleNavigation("/wallet")}
-              className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors"
+              className="flex items-center gap-4 px-4 py-2 rounded-lg transition-colors"
               style={{ backgroundColor: "#7440ff", color: "white" }}
               data-tour="wallet"
             >
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-2">
                 <i className="fas fa-wallet text-emerald-500"></i>
                 <span className="text-sm font-medium">
                   {formatBalance(
@@ -140,44 +210,13 @@ export function Navigation() {
                   )}
                 </span>
               </div>
-              <div className="flex items-center space-x-1 border-l border-white/20 pl-3">
+              <div className="flex items-center gap-2">
                 <i className="fas fa-coins text-yellow-400"></i>
                 <span className="text-sm font-medium">
                   {typeof balance === "object"
                     ? (balance.coins || 0).toLocaleString()
                     : "0"}
                 </span>
-              </div>
-            </button>
-
-            {/* Leaderboard */}
-            <button
-              onClick={() => handleNavigation("/leaderboard")}
-              className="flex items-center space-x-1 p-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-              data-tour="leaderboard"
-              title="Leaderboard"
-            >
-              <img
-                src="/assets/notify22.svg"
-                alt="Calendar"
-                className="w-7 h-7"
-              />
-            </button>
-
-            {/* Gemini AI - Bantzz */}
-            <button
-              onClick={() => handleNavigation("/bantzz")}
-              className="flex items-center space-x-1 p-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-              title="Bantzz AI Assistant"
-            >
-              <div className="w-5 h-5 relative">
-                <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-pulse"></div>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 animate-spin opacity-50"></div>
-                <div className="absolute inset-1 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center">
-                  <span className="text-xs font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-                    AI
-                  </span>
-                </div>
               </div>
             </button>
 
@@ -199,86 +238,16 @@ export function Navigation() {
               )}
             </button>
 
-            {/* Profile - Desktop Only */}
-            <div className="hidden md:block">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center space-x-2 p-2"
-                    data-tour="profile"
-                  >
-                    <UserAvatar
-                      userId={user.id}
-                      username={user.username}
-                      size={32}
-                      className="h-8 w-8"
-                    />
-                    <span className="hidden sm:block text-sm font-medium">
-                      {user.firstName || user.username}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem
-                    onClick={() => handleNavigation("/profile")}
-                  >
-                    <i className="fas fa-user mr-2"></i>
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleNavigation("/profile/settings")}
-                  >
-                    <i className="fas fa-cog mr-2"></i>
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigation("/wallet")}>
-                    <i className="fas fa-wallet mr-2"></i>
-                    Wallet
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleNavigation("/friends")}
-                  >
-                    <i className="fas fa-users mr-2"></i>
-                    Friends
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigation("/shop")}>
-                    <i className="fas fa-shopping-cart mr-2"></i>
-                    Shop
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleNavigation("/history")}
-                  >
-                    <i className="fas fa-history mr-2"></i>
-                    History
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => handleNavigation("/referrals")}
-                  >
-                    <i className="fas fa-share-alt mr-2"></i>
-                    Referrals
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => {
-                      const event = new CustomEvent("start-tour");
-                      window.dispatchEvent(event);
-                    }}
-                  >
-                    <i className="fas fa-question-circle mr-2"></i>
-                    Website Tour
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => (window.location.href = "/api/logout")}
-                    className="text-red-600 dark:text-red-400"
-                  >
-                    <i className="fas fa-sign-out-alt mr-2"></i>
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            {/* Profile Button - Desktop Only */}
+            <button
+              onClick={() => handleNavigation("/profile")}
+              className="relative flex items-center justify-center w-8 h-8 rounded-full overflow-hidden hover:ring-2 hover:ring-primary transition-all"
+            >
+              <UserAvatar
+                user={user}
+                className="w-full h-full"
+              />
+            </button>
           </div>
         </div>
       </div>

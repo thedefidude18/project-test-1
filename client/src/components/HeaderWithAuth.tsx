@@ -1,3 +1,5 @@
+import { useEventsSearch } from "@/context/EventsSearchContext";
+import { useLocation } from "wouter";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
@@ -63,10 +65,10 @@ export function HeaderWithAuth() {
               <div className="flex items-center space-x-2">
                 <img
                   src="/assets/bantahblue.svg"
-                  alt="BetChat Logo"
+                  alt="Bantah Logo"
                   className="w-8 h-8"
                 />
-                <span className="text-xl font-bold text-slate-900 dark:text-white">BetChat</span>
+                <span className="text-xl font-bold text-slate-900 dark:text-white">Bantah</span>
               </div>
             </div>
             <div className="animate-pulse h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
@@ -88,10 +90,10 @@ export function HeaderWithAuth() {
                 <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
                   <img
                     src="/assets/bantahblue.svg"
-                    alt="BetChat Logo"
+                    alt="Bantah Logo"
                     className="w-8 h-8"
                   />
-                  <span className="text-xl font-bold text-slate-900 dark:text-white">BetChat</span>
+                  <span className="text-xl font-bold text-slate-900 dark:text-white">Bantah</span>
                 </div>
               </div>
 
@@ -125,6 +127,12 @@ export function HeaderWithAuth() {
   }
 
   // Authenticated header (existing Navigation component logic)
+  const { searchTerm, setSearchTerm } = useEventsSearch();
+  const [location] = useLocation();
+
+  // Only show search bar on /events route and desktop
+  const showEventsSearch = location === "/events";
+
   return (
     <nav className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 theme-transition sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -137,10 +145,10 @@ export function HeaderWithAuth() {
             >
               <img
                 src="/assets/bantahblue.svg"
-                alt="BetChat Logo"
+                alt="Bantah Logo"
                 className="w-8 h-8"
               />
-              <span className="text-xl font-bold text-slate-900 dark:text-white">BetChat</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white">Bantah</span>
             </button>
           </div>
 
@@ -186,6 +194,18 @@ export function HeaderWithAuth() {
 
           {/* Right Side Items */}
           <div className="flex items-center space-x-4">
+            {/* Events Search Bar (desktop, only on /events) */}
+            {showEventsSearch && (
+              <div className="hidden md:block w-64">
+                <input
+                  type="text"
+                  placeholder="Search events..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            )}
             {/* Wallet Balance & Coins */}
             <button
               onClick={() => handleNavigation("/wallet")}
@@ -210,7 +230,7 @@ export function HeaderWithAuth() {
             {/* Notifications */}
             <button
               onClick={() => handleNavigation("/notifications")}
-              className="relative p-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"
+              className={"relative p-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors"}
               data-tour="notifications"
             >
               <Bell className="w-5 h-5" />

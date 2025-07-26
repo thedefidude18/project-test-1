@@ -28,7 +28,7 @@ export default function MobileSplashScreen({ onComplete }: MobileSplashScreenPro
             className="w-24 h-24 mx-auto"
           />
         </div>
-        <div className="text-white text-xl font-bold mb-2">BetChat</div>
+        <div className="text-white text-xl font-bold mb-2">Bantah</div>
         <div className="text-blue-100 text-sm">Social Betting Platform</div>
         <div className="mt-6">
           <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>

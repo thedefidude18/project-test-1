@@ -16,8 +16,8 @@ export default function MobileLayout({ children, className, showPadding = true }
     )}>
       {/* Mobile-first container */}
       <div className={cn(
-        "mx-auto max-w-md md:max-w-6xl",
-        "md:pt-6", // Only add top padding on desktop
+        "mx-auto max-w-md md:max-w-none",
+        "md:px-8 md:py-6", // Add horizontal padding on desktop for content area
         showPadding && "px-3 md:px-6"
       )}>
         <div className={cn(

@@ -115,7 +115,7 @@ export default function EventCreate() {
                 placeholder="What will people predict?"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="mobile-form-input md:h-12 md:text-base md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg"
+                className="mobile-form-input md:h-12 md:text-base md:bg-slate-50 md:dark:bg-slate-800 md:border-0 md:shadow-none md:rounded-xl focus:ring-2 focus:ring-primary/30"
                 required
               />
             </div>
@@ -127,7 +127,7 @@ export default function EventCreate() {
                 placeholder="Provide details about the event..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="mobile-form-textarea md:min-h-[100px] md:text-base md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg"
+                className="mobile-form-textarea md:min-h-[100px] md:text-base md:bg-slate-50 md:dark:bg-slate-800 md:border-0 md:shadow-none md:rounded-xl focus:ring-2 focus:ring-primary/30"
                 required
               />
             </div>
@@ -135,10 +135,10 @@ export default function EventCreate() {
             <div className="mobile-form-field md:mb-6">
               <Label htmlFor="category" className="mobile-form-label md:text-base md:font-semibold md:text-slate-700 md:dark:text-slate-300">Category *</Label>
               <Select value={category} onValueChange={setCategory} required>
-                <SelectTrigger className="mobile-form-select md:h-12 md:text-base md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg">
+                <SelectTrigger className="mobile-form-select md:h-12 md:text-base md:bg-slate-50 md:dark:bg-slate-800 md:border-0 md:shadow-none md:rounded-xl focus:ring-2 focus:ring-primary/30">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent className="md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg">
+                <SelectContent className="md:bg-slate-50 md:dark:bg-slate-800 md:border-0 md:rounded-xl">
                   {categories.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>
                       <div className="flex items-center space-x-2">
@@ -159,7 +159,7 @@ export default function EventCreate() {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="mobile-form-input md:h-12 md:text-base md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg"
+                  className="mobile-form-input md:h-12 md:text-base md:bg-slate-50 md:dark:bg-slate-800 md:border-0 md:shadow-none md:rounded-xl focus:ring-2 focus:ring-primary/30"
                   min={new Date().toISOString().split('T')[0]}
                   required
                 />
@@ -172,7 +172,7 @@ export default function EventCreate() {
                   type="time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="mobile-form-input md:h-12 md:text-base md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg"
+                  className="mobile-form-input md:h-12 md:text-base md:bg-slate-50 md:dark:bg-slate-800 md:border-0 md:shadow-none md:rounded-xl focus:ring-2 focus:ring-primary/30"
                   required
                 />
               </div>
@@ -188,7 +188,7 @@ export default function EventCreate() {
                 placeholder="100"
                 value={entryFee}
                 onChange={(e) => setEntryFee(e.target.value)}
-                className="mobile-form-input md:h-12 md:text-base md:bg-white md:dark:bg-slate-700 md:border-slate-300 md:dark:border-slate-600 md:rounded-lg"
+                className="mobile-form-input md:h-12 md:text-base md:bg-slate-50 md:dark:bg-slate-800 md:border-0 md:shadow-none md:rounded-xl focus:ring-2 focus:ring-primary/30"
                 min="1"
                 step="1"
                 required
@@ -204,16 +204,16 @@ export default function EventCreate() {
             <div className="flex space-x-3 md:space-x-4 md:justify-center">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={() => window.history.back()}
-                className="flex-1 h-12 border-slate-300 dark:border-slate-600 md:flex-none md:px-8 md:bg-white md:dark:bg-slate-700 md:hover:bg-slate-50 md:dark:hover:bg-slate-600"
+                className="flex-1 h-12 md:flex-none md:px-8 md:bg-slate-100 md:dark:bg-slate-800 md:hover:bg-slate-200 md:dark:hover:bg-slate-700 md:text-slate-700 md:dark:text-slate-200 md:shadow-none md:border-0"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={createEventMutation.isPending}
-                className="flex-1 h-12 bg-primary text-white hover:bg-primary/90 font-semibold md:flex-none md:px-8"
+                className="flex-1 h-12 bg-[#7440ff] text-white hover:bg-[#7440ff]/90 font-semibold md:flex-none md:px-8 md:shadow-none md:border-0 md:rounded-xl"
               >
                 {createEventMutation.isPending ? (
                   <>

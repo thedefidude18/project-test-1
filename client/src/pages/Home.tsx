@@ -117,15 +117,15 @@ export default function Home() {
             <div className="flex items-center justify-center mb-4 md:hidden">
               <img 
                 src="/assets/bantahblue.svg" 
-                alt="BetChat" 
+                alt="Bantah" 
                 className="w-8 h-8 mr-2"
               />
-              <h1 className="text-2xl font-bold text-white">BetChat</h1>
+              <h1 className="text-2xl font-bold text-white">Bantah</h1>
             </div>
 
             {/* Desktop title */}
             <h1 className="hidden md:block text-4xl md:text-6xl font-bold text-white mb-6">
-              Find your betting community on BetChat
+              Find your betting community on Bantah
             </h1>
 
             <p className="text-sm md:text-xl text-white/90 mb-6 md:mb-8 md:max-w-2xl md:mx-auto">

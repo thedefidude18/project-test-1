@@ -17,36 +17,28 @@ import { LevelProgress } from "@/components/LevelProgress";
 import { formatBalance } from "@/utils/currencyUtils";
 import { getAvatarUrl } from "@/utils/avatarUtils";
 
+import { ProfileSidebar } from "@/components/ProfileSidebar";
+
 export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const { data: userStats } = useQuery({
+  const { data: userStats = {} as { wins?: number; activeChallenges?: number } } = useQuery({
     queryKey: ["/api/user/stats"],
     retry: false,
-    onError: (error: Error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      }
-    },
   });
 
   const { data: achievements = [] } = useQuery({
     queryKey: ["/api/user/achievements"],
     retry: false,
   });
+  const achievementsList = achievements as Array<any>;
 
   const { data: transactions = [] } = useQuery({
     queryKey: ["/api/transactions"],
     retry: false,
   });
+  const transactionsList = transactions as Array<any>;
 
   if (!user) return null;
 
@@ -92,19 +84,24 @@ export default function Profile() {
     }
   };
 
-  const recentTransactions = transactions.slice(0, 5);
+  const recentTransactions = transactionsList.slice(0, 5);
 
   return (
-    <MobileLayout>
-
-      {/* Mobile Profile Header - Cleaner Design */}
+    <div className="flex min-h-screen">
+      {/* Desktop Sidebar - Hidden on Mobile */}
+      <ProfileSidebar />
+      
+      {/* Main Content */}
+      <div className="flex-1">
+        <MobileLayout>
+          {/* Mobile Profile Header - Cleaner Design */}
       <div className="md:hidden">
         {/* Profile Avatar and Name Section */}
         <div className="bg-white dark:bg-slate-800 p-6 mb-6 rounded-b-3xl">
           <div className="flex flex-col items-center text-center">
             <Avatar className="w-24 h-24 mb-4 ring-4 ring-primary/20">
               <AvatarImage 
-                src={getAvatarUrl(user.id, user.profileImageUrl, user.firstName || user.username)} 
+                src={getAvatarUrl(user)}
                 alt={user.firstName || user.username || 'User'} 
               />
               <AvatarFallback className="text-2xl bg-primary/10 text-primary">
@@ -139,7 +136,7 @@ export default function Profile() {
           
           <MobileCard className="text-center py-6">
             <div className="text-2xl font-bold text-emerald-600 mb-1">
-              {userStats?.wins || 0}
+              {userStats.wins || 0}
             </div>
             <div className="text-sm text-slate-600 dark:text-slate-400">Wins</div>
           </MobileCard>
@@ -153,7 +150,7 @@ export default function Profile() {
           
           <MobileCard className="text-center py-6">
             <div className="text-2xl font-bold text-cyan-600 mb-1">
-              {achievements.length}
+              {achievementsList.length}
             </div>
             <div className="text-sm text-slate-600 dark:text-slate-400">Badges</div>
           </MobileCard>
@@ -192,84 +189,87 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Desktop Profile Header */}
-      <div className="hidden md:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 mb-8">
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-              <Avatar className="w-32 h-32">
-                <AvatarImage 
-                  src={getAvatarUrl(user.id, user.profileImageUrl, user.firstName || user.username)} 
-                  alt={user.firstName || user.username || 'User'} 
-                />
-                <AvatarFallback className="text-2xl">
-                  {(user.firstName?.[0] || user.username?.[0] || 'U').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+      {/* Desktop Profile Header + Menu List */}
+      <div className="hidden md:block max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex gap-8">
+          {/* Profile Card */}
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 mb-8 w-full">
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+                <Avatar className="w-32 h-32">
+                  <AvatarImage 
+                src={getAvatarUrl(user)} 
+                    alt={user.firstName || user.username || 'User'} 
+                  />
+                  <AvatarFallback className="text-2xl">
+                    {(user.firstName?.[0] || user.username?.[0] || 'U').toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
 
-              <div className="flex-1 text-center md:text-left">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-                  <div>
-                    <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-                      {user.firstName || user.username}
-                    </h1>
-                    <p className="text-slate-600 dark:text-slate-400">
-                      {user.email}
-                    </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">
-                      Joined {user.createdAt ? formatDistanceToNow(new Date(user.createdAt), { addSuffix: true }) : 'recently'}
-                    </p>
+                <div className="flex-1 text-center md:text-left">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+                    <div>
+                      <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                        {user.firstName || user.username}
+                      </h1>
+                      <p className="text-slate-600 dark:text-slate-400">
+                        {user.email}
+                      </p>
+                      <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">
+                        Joined {user.createdAt ? formatDistanceToNow(new Date(user.createdAt), { addSuffix: true }) : 'recently'}
+                      </p>
+                    </div>
+
+                    <Button 
+                      onClick={() => window.location.href = '/profile/settings'}
+                      className="bg-primary text-white hover:bg-primary/90 mt-4 md:mt-0"
+                    >
+                      <i className="fas fa-edit mr-2"></i>
+                      Edit Profile
+                    </Button>
                   </div>
 
-                  <Button 
-                    onClick={() => window.location.href = '/profile/settings'}
-                    className="bg-primary text-white hover:bg-primary/90 mt-4 md:mt-0"
-                  >
-                    <i className="fas fa-edit mr-2"></i>
-                    Edit Profile
-                  </Button>
-                </div>
+                  {/* Level Progress */}
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        Level {user.level}
+                      </span>
+                      <span className="text-sm text-slate-600 dark:text-slate-400">
+                        {user.xp} / {nextLevelXP} XP
+                      </span>
+                    </div>
+                    <Progress value={levelProgress} className="h-2" />
+                  </div>
 
-                {/* Level Progress */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Level {user.level}
-                    </span>
-                    <span className="text-sm text-slate-600 dark:text-slate-400">
-                      {user.xp} / {nextLevelXP} XP
-                    </span>
-                  </div>
-                  <Progress value={levelProgress} className="h-2" />
-                </div>
-
-                {/* Stats Row */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">{formatBalance(user.points || 0)}</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Points</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-emerald-600">{userStats?.wins || 0}</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Wins</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-amber-600">{user.streak}</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Streak</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-cyan-600">{achievements.length}</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Achievements</p>
+                  {/* Stats Row */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-primary">{formatBalance(user.points || 0)}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Points</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-emerald-600">{userStats.wins || 0}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Wins</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-amber-600">{user.streak}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Streak</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-cyan-600">{achievementsList.length}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Achievements</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Profile Tabs */}
-      <div className="px-4 md:px-0">
+      <div className="px-4 md:px-8 max-w-4xl mx-auto">
         <Tabs defaultValue="level" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800">
             <TabsTrigger value="level" className="text-sm rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">Level</TabsTrigger>
@@ -296,11 +296,11 @@ export default function Profile() {
                   Your Badges
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400">
-                  {achievements.length} badges earned
+                  {achievementsList.length} badges earned
                 </p>
               </div>
               
-              {achievements.length === 0 ? (
+              {achievementsList.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i className="fas fa-trophy text-2xl text-slate-400"></i>
@@ -314,7 +314,7 @@ export default function Profile() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4">
-                  {achievements.map((achievement: any) => (
+                  {achievementsList.map((achievement: any) => (
                     <div
                       key={achievement.id}
                       className="flex items-center space-x-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/50"
@@ -423,7 +423,7 @@ export default function Profile() {
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600 dark:text-slate-400">Total Wins</span>
-                    <span className="text-2xl font-bold text-emerald-600">{userStats?.wins || 0}</span>
+                    <span className="text-2xl font-bold text-emerald-600">{userStats.wins || 0}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600 dark:text-slate-400">Current Streak</span>
@@ -431,7 +431,7 @@ export default function Profile() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-600 dark:text-slate-400">Active Challenges</span>
-                    <span className="text-2xl font-bold text-cyan-600">{userStats?.activeChallenges || 0}</span>
+                    <span className="text-2xl font-bold text-cyan-600">{userStats.activeChallenges || 0}</span>
                   </div>
                 </div>
               </MobileCard>
@@ -464,5 +464,7 @@ export default function Profile() {
 
       <MobileNavigation />
     </MobileLayout>
+      </div>
+    </div>
   );
 }

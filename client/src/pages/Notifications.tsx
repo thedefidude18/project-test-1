@@ -180,16 +180,11 @@ export default function Notifications() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
 
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex justify-between items-start mb-4 sm:mb-8">
+        <div className="flex justify-between items-start mb-2 sm:mb-4">
           <div className="hidden sm:block">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-              Notifications 🔔
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400">
-              Stay updated with your latest activities
-            </p>
+            {/* Removed desktop intro text for Notifications page */}
           </div>
 
           <div className="flex gap-2">

@@ -85,26 +85,35 @@ export default function Leaderboard() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
 
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-4 md:py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="hidden md:block text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            Leaderboard 🏆
+            {/* Removed desktop intro text for Leaderboard page */}
           </h1>
           <p className="hidden md:block text-slate-600 dark:text-slate-400">
-            See how you rank against other players
+            {/* Removed desktop intro text for Leaderboard page */}
           </p>
         </div>
 
         {/* Your Rank Card */}
         {currentUserRank > 0 && (
-          <Card className="bg-gradient-to-br from-primary to-secondary text-white mb-8">
+          <Card className="mb-8 bg-gradient-to-br from-[#7440ff] via-[#5e60ce] to-[#48bfe3] text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
-                    currentUserRank <= 3 ? 'bg-white text-primary' : 'bg-primary-700 text-white'
-                  }`}>
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl shadow-md border ${
+                      currentUserRank === 1
+                        ? 'bg-white text-yellow-700 border-yellow-300'
+                        : currentUserRank === 2
+                        ? 'bg-white text-slate-600 border-slate-300'
+                        : currentUserRank === 3
+                        ? 'bg-white text-orange-600 border-orange-300'
+                        : 'bg-primary-700 text-white border-primary-800'
+                    }`}
+                    style={{ textShadow: currentUserRank <= 3 ? '0 1px 4px rgba(0,0,0,0.18)' : undefined }}
+                  >
                     {getRankIcon(currentUserRank)}
                   </div>
                   <div>

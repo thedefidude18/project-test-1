@@ -72,12 +72,12 @@ export default function Challenges() {
     },
   });
 
-  const { data: friends = [] } = useQuery({
+  const { data: friends = [] as any[] } = useQuery({
     queryKey: ["/api/friends"],
     retry: false,
   });
 
-  const { data: allUsers = [], isLoading: usersLoading, error: usersError } = useQuery({
+  const { data: allUsers = [] as any[], isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ["/api/users"],
     retry: false,
     onError: (error: Error) => {
@@ -212,17 +212,10 @@ export default function Challenges() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
 
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-          <div className="hidden md:block">
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-              Challenges ⚔️
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400">
-              Challenge friends and prove your skills
-            </p>
-          </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header - spacing reduced after removing intro text */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+          <div className="hidden md:block"></div>
 
           <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
             setIsCreateDialogOpen(open);
@@ -231,12 +224,6 @@ export default function Challenges() {
               form.reset();
             }
           }}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary text-white hover:bg-primary/90 mt-4 sm:mt-0">
-                <i className="fas fa-plus mr-2"></i>
-                Create Challenge
-              </Button>
-            </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>
@@ -406,16 +393,20 @@ export default function Challenges() {
         </div>
 
         {/* Search */}
-        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 mb-8">
-          <CardContent className="p-6">
-            <Input
-              placeholder="Search challenges..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-700"
-            />
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-4 mb-4">
+          <Input
+            placeholder="Search challenges..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="bg-slate-50 dark:bg-slate-700 w-3/4"
+          />
+          <Button 
+            className="bg-primary text-white font-black px-6 py-2 rounded-lg shadow hover:bg-primary/90"
+            onClick={() => setIsCreateDialogOpen(true)}
+          >
+            Create Challenge
+          </Button>
+        </div>
 
         {/* Challenges Tabs */}
         <Tabs defaultValue="pending" className="space-y-6">

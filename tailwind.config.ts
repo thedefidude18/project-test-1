@@ -15,6 +15,7 @@ export default {
         sm: "0.5rem",
       },
       colors: {
+        'light-bg': '#F8F9FA',  // Add the light-bg color
         background: "var(--background)",
         foreground: "var(--foreground)",
         card: {

@@ -286,26 +286,32 @@ export default function WalletPage() {
         {/* Balance Section - Card Style */}
         <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 mb-6 shadow-sm">
           <div className="text-center">
-            <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">Naira Balance</p>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              {formatBalance(currentBalance)}
-            </h1>
-            
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-2xl p-4 mb-6">
-              <p className="text-yellow-600 dark:text-yellow-400 text-sm mb-1">Coins Balance</p>
-              <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
-                {currentCoins.toLocaleString()} coins
-              </h2>
-              <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                Use coins to bet in events and challenges
-              </p>
-              <Button
-                onClick={() => navigate('/shop')}
-                className="mt-3 w-full bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl h-10"
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Buy More Coins
-              </Button>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              {/* Naira Balance */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-4">
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">Naira Balance</p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {formatBalance(currentBalance)}
+                </h1>
+              </div>
+
+              {/* Coins Balance */}
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-2xl p-4">
+                <p className="text-yellow-600 dark:text-yellow-400 text-sm mb-1">Coins Balance</p>
+                <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
+                  {currentCoins.toLocaleString()} coins
+                </h2>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                  Use coins to bet in events
+                </p>
+                <Button
+                  onClick={() => navigate('/shop')}
+                  className="mt-2 w-full bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl h-8 text-sm"
+                >
+                  <ShoppingCart className="w-3 h-3 mr-1" />
+                  Buy More
+                </Button>
+              </div>
             </div>
 
             {/* Action Buttons */}

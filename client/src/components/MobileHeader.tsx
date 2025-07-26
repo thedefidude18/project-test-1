@@ -73,7 +73,7 @@ export function MobileHeader({
               alt="BetChat" 
               className="w-6 h-6 mr-2"
             />
-            <span className="text-lg font-bold text-slate-900 dark:text-slate-100">BetChat</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-slate-100">Bantah</span>
           </div>
         )}
 

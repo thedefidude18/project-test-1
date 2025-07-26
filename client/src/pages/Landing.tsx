@@ -37,6 +37,7 @@ export default function Landing() {
     }
   }, [isAuthenticated, setLocation, params.code, toast]);
 
+
   const handleGetStarted = () => {
     // Store referral code before showing auth modal
     if (referralCode) {
@@ -49,147 +50,71 @@ export default function Landing() {
     setShowAuthModal(true);
   };
 
-  // Mascot SVG Components
-  const PinkMascot = () => (
-    <motion.div 
+  // Fix: Add handleNavigation for logo click
+  const handleNavigation = (path: string) => {
+    setLocation(path);
+  };
+
+
+  // Mascot Image Components (updated)
+  const BlueMascot = () => (
+    <motion.div
       className="relative"
-      animate={{ 
-        y: [0, -10, 0],
-        rotate: [0, 2, -2, 0]
-      }}
-      transition={{ 
-        duration: 4,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }}
+      animate={{ y: [0, -10, 0] }}
+      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
     >
-      <svg width="120" height="120" viewBox="0 0 120 120" className="drop-shadow-lg">
-        <defs>
-          <radialGradient id="pinkGradient" cx="0.3" cy="0.3">
-            <stop offset="0%" stopColor="#fce7f3" />
-            <stop offset="100%" stopColor="#f472b6" />
-          </radialGradient>
-        </defs>
-        <ellipse cx="60" cy="60" rx="45" ry="35" fill="url(#pinkGradient)" />
-        <circle cx="45" cy="55" r="3" fill="#1f2937" />
-        <circle cx="75" cy="55" r="3" fill="#1f2937" />
-        <path d="M50 65 Q60 75 70 65" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round" />
-      </svg>
+      <img src="/assets/bantahblue.svg" alt="Bantah Blue Mascot" className="w-32 h-32 drop-shadow-lg" />
     </motion.div>
   );
 
-  const OrangeMascot = () => (
-    <motion.div 
+  const YellowMascot = () => (
+    <motion.div
       className="relative"
-      animate={{ 
-        y: [0, -8, 0],
-        rotate: [0, -2, 2, 0]
-      }}
-      transition={{ 
-        duration: 3.5,
-        repeat: Infinity,
-        ease: "easeInOut",
-        delay: 0.5
-      }}
+      animate={{ y: [0, -8, 0] }}
+      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
     >
-      <svg width="130" height="130" viewBox="0 0 130 130" className="drop-shadow-lg">
-        <defs>
-          <radialGradient id="orangeGradient" cx="0.3" cy="0.3">
-            <stop offset="0%" stopColor="#fed7aa" />
-            <stop offset="100%" stopColor="#f97316" />
-          </radialGradient>
-        </defs>
-        <g transform="translate(65, 65)">
-          <circle cx="-15" cy="-10" r="20" fill="url(#orangeGradient)" />
-          <circle cx="15" cy="-5" r="18" fill="url(#orangeGradient)" />
-          <circle cx="0" cy="10" r="22" fill="url(#orangeGradient)" />
-          <circle cx="-10" cy="25" r="16" fill="url(#orangeGradient)" />
-          <circle cx="12" cy="20" r="14" fill="url(#orangeGradient)" />
-        </g>
-        <circle cx="55" cy="60" r="2.5" fill="#1f2937" />
-        <circle cx="75" cy="65" r="2.5" fill="#1f2937" />
-        <path d="M60 70 Q65 80 70 70" stroke="#1f2937" strokeWidth="2" fill="none" strokeLinecap="round" />
-      </svg>
+      <img src="/assets/bantahyellow.svg" alt="Bantah Yellow Mascot" className="w-32 h-32 drop-shadow-lg" />
     </motion.div>
   );
 
+  // Floating SVG/image elements
   const FloatingElements = () => (
     <>
-      {/* Floating stars and shapes */}
-      <motion.div 
-        className="absolute top-20 left-1/4 text-yellow-400 text-2xl"
-        animate={{ 
-          rotate: [0, 360],
-          scale: [1, 1.2, 1]
-        }}
-        transition={{ 
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      >
-        ⭐
-      </motion.div>
-      <motion.div 
-        className="absolute top-32 right-1/3 text-gray-300 dark:text-gray-600 text-xl"
-        animate={{ 
-          y: [0, -20, 0],
-          opacity: [0.5, 1, 0.5]
-        }}
-        transition={{ 
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 1
-        }}
-      >
-        ⭐
-      </motion.div>
-      <motion.div 
-        className="absolute top-16 right-1/4 text-yellow-300 text-lg"
-        animate={{ 
-          rotate: [0, -360],
-          scale: [1, 1.3, 1]
-        }}
-        transition={{ 
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 2
-        }}
-      >
-        ⭐
-      </motion.div>
-      <motion.div 
-        className="absolute bottom-40 left-1/5 text-pink-300 text-sm"
-        animate={{ 
-          y: [0, -15, 0],
-          rotate: [0, 180, 360]
-        }}
-        transition={{ 
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 1.5
-        }}
-      >
-        💫
-      </motion.div>
-      <motion.div 
-        className="absolute bottom-32 right-1/5 text-orange-200 text-lg"
-        animate={{ 
-          scale: [1, 1.4, 1],
-          opacity: [0.6, 1, 0.6]
-        }}
-        transition={{ 
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 0.8
-        }}
-      >
-        ✨
-      </motion.div>
+      <motion.img
+        src="/assets/gamessvg.svg"
+        alt="Games Icon"
+        className="absolute top-20 left-1/4 w-12 h-12 opacity-80"
+        animate={{ rotate: [0, 360], scale: [1, 1.2, 1] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.img
+        src="/assets/chat_icon.png"
+        alt="Chat Icon"
+        className="absolute top-32 right-1/3 w-10 h-10 opacity-70"
+        animate={{ y: [0, -20, 0], opacity: [0.5, 1, 0.5] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+      />
+      <motion.img
+        src="/assets/bantahblue.svg"
+        alt="Blue Mascot Small"
+        className="absolute top-16 right-1/4 w-10 h-10 opacity-70"
+        animate={{ rotate: [0, -360], scale: [1, 1.3, 1] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+      />
+      <motion.img
+        src="/assets/bantahyellow.svg"
+        alt="Yellow Mascot Small"
+        className="absolute bottom-40 left-1/5 w-8 h-8 opacity-70"
+        animate={{ y: [0, -15, 0], rotate: [0, 180, 360] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+      />
+      <motion.img
+        src="/assets/gamessvg.svg"
+        alt="Games Icon 2"
+        className="absolute bottom-32 right-1/5 w-10 h-10 opacity-60"
+        animate={{ scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+      />
     </>
   );
 
@@ -201,14 +126,14 @@ export default function Landing() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
-                <span className="text-white font-bold text-sm">B</span>
-              </div>
-              <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                BetChat <span className="text-sm text-gray-500 dark:text-gray-400 font-normal">by BetChat</span>
-              </span>
+              <button onClick={() => handleNavigation("/")} className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+                <img src="/assets/bantahblue.svg" alt="BetChat Logo" className="w-8 h-8" />
+                <span className="text-xl font-bold text-slate-900 dark:text-white">Bantah</span>
+              </button>
             </div>
-
+            <span className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+              Bantah <span className="text-sm text-gray-500 dark:text-gray-400 font-normal"></span>
+            </span>
             {/* Navigation */}
             <div className="hidden md:flex items-center space-x-8">
               <div className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer transition-colors">
@@ -222,7 +147,7 @@ export default function Landing() {
                 className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer transition-colors"
                 onClick={handleSignIn}
               >
-                Sign in
+                Get Started
               </span>
               <Button
                 variant="outline"
@@ -234,25 +159,23 @@ export default function Landing() {
               </Button>
               <Button
                 size="sm"
-                className="text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
+                className="text-sm font-medium bg-[#7440ff] dark:bg-white text-white dark:text-gray-900 hover:bg-[#7440ff] dark:hover:bg-gray-100"
                 onClick={handleGetStarted}
               >
                 Sign in
               </Button>
             </div>
-
             {/* Mobile menu button and theme toggle */}
             <div className="flex items-center space-x-3 md:hidden">
               <ThemeToggle />
               <Button
                 size="sm"
-                className="text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900"
+                className="text-sm font-medium bg-[#7440ff] dark:bg-white text-white dark:text-gray-900"
                 onClick={handleGetStarted}
               >
-                Sign in
+                Get Started
               </Button>
             </div>
-
             {/* Theme toggle for desktop */}
             <div className="hidden md:block">
               <ThemeToggle />
@@ -288,8 +211,8 @@ export default function Landing() {
           {/* Mascots */}
           <div className="relative mb-12">
             <div className="flex justify-center items-center space-x-8">
-              <PinkMascot />
-              <OrangeMascot />
+              <BlueMascot />
+              <YellowMascot />
             </div>
           </div>
 
@@ -299,16 +222,16 @@ export default function Landing() {
             animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 30 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-              Bring joy to
+            <h1 className="text-5xl md:text-7xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+              Chat. Bet. Banter
               <br />
-              <span className="block mt-2">your workplace.</span>
+              <span className="block mt-2">Earn. Repeat!</span>
             </h1>
             
             <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-              BetChat is the social betting platform your
+              Bantah is the social betting platform where you can create events, 
               <br className="hidden md:block" />
-              employees & team will love.
+              challenge your friends and earn rewards. 
             </p>
 
             <motion.div
@@ -352,7 +275,7 @@ export default function Landing() {
                       </div>
                       <div className="flex-1 flex justify-center">
                         <div className="bg-white dark:bg-gray-700 rounded-lg px-4 py-1 text-xs text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                          betchat.com
+                          Bantah.com
                         </div>
                       </div>
                     </div>
@@ -364,7 +287,7 @@ export default function Landing() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <div className="w-6 h-6 bg-blue-500 rounded"></div>
-                            <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">BetChat</div>
+                            <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">Bantah</div>
                           </div>
                           <div className="flex space-x-2">
                             <div className="w-16 h-6 bg-gray-200 dark:bg-gray-600 rounded"></div>

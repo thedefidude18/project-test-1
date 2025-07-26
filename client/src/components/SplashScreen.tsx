@@ -28,7 +28,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             alt="BetChat" 
             className="w-20 h-20 mx-auto mb-4 animate-pulse"
           />
-          <h1 className="text-primary text-2xl font-bold mb-2">BetChat</h1>
+          <h1 className="text-primary text-2xl font-bold mb-2">Bantah</h1>
           <p className="text-slate-600 text-sm">Predict • Chat • Win</p>
         </div>
         

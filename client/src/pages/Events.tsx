@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { MobileNavigation } from "@/components/MobileNavigation";
@@ -7,6 +7,7 @@ import { OnboardingTooltip } from "@/components/OnboardingTooltip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useEventsSearch } from "@/context/EventsSearchContext";
 import {
   Select,
   SelectContent,
@@ -39,7 +40,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { PlayfulLoading } from "@/components/ui/playful-loading";
 import { AnimatedButton } from "@/components/ui/animated-button";
-import { SkeletonCard } from "@/components/ui/loading-states";
+
 
 const createEventSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long"),
@@ -57,12 +58,24 @@ export default function Events() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState("");
+  const { searchTerm, setSearchTerm } = useEventsSearch();
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [visibleEvents, setVisibleEvents] = useState(12);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Desktop search bar in header
+  const DesktopSearchBar = (
+    <div className="hidden md:flex items-center justify-end w-full max-w-2xl ml-auto mb-6">
+      <Input
+        placeholder="Search events..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 w-full max-w-md"
+      />
+    </div>
+  );
 
   // Check if user should see onboarding
   useEffect(() => {
@@ -186,7 +199,7 @@ export default function Events() {
   const loadMoreEvents = () => {
     setIsLoadingMore(true);
     setTimeout(() => {
-      setVisibleEvents((prev) => Math.min(prev + 12, filteredEvents.length));
+      setVisibleEvents((prev: number) => Math.min(prev + 12, filteredEvents.length));
       setIsLoadingMore(false);
     }, 500);
   };
@@ -199,36 +212,35 @@ export default function Events() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 theme-transition">
-
-
-      <div className="max-w-7xl mx-auto px-3 md:px-4 sm:px-6 lg:px-8 py-3 md:py-8">
-        {/* Category Navigation Bar */}
+      <div className="max-w-4xl mx-auto px-3 md:px-4 sm:px-6 lg:px-8 py-3 md:py-8">
+        {DesktopSearchBar}
+        
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Categories
-            </h3>
-            <div className="flex-1 max-w-md ml-4">
-              <Input
-                placeholder="Search events..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
-              />
-            </div>
+          {/* Mobile search bar below header */}
+          <div className="block md:hidden mb-3">
+            <Input
+              placeholder="Search events..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+            />
           </div>
 
-          <div className="flex overflow-x-auto pb-2 gap-3 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
-            <Dialog
-              open={isCreateDialogOpen}
-              onOpenChange={setIsCreateDialogOpen}
-            >
+          {/* Category Bar */}
+          <div className="sticky top-16 bg-light-bg z-40 py-2.5">
+            <div className="container mx-auto px-4">
+              <div className="flex md:justify-center overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-white/20 gap-3">
+                <div className="flex gap-3 md:max-w-[800px]">
+                  <Dialog
+                    open={isCreateDialogOpen}
+                    onOpenChange={setIsCreateDialogOpen}
+                  >
               <DialogTrigger asChild>
-                <button className="flex-shrink-0 flex flex-col items-center p-3 rounded-2xl transition-all bg-primary text-white shadow-lg hover:bg-primary/90">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-2">
+                <button className="flex-shrink-0 flex flex-col items-center px-4 py-1.5 rounded-full border border-primary bg-primary text-white shadow hover:bg-primary/90 transition-all text-sm min-h-[38px]">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mb-1">
                     <i className="fas fa-plus text-white text-lg"></i>
                   </div>
-                  <span className="text-xs font-medium">Create</span>
+                  <span className="text-xs font-semibold">Create</span>
                 </button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
@@ -465,30 +477,30 @@ export default function Events() {
 
             <button
               onClick={() => setCategoryFilter("all")}
-              className={`flex-shrink-0 flex flex-col items-center p-3 rounded-2xl transition-all ${
+              className={`flex-shrink-0 flex flex-row items-center px-4 py-1.5 rounded-full border transition-all text-sm font-semibold min-h-[38px] ${
                 categoryFilter === "all"
-                  ? "bg-primary text-white shadow-lg"
-                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  ? "bg-primary text-white border-primary shadow"
+                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
             >
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-2">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mr-2">
                 <i className="fas fa-th-large text-white text-lg"></i>
               </div>
-              <span className="text-xs font-medium">All</span>
+              All
             </button>
 
             {categories.map((category) => (
               <button
                 key={category.value}
                 onClick={() => setCategoryFilter(category.value)}
-                className={`flex-shrink-0 flex flex-col items-center p-3 rounded-2xl transition-all ${
+                className={`flex-shrink-0 flex flex-row items-center px-6 py-2 rounded-full border transition-all text-sm font-semibold ${
                   categoryFilter === category.value
-                    ? "bg-primary text-white shadow-lg"
-                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    ? "bg-primary text-white border-primary shadow"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                 }`}
               >
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                  className={`w-7 h-7 rounded-full flex items-center justify-center mr-2 ${
                     category.value === "crypto"
                       ? "bg-gradient-to-br from-orange-400 to-yellow-500"
                       : category.value === "sports"
@@ -504,7 +516,7 @@ export default function Events() {
                 >
                   <i className={`${category.icon} text-white text-lg`}></i>
                 </div>
-                <span className="text-xs font-medium">{category.label}</span>
+                {category.label}
               </button>
             ))}
           </div>
@@ -520,16 +532,16 @@ export default function Events() {
           />
         ) : filteredEvents.length === 0 ? (
           <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-            <CardContent className="text-center py-15">
+            <CardContent className="text-center py-10 flex flex-col items-center justify-center">
               <img
                 src="/assets/noti-lonely.svg"
                 alt="Calend"
-                className="w-10 h-10"
+                className="w-12 h-12 mb-3"
               />
-              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-1">
                 No events found
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-6">
+              <p className="text-slate-600 dark:text-slate-400 mb-4">
                 {searchTerm || categoryFilter !== "all"
                   ? "Try adjusting your filters to see more events."
                   : "Be the first to create an event!"}
@@ -537,10 +549,10 @@ export default function Events() {
               {!searchTerm && categoryFilter === "all" && (
                 <Button
                   onClick={() => setIsCreateDialogOpen(true)}
-                  className="bg-primary text-white hover:bg-primary/90"
+                  className="bg-[#7440ff] text-white hover:bg-[#7440ff] mt-1"
                 >
                   <i className="fas fa-plus mr-2"></i>
-                  Create First Event
+                  Create Event
                 </Button>
               )}
             </CardContent>
